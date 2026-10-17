@@ -17,8 +17,9 @@ Verified on `main` at `5be26c1` (merge of PR #3), plus the documentation in this
 | Synthetic transactions, rules, review UI, Privacy Inspector | Implemented |
 | SQLite confirmations and consented category memory | Implemented, local fallback |
 | Consented memory affects the next analysis | Implemented on `main` |
-| TypeSafe Jev | Stub. No API call |
-| Backboard | Stub. No API call |
+| Jev through Backboard | Implemented. Live only when `BACKBOARD_API_KEY` is set and the response parses |
+| Direct TypeSafe API | Not selected and not called |
+| Backboard persistent memory | Not implemented. SQLite remains the memory store |
 | Capital One Nessie | Stub. Synthetic fixture is the data source |
 | GitHub Actions CI | Passing on the PR #3 merge to `main` |
 | Production auth, hosting, deployment | Not started |
@@ -60,9 +61,9 @@ Details, directories, and remaining tasks: [TEAM_ROLES.md](TEAM_ROLES.md).
 |---|---|
 | Frontend | React 19.3.1, TypeScript 5.9.3, Vite 7.3.7 |
 | Backend | Python 3.12, FastAPI 0.143.3, Uvicorn 0.54.0 |
-| Analysis | Deterministic rules in `backend/app/services/ai/rules.py` |
+| Analysis | Deterministic rules, plus Jev through Backboard when a key is set |
 | Memory | SQLite through the Python standard library |
-| External AI and banking | Named in config and stubs only |
+| Banking | Synthetic fixture. Nessie is still a stub |
 
 Versions are the lockfiles, not the ranges in `package.json`. Full inventory: [TECH_STACK.md](TECH_STACK.md).
 
@@ -110,8 +111,9 @@ That runs backend Ruff and pytest, then frontend typecheck, Vitest, and producti
 
 | Service | In this repo | Credential | Called today |
 |---|---|---|---|
-| TypeSafe Jev | `backend/app/services/ai/jev_client.py` raises `NotImplementedError` | `JEV_API_KEY` is loaded and unused | No |
-| Backboard | `backend/app/services/ai/backboard_client.py` raises `NotImplementedError` | `BACKBOARD_API_KEY` is loaded and unused | No |
+| Jev through Backboard | `POST https://app.backboard.io/api/threads/messages` from `jev_client.py` | `BACKBOARD_API_KEY` | Only when that key is non-empty |
+| Direct TypeSafe API | Not used. Optional vendor route | `JEV_API_KEY` is unused | No |
+| Backboard memory | `backboard_client.py` still raises `NotImplementedError` | Assistant id is not read | No |
 | Nessie sandbox | `backend/app/adapters/nessie.py` raises `NessieNotConfigured` | `NESSIE_API_KEY` is loaded and unused | No |
 
 `docs/.env.example` lists extra URLs and model names. `backend/app/core/config.py` does not read those fields. Do not treat that example as the live configuration.

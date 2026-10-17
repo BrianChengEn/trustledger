@@ -17,7 +17,10 @@ or `feat/local-memory-feedback`.
 - Integrator owner: backend/app/api/**, backend/app/core/**, backend/app/main.py,
   shared dependencies, integration tests, CI, contracts/**.
 - Agree on contract changes before implementation; preserve the synthetic baseline.
-- Jev, Backboard and Nessie files are explicit extension points, not live implementations.
+- Jev is called through Backboard System One when BACKBOARD_API_KEY is set.
+  The direct TypeSafe API is not the selected route. Nessie and Backboard
+  memory remain extension points. A missing key or failed call stays rules-only
+  or degraded, and must not be labeled rules+jev-live.
 - Local memory must be labelled local-fallback; only write after normal confirmation + consent.
 - Run bash scripts/check.sh. Do not claim tests pass if dependencies could not be installed.
 - Never commit node_modules, .venv, .env, databases, or credentials.

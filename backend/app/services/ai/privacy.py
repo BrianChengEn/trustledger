@@ -75,5 +75,5 @@ def privacy_preview(
                     output=payload.prior_user_confirmation,
                     reason="Consented category label only. No merchant, amount, or id."),
         FieldAction(field="unknown fields / PII / API keys", action="dropped",
-                    reason="Constructed from eight approved features only."),
+                    reason="Eight approved features only. A live call sends them as Backboard state."),
     ])

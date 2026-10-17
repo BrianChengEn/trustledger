@@ -1,6 +1,6 @@
 # Architecture
 
-This file describes the code on `main`. Target-design notes in [docs/00-overall-architecture-report.md](docs/00-overall-architecture-report.md) still describe Jev and Backboard as part of the product path. Those calls are not in the running process.
+This file describes the selected architecture. Jev is reached through Backboard's System One API, not through `https://api.typesafe.ai`. The direct TypeSafe route remains an unused option documented by TypeSafe. Target-design notes in [docs/00-overall-architecture-report.md](docs/00-overall-architecture-report.md) still describe the product shape.
 
 Diagrams, preserved and still useful for the target shape:
 
@@ -34,7 +34,7 @@ flowchart LR
   db -->|category label only| rules
 ```
 
-There is no arrow to Jev, Backboard, or Nessie. The modules exist and are not called.
+Nessie is not called. Jev is called only through Backboard, and only when a server-side key is present. Memory writes stay in SQLite.
 
 ## Modules
 
@@ -50,8 +50,9 @@ There is no arrow to Jev, Backboard, or Nessie. The modules exist and are not ca
 | Privacy guard | `backend/app/services/ai/privacy.py` | Builds the eight-field allowlist and the inspector rows | Brian |
 | Rules | `backend/app/services/ai/rules.py` | Duplicate, amount at least 250, subscription increase over 20 percent | Brian |
 | Memory policy | `backend/app/services/ai/memory_policy.py` | Writes a category sentence and parses it back to `normal` or `unknown` | Brian |
-| Jev client | `backend/app/services/ai/jev_client.py` | `NotImplementedError` | Brian |
-| Backboard client | `backend/app/services/ai/backboard_client.py` | `NotImplementedError` | Brian |
+| Jev client | `backend/app/services/ai/jev_client.py` | Backboard `POST /threads/messages` when `BACKBOARD_API_KEY` is set | Brian |
+| Decision merge | `backend/app/services/ai/decision.py` | Keeps the rule result. Labels Jev only after a valid response | Brian |
+| Backboard memory client | `backend/app/services/ai/backboard_client.py` | `NotImplementedError`. Inference does not enable memory | Brian |
 | SQLite store | `backend/app/core/store.py` | Scoped to `demo-user-001`. Idempotent confirmation. Delete by memory id | Benson |
 | Settings | `backend/app/core/config.py` | Loads `backend/.env`. Empty vendor keys | Benson |
 
@@ -75,35 +76,57 @@ There is no arrow to Jev, Backboard, or Nessie. The modules exist and are not ca
 
 | Promised integration | Code | What a caller would see |
 |---|---|---|
-| Jev classification | Stub, not imported | Rules only. `provider_mode=rules-only`. `model_version=null` |
-| Jev over HTTP or a Python SDK | Neither `httpx` nor `typesafe-sdk` is used | No request |
-| Jev through Backboard | No | Backboard is a separate unused stub |
-| Backboard memory, routing, or retrieval | Stub, not imported | SQLite sentence, `source=local-fallback` |
-| Nessie customers, accounts, or purchases | Stub, not imported | `source=synthetic` on every fixture row |
-| Authentication | Fixed `demo_user_id` | The browser cannot select another user |
+| Jev through Backboard | `POST https://app.backboard.io/api/threads/messages` with `httpx` | `provider_mode=rules+jev-live` only after a parsed `system_one.answers` |
+| Direct TypeSafe API | Not used | No request to `api.typesafe.ai` |
+| Missing key | No outbound call | `provider_mode=rules-only` |
+| Backboard timeout, non-200, or invalid answers | Rules kept | `provider_mode=degraded`. Not described as live Jev |
+| Backboard memory | Stub | SQLite sentence, `source=local-fallback`. The inference request omits `memory` |
+| Nessie | Stub | `source=synthetic` |
+| Authentication | Fixed `demo-user-001` | The browser cannot select another user |
 | Hosting | None | Localhost ports 5173 and 8000 |
 
-## Jev, when someone adds it
+## Selected Jev route
 
-The intended call is Brian's direct client, not a Backboard route and not a local process.
+Official reference: [Backboard System One](https://docs.backboard.io/concepts/system-one).
 
-- Remote API: `POST https://api.typesafe.ai/v1/systemone`.
-- Auth header: `Authorization: Bearer <key>`.
-- Body: a string or object `state` plus typed `questions`. For TrustLedger, `state` must be the existing `SafePayload` only.
-- Model id: pin `jev-1.13.0` or the current id the team writes down. Do not rely on `jev-latest` without checking [the model page](https://docs.typesafe.ai/models).
-- This repo's unused setting is `JEV_API_KEY`. The official SDK reads `TYPESAFE_API_KEY`. Pick one name in a reviewed settings change. Do not send the key to the browser.
-- Official Python package `typesafe-sdk` is not installed. Adding it is an integrator lockfile change.
+```text
+React → FastAPI → privacy allowlist → Backboard REST → TypeSafe Jev
+```
 
-`docs/.env.example` mentions `https://jev-ai.org/api/v1` and `jev-1.13`. Those values are not loaded and do not match the TypeSafe quick start. Do not implement against them unless official TypeSafe documentation is updated and the team agrees.
+The client sends:
 
-## Backboard, when someone adds it
+- `POST https://app.backboard.io/api/threads/messages`
+- Header `X-API-Key: $BACKBOARD_API_KEY`. This is the Backboard key. `JEV_API_KEY` is not sent.
+- `llm_provider` = `typesafe`
+- `model_name` = `jev-latest`
+- `stream` = `false`
+- `system_one.state` = the eight `SafePayload` fields
+- `system_one.questions` = `pattern` (choice) and `needs_review` (noul)
+- No `thread_id`, so each decision starts a new thread
+- No `memory` parameter, so assistant memory stays off
 
-- Remote base URL in Backboard's docs: `https://app.backboard.io/api`.
-- Auth header: `X-API-Key`.
-- Product memory is per assistant. A demo must not share one assistant across real users. This MVP has one demo user.
-- The only content eligible to send is the consented sentence already stored locally. Do not send the transaction.
-- Delete must call Backboard's memory delete and the local row. If the remote delete fails, the UI must not say the memory is gone.
-- Until that client exists, the running label remains `local-fallback`.
+`system_one.model` in the response is the resolved model, such as `jev-1.13.0`. The code stores that string in `model_version`. The rule's `alert_type`, severity, and `confidence=1.0` stay as they were. A Jev label is one extra evidence line. `needs_human` stays true when the rule flagged the transaction.
+
+`GET /api/v1/alerts` calls Jev only for rows the rules already flag. `POST /api/v1/analyses` calls Jev for the requested transaction when the key is set. Health reports `rules+jev-live` or `degraded` only after one of those calls records that outcome. A key by itself does not make health say live.
+
+### Optional direct TypeSafe route
+
+TypeSafe also documents `POST https://api.typesafe.ai/v1/systemone` with `Authorization: Bearer` and `TYPESAFE_API_KEY`. TrustLedger does not call that URL and does not install `typesafe-sdk`. Do not switch to it unless the team replaces this decision. `docs/.env.example` values `JEV_BASE_URL=https://jev-ai.org/api/v1` and `JEV_MODEL=jev-1.13` are still unread leftovers.
+
+## Backboard memory plan
+
+Persistent Backboard memory is not implemented. The inference call must not be treated as a memory write.
+
+| Behavior | Required design | Current code |
+|---|---|---|
+| Isolation | One server-side assistant for `demo-user-001`. The browser cannot choose it. Do not share that assistant with another person | Not stored. No `assistant_id` is sent |
+| Consent | Write only when the decision is `normal`, consent is checked, and `ALLOW_MEMORY_WRITE=true` | SQLite uses those three gates |
+| Content | The existing category sentence only. No merchant, amount, id, or raw transaction | SQLite stores that sentence |
+| Retrieval | Read that assistant's memories and map them with `prior_confirmation`. On failure, keep using SQLite and do not claim `backboard-live` | SQLite summaries feed the next analysis |
+| Deletion | Delete the remote memory and the local row. If the remote delete fails, keep the local row and show a failure | Local delete only |
+| Failure | A failed remote write does not undo the confirmation. Leave `memory_status` as failed or skipped and keep `source=local-fallback` | Confirmation still commits locally |
+
+`backboard_client.add_memory` still raises `NotImplementedError`. Do not point the UI at `backboard` until a delete and a read both succeed.
 
 ## Nessie, when someone adds it
 
@@ -122,10 +145,10 @@ The browser holds no vendor key. Vendor keys, if later set, stay in `backend/.en
 |---|---|---|---|---|---|
 | Synthetic load, 3 alerts, review, inspector | DONE | Shared | — | Keep it green | `check.sh` passes and the click path works |
 | SQLite memory affects the next analysis | DONE | Brian content, Benson store | — | Merged in PR #3 | Preview shows `normal` only for that category, then `unknown` after delete |
-| Jev live call | NOT STARTED | Brian | P1 | Direct System One call with the allowlist | Failed calls leave rules in place and the mode honest |
-| Backboard live memory | NOT STARTED | Brian | P1 | Consent-gated write and delete | Local fallback remains labeled when the call fails |
+| Jev through Backboard | IMPLEMENTED behind `BACKBOARD_API_KEY` | Brian | P1 | A real response must be seen before calling the demo live | Mocked tests cover success and failure. A missing key stays `rules-only` |
+| Backboard persistent memory | NOT STARTED | Brian | P1 | Consent, isolation, read, and delete as in the plan above | Local fallback remains the only memory write |
 | Nessie live read | NOT STARTED | Kenny | P1 | Read-only mapper plus synthetic fallback | CI passes with no key and makes no network call |
-| Health and route wiring for those clients | NOT STARTED | Benson | P1 | Depends on the three clients | Mode flags flip only after a successful call |
+| Health mode after a Jev attempt | DONE | Benson's route records Brian's result | `rules+jev-live` or `degraded` only after a call. Nessie and memory modes are unchanged |
 | Frontend polish and small-screen pass | NOT STARTED | Ian | P1 | Use the current API | Demo path is usable without spoken help |
 | Deployment | NOT STARTED | Benson | P2 | No config exists | A URL and SHA are written down, with no secrets in the repo |
 | Authentication | NOT STARTED | Benson | P2 | Out of the local demo unless the team cuts scope elsewhere | Not required for the synthetic localhost demo |

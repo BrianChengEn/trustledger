@@ -66,7 +66,7 @@ Official docs: [FastAPI](https://fastapi.tiangolo.com/), [Uvicorn](https://www.u
 | Tool | Version | Purpose | Where | Owner | This workspace | Key | Runs | Status | Config |
 |---|---|---|---|---|---|---|---|---|---|
 | Browser `fetch` | Platform | Call `/api/v1` | `frontend/src/api.ts` | Ian | Browser | No | Local. Vite proxies `/api` to port 8000 | IMPLEMENTED | `frontend/vite.config.ts`, `frontend/.env.example` |
-| httpx | 0.28.1 | Declared HTTP client | `backend/requirements.lock.txt` only | Benson | Installed | No | Not imported by `backend/app` | UNVERIFIED as a product client. The package is installed and unused |
+| httpx | 0.28.1 | Async Backboard client | `backend/app/services/ai/jev_client.py` | Brian uses it; Benson owns the lockfile | Installed | Header `X-API-Key` only | Remote when the key is set | IMPLEMENTED | `backend/requirements.lock.txt` |
 | FastAPI `TestClient` | From the installed Starlette | In-process API tests | `backend/tests/conftest.py` | Benson | Installed | No | Local tests | IMPLEMENTED | pytest |
 
 No generated OpenAPI client and no vendor SDK are dependencies.
@@ -75,26 +75,23 @@ No generated OpenAPI client and no vendor SDK are dependencies.
 
 | Model | Version in official docs checked 17 Oct 2026 | Purpose | Where in this repo | Owner | Status |
 |---|---|---|---|---|---|
-| TypeSafe Jev | Docs list `jev-1.13.0` and `jev-1.14.0`. Alias `jev-latest` pointed at `jev-1.13.0`; `jev-preview` pointed at `jev-1.14.0` | Bounded classification of a minimized payload | Not called. `docs/.env.example` mentions `JEV_MODEL=jev-1.13`, which settings do not read | Brian | PLANNED |
+| TypeSafe Jev | Requested alias `jev-latest`. The response field `system_one.model` is stored as `model_version` | Bounded classification of `SafePayload` | `backend/app/services/ai/jev_client.py` | Brian | IMPLEMENTED through Backboard. Not a local model |
 
-Jev is a remote model. TypeSafe does not publish weights for local inference. This repository does not run Jev locally.
+Jev is a remote model. This repository does not run it locally and does not call TypeSafe's host directly.
 
-Source checked: [TypeSafe models](https://docs.typesafe.ai/models), [quick start](https://docs.typesafe.ai/introduction/quickstart). Confirm alias targets again before a live demo. They are scheduled to move.
-
-The rules engine sets `confidence=1.0` when a deterministic rule matches. That number is not a Jev probability.
+The rules engine sets `confidence=1.0` when a deterministic rule matches. That number stays the rule confidence even after a live Jev label is attached.
 
 ## G. AI infrastructure services
 
 | Service | Integration in this repo | Credential this repo knows | Official interface checked | Owner | Status |
 |---|---|---|---|---|---|
-| TypeSafe API for Jev | `jev_client.decide` raises `NotImplementedError` and is not imported | `JEV_API_KEY`, unused | `POST https://api.typesafe.ai/v1/systemone` with `Authorization: Bearer`. Official env name for the SDK is `TYPESAFE_API_KEY`. Python package name in the quick start is `typesafe-sdk` | Brian | MOCK / STUB |
-| Backboard | `backboard_client.add_memory` raises `NotImplementedError` and is not imported | `BACKBOARD_API_KEY`, unused. `BACKBOARD_ASSISTANT_ID` appears only in `docs/.env.example` and is not read | Base URL `https://app.backboard.io/api`. Header `X-API-Key`. Python package `backboard-sdk` is not installed | Brian | MOCK / STUB |
+| Backboard System One, selected Jev route | `httpx` async `POST /threads/messages` | `BACKBOARD_API_KEY` | [System One](https://docs.backboard.io/concepts/system-one). `llm_provider=typesafe`, `model_name=jev-latest`, `stream=false` | Brian | IMPLEMENTED. Live only when the key is set and the response parses |
+| Direct TypeSafe API | Not called | `JEV_API_KEY` is loaded and unused. Official SDK name is `TYPESAFE_API_KEY` | `POST https://api.typesafe.ai/v1/systemone` | Brian | Optional route, not selected |
+| Backboard memory | `backboard_client.add_memory` still raises `NotImplementedError` | `BACKBOARD_ASSISTANT_ID` is not read | [Memory](https://docs.backboard.io/concepts/memory). Default `memory=off` when the parameter is omitted | Brian | MOCK / STUB for memory. Inference does not pass `memory` |
 
-`docs/.env.example` sets `JEV_BASE_URL=https://jev-ai.org/api/v1`. That host is not the endpoint in the TypeSafe quick start, and this backend does not request it. Treat it as an unverified leftover, not the integration.
+`docs/.env.example` sets `JEV_BASE_URL=https://jev-ai.org/api/v1`. The running client does not read or request that host.
 
-Backboard can route models and store assistant memory in its own product. This repository does not use Backboard to call Jev, and it does not send memory there.
-
-Docs: [Backboard introduction](https://docs.backboard.io/), [Backboard memory](https://docs.backboard.io/concepts/memory).
+`httpx` 0.28.1 is the client. `typesafe-sdk` and `backboard-sdk` are not installed.
 
 ## H. Banking data services
 

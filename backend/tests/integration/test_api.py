@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import yaml
+from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
 
@@ -93,6 +94,44 @@ def test_consented_memory_is_used_on_the_next_analysis(client):
     assert client.delete(f"/api/v1/memories/{saved.json()['memory_id']}").status_code == 204
     cleared = client.get("/api/v1/privacy/preview/txn_syn_004").json()["safe_payload"]
     assert cleared["prior_user_confirmation"] == "unknown"
+
+
+def test_backboard_failure_and_success_keep_the_rule_contract(monkeypatch, tmp_path):
+    from app.core.config import Settings
+    from app.main import create_app
+    from app.services.ai.jev_client import JevCallError, JevClassification
+
+    settings = Settings(_env_file=None, database_path=tmp_path / "live.db",
+                        allow_memory_write=True, backboard_api_key="synthetic-test-key")
+
+    async def failed(*_args, **_kwargs):
+        raise JevCallError("request_failed")
+
+    monkeypatch.setattr("app.services.ai.decision.classify", failed)
+    with TestClient(create_app(settings)) as live:
+        body = live.post("/api/v1/analyses", json={"transaction_id": "txn_syn_004"}).json()
+        assert body["alert_type"] == "duplicate"
+        assert body["provider_mode"] == "degraded"
+        assert body["model_version"] is None
+        assert live.get("/api/v1/health").json()["analysis_mode"] == "degraded"
+        assert "StreamWave" not in json.dumps(body["safe_payload"] if "safe_payload" in body else body)
+
+    async def succeeded(payload, api_key, client=None):
+        assert api_key == "synthetic-test-key"
+        assert "merchant_display" not in payload.model_dump()
+        return JevClassification(pattern="duplicate", needs_review=0.93,
+                                 choice_confidence=0.81, model_version="jev-1.13.0")
+
+    monkeypatch.setattr("app.services.ai.decision.classify", succeeded)
+    with TestClient(create_app(settings)) as live:
+        body = live.post("/api/v1/analyses", json={"transaction_id": "txn_syn_004"}).json()
+        assert body["provider_mode"] == "rules+jev-live"
+        assert body["model_version"] == "jev-1.13.0"
+        assert body["alert_type"] == "duplicate" and body["needs_human"] is True
+        alerts = live.get("/api/v1/alerts").json()
+        assert len(alerts) == 3
+        assert {item["provider_mode"] for item in alerts} == {"rules+jev-live"}
+        assert live.get("/api/v1/health").json()["analysis_mode"] == "rules+jev-live"
 
 
 def test_analysis_matches_preview_and_get_limit(client):
