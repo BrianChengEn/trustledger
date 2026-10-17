@@ -6,7 +6,7 @@ from app.schemas.api import (
     MemorySummary, PrivacyPreview,
 )
 from app.schemas.transaction import Transaction
-from app.services.ai.memory_policy import memory_sentence
+from app.services.ai.memory_policy import memory_sentence, prior_confirmation
 from app.services.ai.privacy import privacy_preview
 from app.services.ai.rules import analyze
 
@@ -20,11 +20,18 @@ def transaction(request: Request, transaction_id: str) -> Transaction:
     return result
 
 
+def remembered(request: Request) -> list[str]:
+    state = request.app.state
+    return [item.summary for item in state.store.list_memories(state.settings.demo_user_id)]
+
+
 def alerts(request: Request) -> list[Alert]:
     state = request.app.state
+    summaries = remembered(request)
     result = []
     for tx in state.transactions:
-        analysis = analyze(tx, state.transactions, request.state.request_id)
+        prior = prior_confirmation(tx.merchant_category, summaries)
+        analysis = analyze(tx, state.transactions, request.state.request_id, prior)
         if analysis.alert_type != "none":
             aid = "alert_" + tx.id
             result.append(Alert(**analysis.model_dump(), alert_id=aid,
@@ -47,7 +54,8 @@ def list_transactions(request: Request, limit: int = Query(25, ge=1, le=100)):
 @router.post("/analyses", response_model=Analysis)
 def analyze_transaction(body: AnalyzeRequest, request: Request):
     tx = transaction(request, body.transaction_id)
-    return analyze(tx, request.app.state.transactions, request.state.request_id)
+    prior = prior_confirmation(tx.merchant_category, remembered(request))
+    return analyze(tx, request.app.state.transactions, request.state.request_id, prior)
 
 
 @router.get("/alerts", response_model=list[Alert])
@@ -58,7 +66,8 @@ def list_alerts(request: Request):
 @router.get("/privacy/preview/{transaction_id}", response_model=PrivacyPreview)
 def preview(transaction_id: str, request: Request):
     tx = transaction(request, transaction_id)
-    return privacy_preview(tx, request.app.state.transactions)
+    prior = prior_confirmation(tx.merchant_category, remembered(request))
+    return privacy_preview(tx, request.app.state.transactions, prior)
 
 
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)
