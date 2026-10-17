@@ -105,4 +105,4 @@ git switch -c chore/<your-name>-bootstrap
 
 ## Nessie Admin design
 
-The implemented v0.0.0 Nessie console is indexed in [English](v0.0.0/README.md) and [Traditional Chinese](v0.0.0/README.zh-TW.md), under left WORKSPACE → Admin. Q021 approved additive contracts; Q023 supports UUID and 24-hex IDs; Q024 records actual sandbox balance semantics. See [verification](v0.0.0/Verification.md) for local/browser/live evidence. Existing ownership, synthetic flows, consent-based memory and CI remain binding.
+The implemented v0.0.0 Nessie console is under left WORKSPACE → Admin. Its design and verification Markdown documents remain local. Published interfaces are in [OpenAPI](../contracts/internal-api.openapi.yaml), and [PR #4](https://github.com/BrianChengEn/trustledger/pull/4) records review and verification results. UUID and 24-hex IDs are supported; sandbox accounts retain opening balances. Existing ownership, synthetic flows, consent-based memory and CI remain binding.

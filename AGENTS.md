@@ -21,4 +21,4 @@ and contracts/internal-api.openapi.yaml before changing code.
 
 Use `/Users/kenny/Desktop/project-development-workflow/SKILL.md` and its `rule.md` as the sole lifecycle router; preserve all team ownership, safety, contract, and CI requirements above.
 
-The Nessie console design is indexed at [docs/v0.0.0/README.md](docs/v0.0.0/README.md), with [Traditional Chinese](docs/v0.0.0/README.zh-TW.md). Q020 selects integration through the left WORKSPACE → Admin entry. Preserve the synthetic baseline and consent-based memory; agree on additive Admin contracts before implementation. The fixture check is `python3 scripts/generate_synthetic_data.py --check`.
+The v0.0.0 design and verification Markdown documents remain local and are not published in this repository. The Nessie console entry is left WORKSPACE → Admin. Preserve the synthetic baseline and consent-based memory; agree on additive Admin contracts before implementation. The fixture check is `python3 scripts/generate_synthetic_data.py --check`.
