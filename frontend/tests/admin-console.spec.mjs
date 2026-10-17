@@ -137,8 +137,26 @@ try {
   await page.getByText('未收到 HTTP 回應，沒有回應內容。', {exact:true}).waitFor();
   await page.reload(); await page.locator('#NAV-ADMIN').click(); await page.locator('#NAV-H').click();
   await page.locator('#H-VIEW-'+firstResults[1].history_id).waitFor();
+  let releaseOldHistory;
+  const release = new Promise(resolve => {releaseOldHistory = resolve;});
+  let capturedOldHistory;
+  const captured = new Promise(resolve => {capturedOldHistory = resolve;});
+  await page.route('**/admin/nessie/history', async route => {
+    if (route.request().method() !== 'GET') return route.continue();
+    const oldResponse = await route.fetch();
+    capturedOldHistory();
+    await release;
+    await route.fulfill({response:oldResponse});
+  }, {times:1});
+  await page.locator('#NAV-H').click();
+  await captured;
   await page.locator('#H-CLEAR').click(); await page.locator('#D-CONFIRM').click();
   await page.getByText('尚無已儲存歷史。', {exact:true}).waitFor();
+  const delayedResponse = page.waitForResponse(r => r.url().endsWith('/admin/nessie/history') && r.request().method()==='GET');
+  releaseOldHistory();
+  await delayedResponse;
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await page.locator('#V-HISTORY tbody tr').count(), 0, 'Old history response restored deleted rows');
   await page.getByRole('button', {name:'Overview & transactions', exact:true}).click();
   await page.getByRole('button', {name:/Possible duplicate/}).click();
   await page.getByRole('heading', {name:'Privacy Inspector'}).waitFor();

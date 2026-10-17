@@ -93,11 +93,13 @@
 
 - [x] 用已對應 baseline ID 驗證六項真正 GET，確認歷史跨重啟、完成匯入重跑仍零新增。憑證及資料保持私人，保存安全證據。
 - [x] 執行 `python3 scripts/generate_synthetic_data.py --check`、必要的 `bash scripts/check.sh`（ruff、pytest、typecheck、Vitest、build）及新增瀏覽器測試，保留既有 CI／安全／獨立 PR 審查要求，不以合成測試替代線上證據。
-- [ ] 審查不明匯入恢復、憑證處理、保存失敗、失效選取、比較邊界及可及性；修正後先重跑受影響檢查，再做最終閘門。
+- [x] 審查不明匯入恢復、憑證處理、保存失敗、失效選取、比較邊界及可及性；修正後先重跑受影響檢查，再做最終閘門。
 - [x] 依實際結果更新雙語設計、Plan 勾選、README、帶時間 CHANGELOG 及真實 MISTAKE，不虛構 tag、發佈、部署或通過測試。
 
-實作與真實驗證已完成，PR 整合審查為剩餘交付關卡，詳見 Verification.zh-TW.md。
+實作與真實驗證已完成，獨立 PR 整合審查已通過，真人隊友核准仍為合併關卡，詳見 Verification.zh-TW.md。
 
 ## 執行紀錄 — [2026/10/17 18:59]
 
-S1 transport／匯入通過，真實 probe 確認八筆，完整 124 筆，重跑零 POST。S2／S3 API／歷史、遷移及七比較案例通過。S4 瀏覽器與響應式截圖通過。S5 完整本機 CI 與六真實 GET 通過；同一審查者的 PR 整合審查待執行。詳見[驗證紀錄](Verification.zh-TW.md)。
+S1 transport／匯入通過，真實 probe 確認八筆，完整 124 筆，重跑零 POST。S2／S3 API／歷史、遷移及七比較案例通過。S4 瀏覽器與響應式截圖通過。S5 完整本機 CI 與六真實 GET 通過；同一審查者的 PR 整合審查通過。詳見[驗證紀錄](Verification.zh-TW.md)。
+
+- [2026/10/17 19:05] PR #4 獨立整合審查通過，四項發現均已修正並複驗。最後本機 CI 通過 47 後端測試，最後遠端更新等待 CI。未合併或部署。

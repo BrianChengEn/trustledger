@@ -65,6 +65,7 @@ export default function Admin() {
   const [compareJson, setCompareJson] = useState(false);
   const [deleting, setDeleting] = useState<number|'all'|null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const historyGeneration = useRef(0);
   const needsId = !['customers.list', 'accounts.list'].includes(query);
   const leftId = left?.history_id ?? null;
   const rightId = right?.history_id ?? null;
@@ -87,13 +88,15 @@ export default function Admin() {
     finally {setQueryBusy(false);}
   }
   async function loadHistory(more = false) {
+    const generation = ++historyGeneration.current;
     setHistoryBusy(true); setError('');
     try {
       const page = await request<HistoryPage>(prefix+'/history'+(more && cursor ? '?before_id='+cursor : ''));
+      if (generation !== historyGeneration.current) return;
       setItems(old => more ? [...old, ...page.items.filter(row => !old.some(r => r.history_id === row.history_id))] : page.items);
       setCursor(page.next_cursor);
-    } catch {setError('無法讀取本機歷史，請重新開啟歷史分頁重試。');}
-    finally {setHistoryBusy(false);}
+    } catch {if (generation === historyGeneration.current) setError('無法讀取本機歷史，請重新開啟歷史分頁重試。');}
+    finally {if (generation === historyGeneration.current) setHistoryBusy(false);}
   }
   function openHistory() {setView('history'); void loadHistory();}
   async function inspect(id: number) {

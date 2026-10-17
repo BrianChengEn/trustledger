@@ -22,3 +22,10 @@ Companion: [繁體中文](MISTAKE.zh-TW.md). Only observed mistakes are recorded
 - Cause: marker detection reused full-payload equality, while bulk preflight checked only confirmed flags and balance.
 - Correction: block any untracked marker, require one fully matching marker on reconciliation, and read back all eight probe entities before bulk writes. Regression tests failed before the fix and passed afterward; the same reviewer confirmed both before real continuation.
 - Prevention: distinguish record identity from payload equality, and verify every dependency of a write barrier.
+
+## [2026/10/17 19:05] — Final integration boundaries missed in initial implementation
+
+- Observation: a delayed history list restored deleted rows; non-probe accounts could be confirmed with incorrect opening balances. Independent review reproduced both.
+- Cause: history loads had no ordering guard, and Q024's static-balance change did not update the shared account matcher.
+- Correction: ignore stale history generations and match all account payload fields. Both regressions failed before fixes; the same reviewer independently verified the corrected browser flow and 30 affected backend tests.
+- Prevention: invalidate asynchronous reads after newer mutations, and revisit shared comparison rules when live semantics change.

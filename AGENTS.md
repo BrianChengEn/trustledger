@@ -11,7 +11,7 @@ and contracts/internal-api.openapi.yaml before changing code.
 - Integrator owner: backend/app/api/**, backend/app/core/**, backend/app/main.py,
   shared dependencies, integration tests, CI, contracts/**.
 - Agree on contract changes before implementation; preserve the synthetic baseline.
-- Jev, Backboard and Nessie files are explicit extension points, not live implementations.
+- Jev, Backboard and the Nessie dashboard transaction adapter remain extension points. Admin allowlisted sandbox reads and the explicit baseline CLI are implemented.
 - Local memory must be labelled local-fallback; only write after normal confirmation + consent.
 - Run bash scripts/check.sh. Do not claim tests pass if dependencies could not be installed.
 - Never commit node_modules, .venv, .env, databases, or credentials.

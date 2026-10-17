@@ -94,8 +94,7 @@ def seed_baseline(settings, store, client=None, *, probe=False, baseline_path=BA
         def matches(row):
             if not isinstance(row, dict) or not REMOTE_ID.fullmatch(str(row.get("_id", ""))):
                 return False
-            fields = [k for k in payload if not (kind == "account" and k == "balance")]
-            return (all(row.get(k) == payload[k] for k in fields)
+            return (all(row.get(k) == value for k, value in payload.items())
                     and (kind != "account" or row.get("customer_id") == parent["remote_id"]))
 
         if not saved:

@@ -93,11 +93,13 @@ Outcome: implemented behavior, design, and evidence agree. Dependency: S4 and pa
 
 - [x] Verify all six live GETs using mapped baseline IDs; prove history survives restart and a completed importer rerun still creates zero records. Treat live credentials/data as private and retain sanitized receipts.
 - [x] Run `python3 scripts/generate_synthetic_data.py --check`, required `bash scripts/check.sh` (ruff, pytest, typecheck, Vitest, build), and the added browser suite. Preserve existing CI/security/independent PR review requirements; do not substitute synthetic tests for live integration evidence.
-- [ ] Review uncertain-import recovery, redaction, storage failure, stale selections, comparison edge cases, and accessibility; fix findings and rerun only affected checks before the final gate.
+- [x] Review uncertain-import recovery, redaction, storage failure, stale selections, comparison edge cases, and accessibility; fix findings and rerun only affected checks before the final gate.
 - [x] Update both language copies of designs, Plan checkboxes, README, timestamped CHANGELOG, and real MISTAKE entries to actual outcomes. No fake tags, release, deployment, or passing tests.
 
-Implementation and live verification completed; PR integration review is the remaining delivery gate. See Verification.md.
+Implementation and live verification completed; independent PR integration review passed; human teammate approval remains a merge gate. See Verification.md.
 
 ## Execution receipt — [2026/10/17 18:59]
 
-S1: transport/import tests passed; live probe confirmed eight; full import confirmed 124; completed rerun made zero POSTs. S2/S3: API/history, migration and seven comparison cases passed. S4: browser suite and responsive screenshots passed. S5: complete local CI and all six live GETs passed; same-reviewer PR integration review pending. See [Verification](Verification.md).
+S1: transport/import tests passed; live probe confirmed eight; full import confirmed 124; completed rerun made zero POSTs. S2/S3: API/history, migration and seven comparison cases passed. S4: browser suite and responsive screenshots passed. S5: complete local CI and all six live GETs passed; same-reviewer PR integration review passed. See [Verification](Verification.md).
+
+- [2026/10/17 19:05] PR #4 independent integration review passed after all four review findings were fixed and rechecked. Final local CI passed with 47 backend tests; final remote update pending CI. No merge or deployment.

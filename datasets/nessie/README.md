@@ -1,6 +1,6 @@
 # Synthetic Nessie datasets
 
-These deterministic JSON fixtures contain invented data only. They support the six agreed read queries and local testing of tables, JSON views, history, and comparison. They are not captured API responses, a running mock service, or records uploaded to Nessie. All durations and timestamps in the history are simulated.
+These deterministic JSON fixtures contain invented data only. They support the six agreed read queries and local testing of tables, JSON views, history, and comparison. They are local fixture snapshots, not captured API responses or a running mock service. The approved baseline CLI has imported mapped synthetic records; the other datasets remain offline. All durations and timestamps in the history are simulated.
 
 Companion: [Traditional Chinese](README.zh-TW.md).
 
@@ -35,7 +35,7 @@ Customer, account, and deposit fields follow the [official OpenAPI 1.0.0](https:
 
 The fixture convention is that only transactions with status `completed` affect balance. For each account, `balance = opening_balances[id] + completed deposits - completed withdrawals`. Opening balances are local bookkeeping metadata. Amounts use the integer representation in the retrieved specification; the datasets do not establish currency or conversion rules. Values such as zero-amount transactions and fictional addresses are boundary fixtures, not validated live creation payloads.
 
-Names and addresses are deliberately synthetic. The 24-character hexadecimal IDs and 16-digit account-number strings are fabricated fixture values. They are not valid references to a user's Nessie account. Importing data later would require a separately authorized API import and mapping server-assigned IDs; these files are not directly importable POST payloads.
+Names and addresses are deliberately synthetic. The 24-character hexadecimal IDs and 16-digit account-number strings are fabricated fixture values. They are not valid references to a user's Nessie account. The explicit baseline CLI maps server-assigned IDs and strips response-only fields; these files are not directly importable POST payloads. Live accounts retain opening balances under Q024, while fixture computed balances remain an offline convention.
 
 ## History and comparisons
 
@@ -51,7 +51,7 @@ Comparison cases reference two history IDs for the same query and resource ID:
 - `CMP006`: an account present in the earlier state and missing in the later state, with HTTP status changing from 200 to 404.
 - `CMP007`: added withdrawals, modified fields, and a transaction status transition.
 
-The expectations describe fixture facts for future comparison tests; no application comparison implementation is included. Render HTML-like strings as text in a future frontend.
+The implemented comparison tests use these fixture expectations, and the Admin frontend renders HTML-like strings as text. [Verification](../../docs/v0.0.0/Verification.md) separates fixture, browser and live evidence.
 
 ## Regeneration and verification
 

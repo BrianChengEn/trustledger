@@ -135,3 +135,21 @@ def test_probe_transaction_drift_and_changed_scope_block_before_bulk_post(tmp_pa
     with pytest.raises(SeedBlocked):
         seed_baseline(changed, store, remote, probe=True)
     assert remote.posts == 8
+
+
+def test_wrong_nonprobe_opening_balance_never_reports_complete(tmp_path):
+    store = Store(tmp_path / "db")
+    settings = Settings(_env_file=None, database_path=store.filename, nessie_api_key="private")
+
+    class WrongBalance(Sandbox):
+        def request(self, method, path, payload=None):
+            result = super().request(method, path, payload)
+            if method == "POST" and path.endswith("/accounts") and self.posts > 8:
+                self.rows[path][-1]["balance"] += 1
+            return result
+
+    remote = WrongBalance(store)
+    seed_baseline(settings, store, remote, probe=True)
+    with pytest.raises(SeedBlocked):
+        seed_baseline(settings, store, remote)
+    assert remote.posts < 124

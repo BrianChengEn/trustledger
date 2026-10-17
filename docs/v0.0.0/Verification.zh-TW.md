@@ -6,7 +6,7 @@
 
 ## 本機及瀏覽器檢查
 
-- `bash scripts/check.sh`：ruff、46 項後端測試、TypeScript、3 項 Vitest、Vite build 與隔離瀏覽器測試；最後執行與 PR 檢查記於後文。
+- `bash scripts/check.sh`：ruff、47 項後端測試、TypeScript、3 項 Vitest、Vite build 與隔離瀏覽器測試；最後執行與 PR 檢查記於後文。
 - `python3 scripts/generate_synthetic_data.py --check`：七個確定性 JSON、六項查詢與七組比較案例通過。
 - 瀏覽器涵蓋六表單、驗證、表格／JSON 不新增查詢、導覽狀態保留、歷史分頁、已存比較、失效選取、取消／Escape／焦點返回、單筆／全部刪除、寫入失敗、空／401／timeout、安全呈現 HTML 文字、原有同意／記憶回歸及 320／390／768px。已目視檢查截圖；本機產物為被忽略的 `artifacts/admin-desktop.png`、`artifacts/admin-mobile.png`。
 - 測試使用合成上游與隔離 SQLite；GitHub CI 新增相同瀏覽器測試，不使用供應商金鑰，保留原有檢查。
@@ -31,6 +31,9 @@
 
 獨立安全審查找到兩項匯入缺陷：既有標記的欄位改動可避開檢查；probe 交易改動可避開只查餘額的前置驗證。回歸測試先失敗後通過，同一審查者以 14 項聚焦測試確認修正，之後才真實續跑。後續 UUID／遷移與餘額測試通過。
 
-完整 PR 整合審查與 GitHub CI 等待建立 PR。尚未合併、建立 release tag 或部署；依專案 PR 清單，仍須真人隊友審查。實作協助：OpenAI Codex 與獨立 AI 審查者，提交參賽作品時請保留此揭露。
+PR [#4](https://github.com/BrianChengEn/trustledger/pull/4) 已開啟。完整獨立 AI 整合審查在另外兩項問題修正及複驗後通過；首輪 GitHub 後端／前端／瀏覽器全通過，最後更新將重新跑 CI。尚未合併、建立 release tag 或部署；依專案 PR 清單，仍須真人隊友審查。實作協助：OpenAI Codex 與獨立 AI 審查者，提交參賽作品時請保留此揭露。
 
 - [2026/10/17 18:59] 最後本機關卡通過：ruff、46 後端、型別檢查、3 Vitest、build、隔離瀏覽器、fixture 自檢、雙語 ID／清單／連結及 Git 空白檢查。既有 Starlette／httpx 淘汰警告仍在，未修改套件。
+
+- [2026/10/17 19:05] PR 整合審查另重現刪除後舊歷史回應還原列，以及非 probe 帳戶餘額未驗證。新增先失敗的瀏覽器／後端回歸，以請求世代忽略舊回應，並比對每項帳戶 payload。相同審查者用 30 項相關後端測試與獨立瀏覽器重現確認修正，無剩餘重大阻擋。
+- [2026/10/17 19:05] 最終本機 CI 通過 47 項後端與瀏覽器測試；新一次唯讀真實重跑確認所有帳戶 opening balance：124 確認、142 次 GET、零次 POST。合併前仍待真人隊友核准。

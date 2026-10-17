@@ -8,7 +8,7 @@
 - Frontend owner：frontend/**。Data owner：backend/app/adapters/**、backend/app/schemas/transaction.py、fixtures/**。
 - Integrator owner：backend/app/api/**、backend/app/core/**、backend/app/main.py、共用相依套件、整合測試、CI、contracts/**。
 - 實作前先同意契約變更，保留 synthetic baseline。
-- Jev、Backboard、Nessie 檔案是明確的擴充點，不是已完成的 live 整合。
+- Jev、Backboard 與 Nessie dashboard 交易 adapter 仍是擴充點；Admin 白名單 sandbox 查詢與明確執行的 baseline CLI 已實作。
 - 本機記憶標示 local-fallback，只有 normal 確認及明確同意後才能寫入。
 - 執行 `bash scripts/check.sh`；無法安裝相依套件時，不宣稱測試通過。
 - 不提交 node_modules、.venv、.env、資料庫或憑證。

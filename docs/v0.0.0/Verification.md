@@ -6,7 +6,7 @@ Baseline: latest merged [PR #3](https://github.com/BrianChengEn/trustledger/pull
 
 ## Local and browser checks
 
-- `bash scripts/check.sh`: ruff, 46 backend tests, TypeScript, three Vitest tests, Vite build and the isolated browser suite. Final invocation and PR checks are recorded below.
+- `bash scripts/check.sh`: ruff, 47 backend tests, TypeScript, three Vitest tests, Vite build and the isolated browser suite. Final invocation and PR checks are recorded below.
 - `python3 scripts/generate_synthetic_data.py --check`: seven deterministic JSON files, six queries and seven comparison cases passed.
 - Browser coverage: six query forms, validation, table/JSON without new queries, retained navigation state, paged history, saved comparison, stale selection, cancellation/Escape/focus return, single/all deletion, failed writes, empty/401/timeout, text-safe HTML-like content, consent/memory regression and 320/390/768px layouts. Screenshots visually inspected. Local artifacts: `artifacts/admin-desktop.png` and `artifacts/admin-mobile.png` (ignored).
 - Tests use synthetic upstream responses and isolated SQLite. GitHub CI adds the same browser suite with no vendor credentials. Existing checks remain required.
@@ -31,6 +31,9 @@ The first customer remained pending when the initial ID validator rejected its U
 
 An independent safety review found two import defects: a changed payload could evade an existing-marker check, and a changed probe transaction could evade the bulk balance-only preflight. Regression tests failed before fixes. The same reviewer verified both fixes with 14 passing focused tests before live continuation. Subsequent UUID/migration and balance tests passed.
 
-Full PR integration review and GitHub CI are pending PR creation. No merge, release tag or deployment has occurred. Human teammate review remains required by the project PR checklist. Implementation assistance: OpenAI Codex and its independent AI reviewer; retain this credit for the submission.
+PR [#4](https://github.com/BrianChengEn/trustledger/pull/4) is open. Full independent AI integration review passed after both additional findings were fixed and rechecked. Initial GitHub backend/frontend/browser jobs passed; the final update receives fresh CI. No merge, release tag or deployment has occurred. Human teammate review remains required by the project PR checklist. Implementation assistance: OpenAI Codex and its independent AI reviewer; retain this credit for the submission.
 
-- [2026/10/17 18:59] Final local gate passed: ruff, 46 backend tests, typecheck, three Vitest tests, build, isolated browser suite, fixture self-check, bilingual IDs/checklist/link checks and Git whitespace check. Existing Starlette/httpx deprecation warning remains; dependencies were not changed.
+- [2026/10/17 18:59] Final local gate passed: ruff, 47 backend tests, typecheck, three Vitest tests, build, isolated browser suite, fixture self-check, bilingual IDs/checklist/link checks and Git whitespace check. Existing Starlette/httpx deprecation warning remains; dependencies were not changed.
+
+- [2026/10/17 19:05] PR integration review also reproduced stale history restoration after deletion and unverified non-probe account balances. Added failing browser/backend regressions, discarded stale history response generations, and matched every account payload field. Same reviewer verified the fixes with 30 affected backend tests and an independent browser reproduction; no material blockers remain.
+- [2026/10/17 19:05] Final local CI passed with 47 backend tests and the browser suite. A fresh read-only live rerun verified every account opening balance: 124 confirmed, 142 GETs, zero POSTs. Human teammate approval remains pending before merge.
