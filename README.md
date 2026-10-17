@@ -1,20 +1,74 @@
 # TrustLedger · Technica 2026
 
-可執行的四人 B2C MVP 起始專案。含 React/Vite/TypeScript、FastAPI、8 筆合成交易、3 種規則警示、Privacy Inspector、人工確認、明確同意後的本機 SQLite 記憶與刪除。
+TrustLedger is a B2C, privacy-first financial assistant. It reviews simulated banking transactions, explains patterns that need a person, and stores only an explicit, minimized memory of what that person confirmed.
 
-**GitHub：** https://github.com/BrianChengEn/trustledger （私人；隊友需先接受邀請）
+This repository is a working synthetic demo. It is not a live bank connection and it does not move money.
 
-**先讀 [TEAM-SETUP-60MIN.md](TEAM-SETUP-60MIN.md)。** 文件網頁：下載／clone 後雙擊 `docs/index.html`，可離線閱讀與放大六張圖。Markdown 與 SVG 原始檔都保留。
+**Deadline:** 18 October 2026, 12:00 PM EDT.
 
-## macOS 啟動
+**Repository:** https://github.com/BrianChengEn/trustledger (private; teammates must accept the invitation).
 
-先安裝 Xcode Command Line Tools、[Homebrew](https://brew.sh/)。若已安裝不要重複。首次安裝可能要等待系統視窗與下載。
+## Current status
 
-```bash
-xcode-select --install
-```
+Verified on `main` at `5be26c1` (merge of PR #3), plus the documentation in this commit.
 
-接著重開 Terminal，確定 `brew --version` 正常，再執行：
+| Area | Status |
+|---|---|
+| Synthetic transactions, rules, review UI, Privacy Inspector | Implemented |
+| SQLite confirmations and consented category memory | Implemented, local fallback |
+| Consented memory affects the next analysis | Implemented on `main` |
+| TypeSafe Jev | Stub. No API call |
+| Backboard | Stub. No API call |
+| Capital One Nessie | Stub. Synthetic fixture is the data source |
+| GitHub Actions CI | Passing on the PR #3 merge to `main` |
+| Production auth, hosting, deployment | Not started |
+
+Health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMORY_WRITE=true`. Those labels stay honest until a live client exists. Filling an API key does not turn a stub on.
+
+## Documentation
+
+| Document | What it answers |
+|---|---|
+| [TECH_STACK.md](TECH_STACK.md) | Every tool, version, owner, and implemented vs planned |
+| [TEAM_ROLES.md](TEAM_ROLES.md) | Brian, Benson, Ian, and Kenny |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Runtime data flow and what is mocked |
+| [TEAM-SETUP-60MIN.md](TEAM-SETUP-60MIN.md) | Four-Mac setup, run, and test |
+| [docs/05-github-collaboration.md](docs/05-github-collaboration.md) | Branches, review, conflicts, secrets |
+| [docs/06-security-privacy-threat-model.md](docs/06-security-privacy-threat-model.md) | Threat model and current controls |
+| [contracts/internal-api.openapi.yaml](contracts/internal-api.openapi.yaml) | Internal API contract |
+| [docs/diagrams/index.md](docs/diagrams/index.md) | Six architecture diagrams |
+| [AGENTS.md](AGENTS.md) | File ownership for contributors and coding agents |
+
+The offline viewer `docs/index.html` is the original starter snapshot. Prefer the Markdown files above when they disagree with that snapshot.
+
+Older design notes remain in `docs/00` through `docs/07` and `docs/prompts/`. Where they describe Jev, Backboard, or Nessie as already called, treat them as the target design. [ARCHITECTURE.md](ARCHITECTURE.md) is the current implementation.
+
+## Team
+
+| Person | GitHub | Owns |
+|---|---|---|
+| Brian | [BrianChengEn](https://github.com/BrianChengEn) | AI services and AI privacy |
+| Benson | [benson5112](https://github.com/benson5112) | FastAPI, integration, CI, deployment |
+| Ian | [IanChou89](https://github.com/IanChou89) | React application |
+| Kenny | [mrkennylee](https://github.com/mrkennylee) | Nessie and banking data |
+
+Details, directories, and remaining tasks: [TEAM_ROLES.md](TEAM_ROLES.md).
+
+## Stack in one page
+
+| Layer | What actually runs |
+|---|---|
+| Frontend | React 19.3.1, TypeScript 5.9.3, Vite 7.3.7 |
+| Backend | Python 3.12, FastAPI 0.143.3, Uvicorn 0.54.0 |
+| Analysis | Deterministic rules in `backend/app/services/ai/rules.py` |
+| Memory | SQLite through the Python standard library |
+| External AI and banking | Named in config and stubs only |
+
+Versions are the lockfiles, not the ranges in `package.json`. Full inventory: [TECH_STACK.md](TECH_STACK.md).
+
+## Run the demo on macOS
+
+Install Xcode Command Line Tools and [Homebrew](https://brew.sh/) once. Then:
 
 ```bash
 brew install git gh
@@ -26,66 +80,51 @@ bash scripts/bootstrap-mac.sh
 bash scripts/check.sh
 ```
 
-`gh auth login` 請各自使用自己的 GitHub 帳號；不要共用 token。clone 404 通常是邀請未接受或帳號錯誤。
-
-在 repo 根目錄開兩個 Terminal：
+Two terminals from the repository root:
 
 ```bash
-# Terminal A
 bash scripts/dev-backend.sh
 ```
 
 ```bash
-# Terminal B
 bash scripts/dev-frontend.sh
 ```
 
-打開 http://127.0.0.1:5173 。API docs：http://127.0.0.1:8000/docs 。第三個 Terminal 可跑：
+- App: http://127.0.0.1:5173
+- API docs: http://127.0.0.1:8000/docs
+- Smoke check, with the backend already running: `backend/.venv/bin/python scripts/smoke.py`
+
+Expect 8 synthetic transactions and 3 alerts. Open **Possible duplicate**, read the evidence and Privacy Inspector, confirm normal with memory consent, then open **Confirmed memory** and delete the row. The inspector reloads after confirm and delete.
+
+Shared steps, role-specific keys, and fixes: [TEAM-SETUP-60MIN.md](TEAM-SETUP-60MIN.md).
+
+## Tests
 
 ```bash
-backend/.venv/bin/python scripts/smoke.py
+bash scripts/check.sh
 ```
 
-預期：8 筆 synthetic transactions、3 個警示；health 顯示 `synthetic`、`rules-only`、`local-fallback`。點「Possible duplicate」，查看 evidence 與 Privacy Inspector，勾選記憶同意並確認 normal，再到 Confirmed memory 查看／刪除本機紀錄。
+That runs backend Ruff and pytest, then frontend typecheck, Vitest, and production build. CI runs the same checks from `backend/requirements.lock.txt` and `frontend/package-lock.json`. CI has no vendor secrets and does not call live APIs.
 
-## 已實作與擴充點
+## External APIs
 
-| 已可操作 | 留給角色 owner 實作 |
-|---|---|
-| Synthetic adapter、canonical DTO、rules | Nessie live adapter |
-| 白名單、分類枚舉、金額時間分桶 | Jev verified client、timeout/retry/schema parser |
-| 人工確認、SQLite、idempotency、list/delete | Backboard confirmed memory、隔離、非同步狀態 |
-| API、UI、PR workflow、CI、測試 | 正式部署、身分驗證、rate limiting |
+| Service | In this repo | Credential | Called today |
+|---|---|---|---|
+| TypeSafe Jev | `backend/app/services/ai/jev_client.py` raises `NotImplementedError` | `JEV_API_KEY` is loaded and unused | No |
+| Backboard | `backend/app/services/ai/backboard_client.py` raises `NotImplementedError` | `BACKBOARD_API_KEY` is loaded and unused | No |
+| Nessie sandbox | `backend/app/adapters/nessie.py` raises `NessieNotConfigured` | `NESSIE_API_KEY` is loaded and unused | No |
 
-API keys 即使填入環境也不會自動啟用 live client。骨架不假稱已完成 sponsor integration；開發期間先保持 synthetic baseline 可展示。`confidence=1.0` 是規則確定匹配，不是詐欺機率。
+`docs/.env.example` lists extra URLs and model names. `backend/app/core/config.py` does not read those fields. Do not treat that example as the live configuration.
 
-## 安全與資料
+## Safety
 
-- 只綁定 localhost、單一固定 demo identity，沒有正式登入。不要透過 tunnel 或公網直接暴露此骨架。
-- `.env` 只在後端，bootstrap 不覆蓋已存在的檔案。所有 vendor key 預設空白。
-- `ALLOW_MEMORY_WRITE=true` 只開啟本機記憶 gate；仍須使用者 normal + explicit consent。
-- 本機 SQLite 位於 `backend/data/`，不會進 Git。重開 server 後 confirmation 與 memory 仍在。
-- unknown request fields 被拒絕；錯誤不回傳 Pydantic raw input；日誌不記 body／供應商 query。
-- API 契約在 `contracts/internal-api.openapi.yaml`。這是團隊契約，不是供應商 schema。
-- 正式安全、合規與 real financial data 不在此 starter 範圍，詳見 `docs/06-security-privacy-threat-model.md`。
+- Localhost only. One server-selected demo user. No production login.
+- Keys stay in `backend/.env`, which Git ignores. Bootstrap does not overwrite an existing `.env`.
+- The AI payload is built from an allowlist. Raw ids, merchant text, exact amounts, and exact timestamps stay out.
+- Memory is written only for decision `normal` plus explicit consent, and the UI labels it `local-fallback`.
+- Do not commit `.env`, SQLite databases, `.venv`, or `node_modules`.
+- No real customer financial data in the hackathon build.
 
-## 依賴與 CI
+## AI assistance
 
-本環境無法下載依賴，因此初始清單使用受限版本範圍。首次成功安裝後，Integrator 應提交 `frontend/package-lock.json` 和後端 lock（可用 `backend/.venv/bin/pip freeze > backend/requirements.lock.txt`），其他人再用相同 lock 安裝。CI 有 lock 時用 `npm ci`，沒有時用 `npm install`。
-
-`.github/workflows/ci.yml` 會在 push／PR 執行後端 lint/tests 與前端 typecheck/tests/build。沒有供應商 secrets，也不會呼叫 live APIs。CI 的 install/test 實際結果以 GitHub Actions 頁為準；不要把測試檔的存在當成測試已通過。
-
-## 四人所有權
-
-| 角色 | 主要範圍 | 分支 |
-|---|---|---|
-| AI | `backend/app/services/ai/`、`backend/tests/unit/ai/` | `feat/ai` |
-| Frontend | `frontend/` | `feat/frontend` |
-| Data | `backend/app/adapters/`、`backend/app/schemas/transaction.py`、`fixtures/` | `feat/data` |
-| Backend | API/core、整合測試、CI、契約、共用依賴 | `feat/api` |
-
-每人讀 `AGENTS.md` 與 `docs/prompts/` 中自己的 Prompt，先拉最新 main 再開 branch。不要四人一起改依賴檔、API contract 或 main。
-
-## AI 使用揭露
-
-此 starter 與文件含 OpenAI Codex 協助生成的程式與內容。團隊需理解、測試與 credit 使用的 AI 工具，並依 Technica 規則揭露。未實測供應商成本、準確率或合規，不做相關宣稱。
+The starter application and the original design notes include material prepared with OpenAI Codex. Later memory-feedback work and this ownership documentation were prepared with Grok. Credit the tools the team actually uses in the Technica submission. Do not claim measured model accuracy, vendor cost, or compliance that this repository has not tested.

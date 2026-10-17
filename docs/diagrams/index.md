@@ -1,5 +1,7 @@
 # TrustLedger Mermaid 圖表
 
+`.mmd` 是可編輯來源。`architecture.mmd` 與 `data-flow.mmd` 已標明目前記憶體是 SQLite，Backboard 尚未呼叫。同目錄的 `.svg` 與 `docs/index.html` 仍是較早的版面快照，數字或供應商箭頭若不一致，以 `.mmd` 與倉庫根目錄的 [ARCHITECTURE.md](../../ARCHITECTURE.md) 為準。
+
 所有 `.mmd` 都是可編輯純文字。可在支援 Mermaid 的 Markdown viewer、GitHub 或 [Mermaid Live Editor](https://mermaid.live/) 檢視。不要把含真實 key、帳號、個資的內容貼進外部 editor。
 
 | 圖 | 用途 | Source of truth |

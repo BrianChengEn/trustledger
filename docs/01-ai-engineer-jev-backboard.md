@@ -1,5 +1,7 @@
 # 任務書 1 — AI Engineer（Jev + Backboard + Privacy）
 
+目前負責人是 Brian（`BrianChengEn`）。執行狀態以 [../ARCHITECTURE.md](../ARCHITECTURE.md) 與 [../TEAM_ROLES.md](../TEAM_ROLES.md) 為準。本任務書中的 live client 尚未接上。
+
 ## 任務結果
 
 交付一個可被 FastAPI 呼叫、可單元測試、fail-closed 的 AI service layer：先將交易轉成 allowlisted features，再跑 deterministic rules；若 Jev 可用，加入 bounded decision；只有使用者明確確認與同意後，才把 sanitized fact 寫入 Backboard。

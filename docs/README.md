@@ -6,7 +6,7 @@
 
 ## 先讀這三件事
 
-**立即開始：** 先讀 [START-HERE.md](START-HERE.md)。本套件提供開發文件，未附完整應用程式；可先安裝工具，啟動與測試指令要等 repo 骨架和程式建立後執行。`index.html` 已內嵌文件與圖表，可離線直接開啟；`pages/` 另有可獨立閱讀的 HTML。
+**立即開始：** 應用程式已經在倉庫根目錄。現況、技術清單與四人分工看 [../README.md](../README.md)、[../TECH_STACK.md](../TECH_STACK.md)、[../TEAM_ROLES.md](../TEAM_ROLES.md)、[../ARCHITECTURE.md](../ARCHITECTURE.md)。本目錄的 `index.html` 是離線快照，可能落後 Markdown。
 
 1. TrustLedger 的 MVP 只有四個產品能力：交易分析、經使用者確認後才寫入的 Backboard 記憶、Privacy Inspector、人工確認。
 2. 原始帳號、姓名、地址、API key 與完整原始交易不得送到 Jev 或 Backboard。所有供應商 key 只存在 FastAPI 後端。

@@ -1,5 +1,7 @@
 # 任務書 4 — FastAPI Integration / Deployment Engineer
 
+目前負責人是 Benson（`benson5112`）。目錄、CI 與尚未開始的部署見 [../TEAM_ROLES.md](../TEAM_ROLES.md)。
+
 ## 任務結果
 
 你是 integrator。交付 internal API、configuration、request identity、safe errors/logging、四個 subsystem 的組裝、CI green 與可重現部署。你不重寫其他三人的實作；你建立穩定介面、mocks、fallbacks 和 vertical slice。

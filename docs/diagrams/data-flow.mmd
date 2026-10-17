@@ -4,7 +4,7 @@ flowchart TB
   INSPECT["Privacy Inspector"]
   ANALYZE["Rules and optional Jev"]
   USER["Human confirmation"]
-  MEMORY["Consent-gated Backboard memory"]
+  MEMORY["Consent-gated memory\nSQLite local-fallback now\nBackboard not called"]
   RAW --> SAFE
   SAFE --> INSPECT
   SAFE --> ANALYZE

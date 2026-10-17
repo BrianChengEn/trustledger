@@ -1,5 +1,7 @@
 # 任務書 3 — Capital One Nessie / Data Engineer
 
+目前負責人是 Kenny（`mrkennylee`）。Nessie client 仍是 stub。狀態見 [../ARCHITECTURE.md](../ARCHITECTURE.md) 與 [../TEAM_ROLES.md](../TEAM_ROLES.md)。
+
 ## 任務結果
 
 交付兩個遵守同一 canonical schema 的 adapters：`SyntheticTransactionAdapter` 永遠可用；`NessieAdapter` 只使用當日官方文件與 sandbox 實測已確認的 read operations。任何 schema/endpoint 不一致都 fail safe 並切回 synthetic，不拖垮整個 Demo。
