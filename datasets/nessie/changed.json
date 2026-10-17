@@ -1,0 +1,1196 @@
+{
+  "synthetic": true,
+  "dataset_id": "changed",
+  "customers": [
+    {
+      "_id": "c00000000000000000000001",
+      "first_name": "Synthetic001Updated",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "1",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic Updated City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000000002",
+      "first_name": "Synthetic002",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "2",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000000003",
+      "first_name": "Synthetic003",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "3",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000000004",
+      "first_name": "Synthetic004",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "4",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000000005",
+      "first_name": "Synthetic005",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "5",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000000006",
+      "first_name": "Synthetic006",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "6",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000000007",
+      "first_name": "Synthetic007",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "7",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000000008",
+      "first_name": "Synthetic008",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "8",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c0000000000000000000000a",
+      "first_name": "Synthetic010",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "10",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c000000000000000000003e9",
+      "first_name": "Synthetic001",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "1",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "_id": "a00000000000000000000001",
+      "type": "Checking",
+      "nickname": "Synthetic renamed account",
+      "rewards": 35,
+      "balance": 1939,
+      "account_number": "9000000000000001",
+      "customer_id": "c00000000000000000000001"
+    },
+    {
+      "_id": "a00000000000000000000002",
+      "type": "Savings",
+      "nickname": "Synthetic account 002",
+      "rewards": 20,
+      "balance": 1260,
+      "account_number": "9000000000000002",
+      "customer_id": "c00000000000000000000001"
+    },
+    {
+      "_id": "a00000000000000000000003",
+      "type": "Credit Card",
+      "nickname": "Synthetic account 003",
+      "rewards": 30,
+      "balance": 1360,
+      "account_number": "9000000000000003",
+      "customer_id": "c00000000000000000000002"
+    },
+    {
+      "_id": "a00000000000000000000004",
+      "type": "Checking",
+      "nickname": "Synthetic account 004",
+      "rewards": 40,
+      "balance": 1460,
+      "account_number": "9000000000000004",
+      "customer_id": "c00000000000000000000002"
+    },
+    {
+      "_id": "a00000000000000000000005",
+      "type": "Savings",
+      "nickname": "Synthetic account 005",
+      "rewards": 50,
+      "balance": 1560,
+      "account_number": "9000000000000005",
+      "customer_id": "c00000000000000000000003"
+    },
+    {
+      "_id": "a00000000000000000000006",
+      "type": "Credit Card",
+      "nickname": "Synthetic account 006",
+      "rewards": 60,
+      "balance": 1660,
+      "account_number": "9000000000000006",
+      "customer_id": "c00000000000000000000003"
+    },
+    {
+      "_id": "a00000000000000000000007",
+      "type": "Checking",
+      "nickname": "Synthetic account 007",
+      "rewards": 70,
+      "balance": 1760,
+      "account_number": "9000000000000007",
+      "customer_id": "c00000000000000000000004"
+    },
+    {
+      "_id": "a00000000000000000000008",
+      "type": "Savings",
+      "nickname": "Synthetic account 008",
+      "rewards": 80,
+      "balance": 1860,
+      "account_number": "9000000000000008",
+      "customer_id": "c00000000000000000000004"
+    },
+    {
+      "_id": "a00000000000000000000009",
+      "type": "Credit Card",
+      "nickname": "Synthetic account 009",
+      "rewards": 90,
+      "balance": 1960,
+      "account_number": "9000000000000009",
+      "customer_id": "c00000000000000000000005"
+    },
+    {
+      "_id": "a0000000000000000000000a",
+      "type": "Checking",
+      "nickname": "Synthetic account 010",
+      "rewards": 100,
+      "balance": 2060,
+      "account_number": "9000000000000010",
+      "customer_id": "c00000000000000000000005"
+    },
+    {
+      "_id": "a0000000000000000000000b",
+      "type": "Savings",
+      "nickname": "Synthetic account 011",
+      "rewards": 110,
+      "balance": 2160,
+      "account_number": "9000000000000011",
+      "customer_id": "c00000000000000000000006"
+    },
+    {
+      "_id": "a0000000000000000000000c",
+      "type": "Credit Card",
+      "nickname": "Synthetic account 012",
+      "rewards": 120,
+      "balance": 2260,
+      "account_number": "9000000000000012",
+      "customer_id": "c00000000000000000000006"
+    },
+    {
+      "_id": "a0000000000000000000000d",
+      "type": "Checking",
+      "nickname": "Synthetic account 013",
+      "rewards": 130,
+      "balance": 2360,
+      "account_number": "9000000000000013",
+      "customer_id": "c00000000000000000000007"
+    },
+    {
+      "_id": "a0000000000000000000000e",
+      "type": "Savings",
+      "nickname": "Synthetic account 014",
+      "rewards": 140,
+      "balance": 2460,
+      "account_number": "9000000000000014",
+      "customer_id": "c00000000000000000000007"
+    },
+    {
+      "_id": "a0000000000000000000000f",
+      "type": "Credit Card",
+      "nickname": "Synthetic account 015",
+      "rewards": 150,
+      "balance": 2560,
+      "account_number": "9000000000000015",
+      "customer_id": "c00000000000000000000008"
+    },
+    {
+      "_id": "a00000000000000000000010",
+      "type": "Checking",
+      "nickname": "Synthetic account 016",
+      "rewards": 160,
+      "balance": 2660,
+      "account_number": "9000000000000016",
+      "customer_id": "c00000000000000000000008"
+    },
+    {
+      "_id": "a000000000000000000003e9",
+      "type": "Checking",
+      "nickname": "Synthetic account 001",
+      "rewards": 10,
+      "balance": 1160,
+      "account_number": "9000000000001001",
+      "customer_id": "c000000000000000000003e9"
+    }
+  ],
+  "deposits_by_account": {
+    "a00000000000000000000001": [
+      {
+        "_id": "d00000000000000000000001",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 351,
+        "description": "Synthetic d transaction 1"
+      },
+      {
+        "_id": "d00000000000000000000002",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "pending",
+        "amount": 201,
+        "description": "Synthetic d transaction 2"
+      },
+      {
+        "_id": "d000000000000000000003e8",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 700,
+        "description": "Synthetic d transaction 1000"
+      }
+    ],
+    "a00000000000000000000002": [
+      {
+        "_id": "d00000000000000000000004",
+        "medium": "balance",
+        "transaction_date": "2026-10-05",
+        "status": "completed",
+        "amount": 102,
+        "description": "Synthetic d transaction 4"
+      },
+      {
+        "_id": "d00000000000000000000005",
+        "medium": "balance",
+        "transaction_date": "2026-10-06",
+        "status": "pending",
+        "amount": 202,
+        "description": "Synthetic d transaction 5"
+      },
+      {
+        "_id": "d00000000000000000000006",
+        "medium": "balance",
+        "transaction_date": "2026-10-07",
+        "status": "cancelled",
+        "amount": 302,
+        "description": "Synthetic d transaction 6"
+      }
+    ],
+    "a00000000000000000000003": [
+      {
+        "_id": "d00000000000000000000007",
+        "medium": "balance",
+        "transaction_date": "2026-10-08",
+        "status": "completed",
+        "amount": 103,
+        "description": "Synthetic d transaction 7"
+      },
+      {
+        "_id": "d00000000000000000000008",
+        "medium": "balance",
+        "transaction_date": "2026-10-09",
+        "status": "pending",
+        "amount": 203,
+        "description": "Synthetic d transaction 8"
+      },
+      {
+        "_id": "d00000000000000000000009",
+        "medium": "balance",
+        "transaction_date": "2026-10-10",
+        "status": "cancelled",
+        "amount": 303,
+        "description": "Synthetic d transaction 9"
+      }
+    ],
+    "a00000000000000000000004": [
+      {
+        "_id": "d0000000000000000000000a",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 104,
+        "description": "Synthetic d transaction 10"
+      },
+      {
+        "_id": "d0000000000000000000000b",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "pending",
+        "amount": 204,
+        "description": "Synthetic d transaction 11"
+      },
+      {
+        "_id": "d0000000000000000000000c",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "cancelled",
+        "amount": 304,
+        "description": "Synthetic d transaction 12"
+      }
+    ],
+    "a00000000000000000000005": [
+      {
+        "_id": "d0000000000000000000000d",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "completed",
+        "amount": 105,
+        "description": "Synthetic d transaction 13"
+      },
+      {
+        "_id": "d0000000000000000000000e",
+        "medium": "balance",
+        "transaction_date": "2026-10-15",
+        "status": "pending",
+        "amount": 205,
+        "description": "Synthetic d transaction 14"
+      },
+      {
+        "_id": "d0000000000000000000000f",
+        "medium": "balance",
+        "transaction_date": "2026-10-01",
+        "status": "cancelled",
+        "amount": 305,
+        "description": "Synthetic d transaction 15"
+      }
+    ],
+    "a00000000000000000000006": [
+      {
+        "_id": "d00000000000000000000010",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 106,
+        "description": "Synthetic d transaction 16"
+      },
+      {
+        "_id": "d00000000000000000000011",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "pending",
+        "amount": 206,
+        "description": "Synthetic d transaction 17"
+      },
+      {
+        "_id": "d00000000000000000000012",
+        "medium": "balance",
+        "transaction_date": "2026-10-04",
+        "status": "cancelled",
+        "amount": 306,
+        "description": "Synthetic d transaction 18"
+      }
+    ],
+    "a00000000000000000000007": [
+      {
+        "_id": "d00000000000000000000013",
+        "medium": "balance",
+        "transaction_date": "2026-10-05",
+        "status": "completed",
+        "amount": 107,
+        "description": "Synthetic d transaction 19"
+      },
+      {
+        "_id": "d00000000000000000000014",
+        "medium": "balance",
+        "transaction_date": "2026-10-06",
+        "status": "pending",
+        "amount": 207,
+        "description": "Synthetic d transaction 20"
+      },
+      {
+        "_id": "d00000000000000000000015",
+        "medium": "balance",
+        "transaction_date": "2026-10-07",
+        "status": "cancelled",
+        "amount": 307,
+        "description": "Synthetic d transaction 21"
+      }
+    ],
+    "a00000000000000000000008": [
+      {
+        "_id": "d00000000000000000000016",
+        "medium": "balance",
+        "transaction_date": "2026-10-08",
+        "status": "completed",
+        "amount": 108,
+        "description": "Synthetic d transaction 22"
+      },
+      {
+        "_id": "d00000000000000000000017",
+        "medium": "balance",
+        "transaction_date": "2026-10-09",
+        "status": "pending",
+        "amount": 208,
+        "description": "Synthetic d transaction 23"
+      },
+      {
+        "_id": "d00000000000000000000018",
+        "medium": "balance",
+        "transaction_date": "2026-10-10",
+        "status": "cancelled",
+        "amount": 308,
+        "description": "Synthetic d transaction 24"
+      }
+    ],
+    "a00000000000000000000009": [
+      {
+        "_id": "d00000000000000000000019",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 109,
+        "description": "Synthetic d transaction 25"
+      },
+      {
+        "_id": "d0000000000000000000001a",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "pending",
+        "amount": 209,
+        "description": "Synthetic d transaction 26"
+      },
+      {
+        "_id": "d0000000000000000000001b",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "cancelled",
+        "amount": 309,
+        "description": "Synthetic d transaction 27"
+      }
+    ],
+    "a0000000000000000000000a": [
+      {
+        "_id": "d0000000000000000000001c",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "completed",
+        "amount": 110,
+        "description": "Synthetic d transaction 28"
+      },
+      {
+        "_id": "d0000000000000000000001d",
+        "medium": "balance",
+        "transaction_date": "2026-10-15",
+        "status": "pending",
+        "amount": 210,
+        "description": "Synthetic d transaction 29"
+      },
+      {
+        "_id": "d0000000000000000000001e",
+        "medium": "balance",
+        "transaction_date": "2026-10-01",
+        "status": "cancelled",
+        "amount": 310,
+        "description": "Synthetic d transaction 30"
+      }
+    ],
+    "a0000000000000000000000b": [
+      {
+        "_id": "d0000000000000000000001f",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 111,
+        "description": "Synthetic d transaction 31"
+      },
+      {
+        "_id": "d00000000000000000000020",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "pending",
+        "amount": 211,
+        "description": "Synthetic d transaction 32"
+      },
+      {
+        "_id": "d00000000000000000000021",
+        "medium": "balance",
+        "transaction_date": "2026-10-04",
+        "status": "cancelled",
+        "amount": 311,
+        "description": "Synthetic d transaction 33"
+      }
+    ],
+    "a0000000000000000000000c": [
+      {
+        "_id": "d00000000000000000000022",
+        "medium": "balance",
+        "transaction_date": "2026-10-05",
+        "status": "completed",
+        "amount": 112,
+        "description": "Synthetic d transaction 34"
+      },
+      {
+        "_id": "d00000000000000000000023",
+        "medium": "balance",
+        "transaction_date": "2026-10-06",
+        "status": "pending",
+        "amount": 212,
+        "description": "Synthetic d transaction 35"
+      },
+      {
+        "_id": "d00000000000000000000024",
+        "medium": "balance",
+        "transaction_date": "2026-10-07",
+        "status": "cancelled",
+        "amount": 312,
+        "description": "Synthetic d transaction 36"
+      }
+    ],
+    "a0000000000000000000000d": [
+      {
+        "_id": "d00000000000000000000025",
+        "medium": "balance",
+        "transaction_date": "2026-10-08",
+        "status": "completed",
+        "amount": 113,
+        "description": "Synthetic d transaction 37"
+      },
+      {
+        "_id": "d00000000000000000000026",
+        "medium": "balance",
+        "transaction_date": "2026-10-09",
+        "status": "pending",
+        "amount": 213,
+        "description": "Synthetic d transaction 38"
+      },
+      {
+        "_id": "d00000000000000000000027",
+        "medium": "balance",
+        "transaction_date": "2026-10-10",
+        "status": "cancelled",
+        "amount": 313,
+        "description": "Synthetic d transaction 39"
+      }
+    ],
+    "a0000000000000000000000e": [
+      {
+        "_id": "d00000000000000000000028",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 114,
+        "description": "Synthetic d transaction 40"
+      },
+      {
+        "_id": "d00000000000000000000029",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "pending",
+        "amount": 214,
+        "description": "Synthetic d transaction 41"
+      },
+      {
+        "_id": "d0000000000000000000002a",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "cancelled",
+        "amount": 314,
+        "description": "Synthetic d transaction 42"
+      }
+    ],
+    "a0000000000000000000000f": [
+      {
+        "_id": "d0000000000000000000002b",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "completed",
+        "amount": 115,
+        "description": "Synthetic d transaction 43"
+      },
+      {
+        "_id": "d0000000000000000000002c",
+        "medium": "balance",
+        "transaction_date": "2026-10-15",
+        "status": "pending",
+        "amount": 215,
+        "description": "Synthetic d transaction 44"
+      },
+      {
+        "_id": "d0000000000000000000002d",
+        "medium": "balance",
+        "transaction_date": "2026-10-01",
+        "status": "cancelled",
+        "amount": 315,
+        "description": "Synthetic d transaction 45"
+      }
+    ],
+    "a00000000000000000000010": [
+      {
+        "_id": "d0000000000000000000002e",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 116,
+        "description": "Synthetic d transaction 46"
+      },
+      {
+        "_id": "d0000000000000000000002f",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "pending",
+        "amount": 216,
+        "description": "Synthetic d transaction 47"
+      },
+      {
+        "_id": "d00000000000000000000030",
+        "medium": "balance",
+        "transaction_date": "2026-10-04",
+        "status": "cancelled",
+        "amount": 316,
+        "description": "Synthetic d transaction 48"
+      }
+    ],
+    "a000000000000000000003e9": [
+      {
+        "_id": "d00000000000000000002711",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "completed",
+        "amount": 101,
+        "description": "Synthetic d transaction 10001"
+      },
+      {
+        "_id": "d00000000000000000002712",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "pending",
+        "amount": 201,
+        "description": "Synthetic d transaction 10002"
+      },
+      {
+        "_id": "d00000000000000000002713",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "cancelled",
+        "amount": 301,
+        "description": "Synthetic d transaction 10003"
+      }
+    ]
+  },
+  "withdrawals_by_account": {
+    "a00000000000000000000001": [
+      {
+        "_id": "e00000000000000000000001",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 61,
+        "description": "Synthetic corrected withdrawal"
+      },
+      {
+        "_id": "e00000000000000000000002",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "completed",
+        "amount": 51,
+        "description": "Synthetic e transaction 2"
+      },
+      {
+        "_id": "e00000000000000000000003",
+        "medium": "balance",
+        "transaction_date": "2026-10-04",
+        "status": "cancelled",
+        "amount": 61,
+        "description": "Synthetic e transaction 3"
+      },
+      {
+        "_id": "e000000000000000000003e8",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 100,
+        "description": "Synthetic e transaction 1000"
+      }
+    ],
+    "a00000000000000000000002": [
+      {
+        "_id": "e00000000000000000000004",
+        "medium": "balance",
+        "transaction_date": "2026-10-05",
+        "status": "completed",
+        "amount": 42,
+        "description": "Synthetic e transaction 4"
+      },
+      {
+        "_id": "e00000000000000000000005",
+        "medium": "balance",
+        "transaction_date": "2026-10-06",
+        "status": "pending",
+        "amount": 52,
+        "description": "Synthetic e transaction 5"
+      },
+      {
+        "_id": "e00000000000000000000006",
+        "medium": "balance",
+        "transaction_date": "2026-10-07",
+        "status": "cancelled",
+        "amount": 62,
+        "description": "Synthetic e transaction 6"
+      }
+    ],
+    "a00000000000000000000003": [
+      {
+        "_id": "e00000000000000000000007",
+        "medium": "balance",
+        "transaction_date": "2026-10-08",
+        "status": "completed",
+        "amount": 43,
+        "description": "Synthetic e transaction 7"
+      },
+      {
+        "_id": "e00000000000000000000008",
+        "medium": "balance",
+        "transaction_date": "2026-10-09",
+        "status": "pending",
+        "amount": 53,
+        "description": "Synthetic e transaction 8"
+      },
+      {
+        "_id": "e00000000000000000000009",
+        "medium": "balance",
+        "transaction_date": "2026-10-10",
+        "status": "cancelled",
+        "amount": 63,
+        "description": "Synthetic e transaction 9"
+      }
+    ],
+    "a00000000000000000000004": [
+      {
+        "_id": "e0000000000000000000000a",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 44,
+        "description": "Synthetic e transaction 10"
+      },
+      {
+        "_id": "e0000000000000000000000b",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "pending",
+        "amount": 54,
+        "description": "Synthetic e transaction 11"
+      },
+      {
+        "_id": "e0000000000000000000000c",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "cancelled",
+        "amount": 64,
+        "description": "Synthetic e transaction 12"
+      }
+    ],
+    "a00000000000000000000005": [
+      {
+        "_id": "e0000000000000000000000d",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "completed",
+        "amount": 45,
+        "description": "Synthetic e transaction 13"
+      },
+      {
+        "_id": "e0000000000000000000000e",
+        "medium": "balance",
+        "transaction_date": "2026-10-15",
+        "status": "pending",
+        "amount": 55,
+        "description": "Synthetic e transaction 14"
+      },
+      {
+        "_id": "e0000000000000000000000f",
+        "medium": "balance",
+        "transaction_date": "2026-10-01",
+        "status": "cancelled",
+        "amount": 65,
+        "description": "Synthetic e transaction 15"
+      }
+    ],
+    "a00000000000000000000006": [
+      {
+        "_id": "e00000000000000000000010",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 46,
+        "description": "Synthetic e transaction 16"
+      },
+      {
+        "_id": "e00000000000000000000011",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "pending",
+        "amount": 56,
+        "description": "Synthetic e transaction 17"
+      },
+      {
+        "_id": "e00000000000000000000012",
+        "medium": "balance",
+        "transaction_date": "2026-10-04",
+        "status": "cancelled",
+        "amount": 66,
+        "description": "Synthetic e transaction 18"
+      }
+    ],
+    "a00000000000000000000007": [
+      {
+        "_id": "e00000000000000000000013",
+        "medium": "balance",
+        "transaction_date": "2026-10-05",
+        "status": "completed",
+        "amount": 47,
+        "description": "Synthetic e transaction 19"
+      },
+      {
+        "_id": "e00000000000000000000014",
+        "medium": "balance",
+        "transaction_date": "2026-10-06",
+        "status": "pending",
+        "amount": 57,
+        "description": "Synthetic e transaction 20"
+      },
+      {
+        "_id": "e00000000000000000000015",
+        "medium": "balance",
+        "transaction_date": "2026-10-07",
+        "status": "cancelled",
+        "amount": 67,
+        "description": "Synthetic e transaction 21"
+      }
+    ],
+    "a00000000000000000000008": [
+      {
+        "_id": "e00000000000000000000016",
+        "medium": "balance",
+        "transaction_date": "2026-10-08",
+        "status": "completed",
+        "amount": 48,
+        "description": "Synthetic e transaction 22"
+      },
+      {
+        "_id": "e00000000000000000000017",
+        "medium": "balance",
+        "transaction_date": "2026-10-09",
+        "status": "pending",
+        "amount": 58,
+        "description": "Synthetic e transaction 23"
+      },
+      {
+        "_id": "e00000000000000000000018",
+        "medium": "balance",
+        "transaction_date": "2026-10-10",
+        "status": "cancelled",
+        "amount": 68,
+        "description": "Synthetic e transaction 24"
+      }
+    ],
+    "a00000000000000000000009": [
+      {
+        "_id": "e00000000000000000000019",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 49,
+        "description": "Synthetic e transaction 25"
+      },
+      {
+        "_id": "e0000000000000000000001a",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "pending",
+        "amount": 59,
+        "description": "Synthetic e transaction 26"
+      },
+      {
+        "_id": "e0000000000000000000001b",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "cancelled",
+        "amount": 69,
+        "description": "Synthetic e transaction 27"
+      }
+    ],
+    "a0000000000000000000000a": [
+      {
+        "_id": "e0000000000000000000001c",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "completed",
+        "amount": 50,
+        "description": "Synthetic e transaction 28"
+      },
+      {
+        "_id": "e0000000000000000000001d",
+        "medium": "balance",
+        "transaction_date": "2026-10-15",
+        "status": "pending",
+        "amount": 60,
+        "description": "Synthetic e transaction 29"
+      },
+      {
+        "_id": "e0000000000000000000001e",
+        "medium": "balance",
+        "transaction_date": "2026-10-01",
+        "status": "cancelled",
+        "amount": 70,
+        "description": "Synthetic e transaction 30"
+      }
+    ],
+    "a0000000000000000000000b": [
+      {
+        "_id": "e0000000000000000000001f",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 51,
+        "description": "Synthetic e transaction 31"
+      },
+      {
+        "_id": "e00000000000000000000020",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "pending",
+        "amount": 61,
+        "description": "Synthetic e transaction 32"
+      },
+      {
+        "_id": "e00000000000000000000021",
+        "medium": "balance",
+        "transaction_date": "2026-10-04",
+        "status": "cancelled",
+        "amount": 71,
+        "description": "Synthetic e transaction 33"
+      }
+    ],
+    "a0000000000000000000000c": [
+      {
+        "_id": "e00000000000000000000022",
+        "medium": "balance",
+        "transaction_date": "2026-10-05",
+        "status": "completed",
+        "amount": 52,
+        "description": "Synthetic e transaction 34"
+      },
+      {
+        "_id": "e00000000000000000000023",
+        "medium": "balance",
+        "transaction_date": "2026-10-06",
+        "status": "pending",
+        "amount": 62,
+        "description": "Synthetic e transaction 35"
+      },
+      {
+        "_id": "e00000000000000000000024",
+        "medium": "balance",
+        "transaction_date": "2026-10-07",
+        "status": "cancelled",
+        "amount": 72,
+        "description": "Synthetic e transaction 36"
+      }
+    ],
+    "a0000000000000000000000d": [
+      {
+        "_id": "e00000000000000000000025",
+        "medium": "balance",
+        "transaction_date": "2026-10-08",
+        "status": "completed",
+        "amount": 53,
+        "description": "Synthetic e transaction 37"
+      },
+      {
+        "_id": "e00000000000000000000026",
+        "medium": "balance",
+        "transaction_date": "2026-10-09",
+        "status": "pending",
+        "amount": 63,
+        "description": "Synthetic e transaction 38"
+      },
+      {
+        "_id": "e00000000000000000000027",
+        "medium": "balance",
+        "transaction_date": "2026-10-10",
+        "status": "cancelled",
+        "amount": 73,
+        "description": "Synthetic e transaction 39"
+      }
+    ],
+    "a0000000000000000000000e": [
+      {
+        "_id": "e00000000000000000000028",
+        "medium": "balance",
+        "transaction_date": "2026-10-11",
+        "status": "completed",
+        "amount": 54,
+        "description": "Synthetic e transaction 40"
+      },
+      {
+        "_id": "e00000000000000000000029",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "pending",
+        "amount": 64,
+        "description": "Synthetic e transaction 41"
+      },
+      {
+        "_id": "e0000000000000000000002a",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "cancelled",
+        "amount": 74,
+        "description": "Synthetic e transaction 42"
+      }
+    ],
+    "a0000000000000000000000f": [
+      {
+        "_id": "e0000000000000000000002b",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "completed",
+        "amount": 55,
+        "description": "Synthetic e transaction 43"
+      },
+      {
+        "_id": "e0000000000000000000002c",
+        "medium": "balance",
+        "transaction_date": "2026-10-15",
+        "status": "pending",
+        "amount": 65,
+        "description": "Synthetic e transaction 44"
+      },
+      {
+        "_id": "e0000000000000000000002d",
+        "medium": "balance",
+        "transaction_date": "2026-10-01",
+        "status": "cancelled",
+        "amount": 75,
+        "description": "Synthetic e transaction 45"
+      }
+    ],
+    "a00000000000000000000010": [
+      {
+        "_id": "e0000000000000000000002e",
+        "medium": "balance",
+        "transaction_date": "2026-10-02",
+        "status": "completed",
+        "amount": 56,
+        "description": "Synthetic e transaction 46"
+      },
+      {
+        "_id": "e0000000000000000000002f",
+        "medium": "balance",
+        "transaction_date": "2026-10-03",
+        "status": "pending",
+        "amount": 66,
+        "description": "Synthetic e transaction 47"
+      },
+      {
+        "_id": "e00000000000000000000030",
+        "medium": "balance",
+        "transaction_date": "2026-10-04",
+        "status": "cancelled",
+        "amount": 76,
+        "description": "Synthetic e transaction 48"
+      }
+    ],
+    "a000000000000000000003e9": [
+      {
+        "_id": "e00000000000000000002711",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "completed",
+        "amount": 41,
+        "description": "Synthetic e transaction 10001"
+      },
+      {
+        "_id": "e00000000000000000002712",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "pending",
+        "amount": 51,
+        "description": "Synthetic e transaction 10002"
+      },
+      {
+        "_id": "e00000000000000000002713",
+        "medium": "balance",
+        "transaction_date": "2026-10-14",
+        "status": "cancelled",
+        "amount": 61,
+        "description": "Synthetic e transaction 10003"
+      }
+    ]
+  },
+  "opening_balances": {
+    "a00000000000000000000001": 1100,
+    "a00000000000000000000002": 1200,
+    "a00000000000000000000003": 1300,
+    "a00000000000000000000004": 1400,
+    "a00000000000000000000005": 1500,
+    "a00000000000000000000006": 1600,
+    "a00000000000000000000007": 1700,
+    "a00000000000000000000008": 1800,
+    "a00000000000000000000009": 1900,
+    "a0000000000000000000000a": 2000,
+    "a0000000000000000000000b": 2100,
+    "a0000000000000000000000c": 2200,
+    "a0000000000000000000000d": 2300,
+    "a0000000000000000000000e": 2400,
+    "a0000000000000000000000f": 2500,
+    "a00000000000000000000010": 2600,
+    "a000000000000000000003e9": 1100
+  }
+}

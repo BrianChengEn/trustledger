@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "dataset_id": "empty",
+  "customers": [],
+  "accounts": [],
+  "deposits_by_account": {},
+  "withdrawals_by_account": {},
+  "opening_balances": {}
+}
