@@ -129,6 +129,175 @@ paths:
       responses:
         '204': { description: Deleted }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/nessie/query:
+    post:
+      operationId: queryNessie
+      tags:
+      - local-admin
+      description: Loopback-only Nessie sandbox console. Mutations require an allowed
+        local Origin and application/json.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExecution'
+        '403': &id001
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404': *id001
+        '409': *id001
+        '422': *id001
+        '500': *id001
+        '503': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminQueryRequest'
+  /api/v1/admin/nessie/history:
+    get:
+      operationId: listNessieHistory
+      tags:
+      - local-admin
+      description: Loopback-only Nessie sandbox console. Mutations require an allowed
+        local Origin and application/json.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHistoryPage'
+        '403': *id001
+        '404': *id001
+        '409': *id001
+        '422': *id001
+        '500': *id001
+        '503': *id001
+      parameters:
+      - name: before_id
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+    delete:
+      operationId: clearNessieHistory
+      tags:
+      - local-admin
+      description: Loopback-only Nessie sandbox console. Mutations require an allowed
+        local Origin and application/json.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDeleteOutcome'
+        '403': *id001
+        '404': *id001
+        '409': *id001
+        '422': *id001
+        '500': *id001
+        '503': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDeleteRequest'
+  /api/v1/admin/nessie/history/{history_id}:
+    get:
+      operationId: getNessieHistory
+      tags:
+      - local-admin
+      description: Loopback-only Nessie sandbox console. Mutations require an allowed
+        local Origin and application/json.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExecution'
+        '403': *id001
+        '404': *id001
+        '409': *id001
+        '422': *id001
+        '500': *id001
+        '503': *id001
+      parameters:
+      - &id002
+        name: history_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    delete:
+      operationId: deleteNessieHistory
+      tags:
+      - local-admin
+      description: Loopback-only Nessie sandbox console. Mutations require an allowed
+        local Origin and application/json.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDeleteOutcome'
+        '403': *id001
+        '404': *id001
+        '409': *id001
+        '422': *id001
+        '500': *id001
+        '503': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDeleteRequest'
+      parameters:
+      - *id002
+  /api/v1/admin/nessie/compare:
+    post:
+      operationId: compareNessieHistory
+      tags:
+      - local-admin
+      description: Loopback-only Nessie sandbox console. Mutations require an allowed
+        local Origin and application/json.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminComparison'
+        '403': *id001
+        '404': *id001
+        '409': *id001
+        '422': *id001
+        '500': *id001
+        '503': *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompareRequest'
 components:
   parameters:
     TransactionId:
@@ -275,3 +444,349 @@ components:
             message: { type: string }
             request_id: { type: string }
 
+    AdminQueryRequest:
+      additionalProperties: false
+      properties:
+        query:
+          enum:
+          - customers.list
+          - accounts.list
+          - accounts.get
+          - accounts.by_customer
+          - deposits.by_account
+          - withdrawals.by_account
+          title: Query
+          type: string
+        resource_id:
+          anyOf:
+          - maxLength: 128
+            type: string
+          - type: 'null'
+          default: null
+          description: Trimmed, lowercase 24-hex ID or canonical UUID; required for resource
+            queries, absent for lists.
+          title: Resource Id
+      required:
+      - query
+      title: QueryRequest
+      type: object
+    AdminCompareRequest:
+      additionalProperties: false
+      properties:
+        left_id:
+          exclusiveMinimum: 0
+          title: Left Id
+          type: integer
+        right_id:
+          exclusiveMinimum: 0
+          title: Right Id
+          type: integer
+      required:
+      - left_id
+      - right_id
+      title: CompareRequest
+      type: object
+    AdminDeleteRequest:
+      additionalProperties: false
+      properties:
+        confirm:
+          title: Confirm
+          type: boolean
+      required:
+      - confirm
+      title: DeleteRequest
+      type: object
+    AdminTransportError:
+      additionalProperties: false
+      properties:
+        type:
+          enum:
+          - timeout
+          - connection
+          title: Type
+          type: string
+        message:
+          title: Message
+          type: string
+      required:
+      - type
+      - message
+      title: TransportError
+      type: object
+    AdminExecution:
+      additionalProperties: false
+      properties:
+        history_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          title: History Id
+        source:
+          enum:
+          - nessie
+          - synthetic
+          title: Source
+          type: string
+        query:
+          title: Query
+          type: string
+        resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resource Id
+        requested_at:
+          title: Requested At
+          type: string
+        duration_ms:
+          minimum: 0
+          title: Duration Ms
+          type: integer
+        http_status:
+          anyOf:
+          - maximum: 599
+            minimum: 100
+            type: integer
+          - type: 'null'
+          title: Http Status
+        body_format:
+          enum:
+          - json
+          - text
+          - none
+          title: Body Format
+          type: string
+        transport_error:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportError'
+          - type: 'null'
+        response_body:
+          title: Response Body
+        write_status:
+          enum:
+          - saved
+          - failed
+          title: Write Status
+          type: string
+        write_label:
+          anyOf:
+          - const: failed to write
+            type: string
+          - type: 'null'
+          title: Write Label
+      required:
+      - history_id
+      - source
+      - query
+      - resource_id
+      - requested_at
+      - duration_ms
+      - http_status
+      - body_format
+      - transport_error
+      - response_body
+      - write_status
+      - write_label
+      title: Execution
+      type: object
+    AdminHistoryItem:
+      additionalProperties: false
+      properties:
+        history_id:
+          exclusiveMinimum: 0
+          title: History Id
+          type: integer
+        source:
+          enum:
+          - nessie
+          - synthetic
+          title: Source
+          type: string
+        query:
+          title: Query
+          type: string
+        resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resource Id
+        requested_at:
+          title: Requested At
+          type: string
+        duration_ms:
+          minimum: 0
+          title: Duration Ms
+          type: integer
+        http_status:
+          anyOf:
+          - maximum: 599
+            minimum: 100
+            type: integer
+          - type: 'null'
+          title: Http Status
+        body_format:
+          enum:
+          - json
+          - text
+          - none
+          title: Body Format
+          type: string
+        transport_error:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportError'
+          - type: 'null'
+      required:
+      - history_id
+      - source
+      - query
+      - resource_id
+      - requested_at
+      - duration_ms
+      - http_status
+      - body_format
+      - transport_error
+      title: HistoryItem
+      type: object
+    AdminHistoryPage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminHistoryItem'
+          title: Items
+          type: array
+        next_cursor:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Cursor
+      required:
+      - items
+      - next_cursor
+      title: HistoryPage
+      type: object
+    AdminComparisonData:
+      additionalProperties: false
+      properties:
+        data_changed:
+          title: Data Changed
+          type: boolean
+        changes:
+          items:
+            $ref: '#/components/schemas/AdminSnapshotChange'
+          title: Changes
+          type: array
+        status_change:
+          anyOf:
+          - $ref: '#/components/schemas/AdminStatusChange'
+          - type: 'null'
+        transport_change:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportChange'
+          - type: 'null'
+      required:
+      - data_changed
+      - changes
+      - status_change
+      - transport_change
+      title: ComparisonData
+      type: object
+    AdminSnapshotChange:
+      additionalProperties: false
+      properties:
+        kind:
+          enum:
+          - added
+          - removed
+          - changed
+          title: Kind
+          type: string
+        record_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Record Id
+        path:
+          title: Path
+          type: string
+        before_present:
+          title: Before Present
+          type: boolean
+        after_present:
+          title: After Present
+          type: boolean
+        before:
+          title: Before
+        after:
+          title: After
+      required:
+      - kind
+      - path
+      - before_present
+      - after_present
+      - before
+      - after
+      title: SnapshotChange
+      type: object
+    AdminStatusChange:
+      additionalProperties: false
+      properties:
+        before:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Before
+        after:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: After
+      required:
+      - before
+      - after
+      title: StatusChange
+      type: object
+    AdminTransportChange:
+      additionalProperties: false
+      properties:
+        before:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportError'
+          - type: 'null'
+        after:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportError'
+          - type: 'null'
+      required:
+      - before
+      - after
+      title: TransportChange
+      type: object
+    AdminComparison:
+      additionalProperties: false
+      properties:
+        left:
+          $ref: '#/components/schemas/AdminExecution'
+        right:
+          $ref: '#/components/schemas/AdminExecution'
+        comparison:
+          $ref: '#/components/schemas/AdminComparisonData'
+      required:
+      - left
+      - right
+      - comparison
+      title: Comparison
+      type: object
+    AdminDeleteOutcome:
+      additionalProperties: false
+      properties:
+        deleted:
+          minimum: 0
+          title: Deleted
+          type: integer
+      required:
+      - deleted
+      title: DeleteOutcome
+      type: object

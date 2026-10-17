@@ -102,3 +102,7 @@ git switch -c chore/<your-name>-bootstrap
 
 這是黑客松 prototype，不是銀行產品、投資建議、詐欺判定系統或合規認證。不要使用真實金融資料，不要宣稱 PCI DSS、SOC 2、GLBA、CCPA/GDPR 或銀行安全合規已完成。正式上線前仍需法律/隱私評估、供應商 DPA 與 retention 審查、正式身分驗證/授權、滲透測試、監控與事件應變。
 
+
+## Nessie Admin design
+
+The implemented v0.0.0 Nessie console is indexed in [English](v0.0.0/README.md) and [Traditional Chinese](v0.0.0/README.zh-TW.md), under left WORKSPACE → Admin. Q021 approved additive contracts; Q023 supports UUID and 24-hex IDs; Q024 records actual sandbox balance semantics. See [verification](v0.0.0/Verification.md) for local/browser/live evidence. Existing ownership, synthetic flows, consent-based memory and CI remain binding.

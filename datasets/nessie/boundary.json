@@ -1,0 +1,124 @@
+{
+  "synthetic": true,
+  "dataset_id": "boundary",
+  "customers": [
+    {
+      "_id": "c00000000000000000002711",
+      "first_name": "合成資料",
+      "last_name": "測試 O'Example",
+      "address": {
+        "street_number": "1",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000002712",
+      "first_name": "SyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSyntheticSynthetic",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "2",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    },
+    {
+      "_id": "c00000000000000000002713",
+      "first_name": "Synthetic003",
+      "last_name": "TestCustomer",
+      "address": {
+        "street_number": "3",
+        "street_name": "Synthetic Example Road",
+        "city": "Synthetic City",
+        "state": "VA",
+        "zip": "00000"
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "_id": "a00000000000000000002711",
+      "type": "Checking",
+      "nickname": "Synthetic account 001",
+      "rewards": 10,
+      "balance": 0,
+      "account_number": "9000000000010001",
+      "customer_id": "c00000000000000000002711"
+    },
+    {
+      "_id": "a00000000000000000002712",
+      "type": "Savings",
+      "nickname": "Synthetic account 002",
+      "rewards": 20,
+      "balance": 2000000000,
+      "account_number": "9000000000010002",
+      "customer_id": "c00000000000000000002711"
+    },
+    {
+      "_id": "a00000000000000000002713",
+      "type": "Credit Card",
+      "nickname": "Synthetic <script>alert(\"fixture\")</script> & \"quotes\" 🧪",
+      "rewards": 30,
+      "balance": 100,
+      "account_number": "9000000000010003",
+      "customer_id": "c00000000000000000002712"
+    },
+    {
+      "_id": "a00000000000000000002714",
+      "type": "Checking",
+      "nickname": "Synthetic account 004",
+      "rewards": 40,
+      "balance": 1,
+      "account_number": "9000000000010004",
+      "customer_id": "c00000000000000000002712"
+    }
+  ],
+  "deposits_by_account": {
+    "a00000000000000000002711": [],
+    "a00000000000000000002712": [
+      {
+        "_id": "d000000000000000000186a1",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "completed",
+        "amount": 0,
+        "description": "Synthetic d transaction 100001"
+      },
+      {
+        "_id": "d000000000000000000186a2",
+        "medium": "balance",
+        "transaction_date": "2026-10-13",
+        "status": "completed",
+        "amount": 1,
+        "description": "Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> Synthetic Unicode 測試\n\"quoted\" <b>text</b> "
+      }
+    ],
+    "a00000000000000000002713": [],
+    "a00000000000000000002714": []
+  },
+  "withdrawals_by_account": {
+    "a00000000000000000002711": [],
+    "a00000000000000000002712": [
+      {
+        "_id": "e000000000000000000186a1",
+        "medium": "balance",
+        "transaction_date": "2026-10-12",
+        "status": "completed",
+        "amount": 1,
+        "description": "Synthetic e transaction 100001"
+      }
+    ],
+    "a00000000000000000002713": [],
+    "a00000000000000000002714": []
+  },
+  "opening_balances": {
+    "a00000000000000000002711": 0,
+    "a00000000000000000002712": 2000000000,
+    "a00000000000000000002713": 100,
+    "a00000000000000000002714": 1
+  }
+}

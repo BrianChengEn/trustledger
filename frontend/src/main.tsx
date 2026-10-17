@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {request, labels, money, type Transaction, type Alert, type Health, type PrivacyPreview, type Memory, type Confirmation} from './api';
+import Admin from './Admin';
 import './styles.css';
 
 function App() {
@@ -15,7 +16,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [tab, setTab] = useState<'transactions'|'memory'>('transactions');
+  const [tab, setTab] = useState<'transactions'|'memory'|'admin'>('transactions');
   async function refresh() {
     setLoading(true); setError('');
     try {
@@ -67,9 +68,12 @@ function App() {
       <div className="navlabel">WORKSPACE</div>
       <button className={tab==='transactions'?'active':''} onClick={()=>setTab('transactions')}>Overview & transactions</button>
       <button className={tab==='memory'?'active':''} onClick={()=>setTab('memory')}>Confirmed memory <span>{memories.length}</span></button>
-      <div className="demobox"><b>Synthetic demo</b><p>One local demo user. No real accounts or money movement.</p><small>Jev / Backboard / Nessie live clients are extension points.</small></div>
+      <button id="NAV-ADMIN" className={tab==='admin'?'active':''} onClick={()=>setTab('admin')}>Admin</button>
+      <div className="demobox"><b>Synthetic demo</b><p>One local demo user. No real accounts or money movement.</p><small>Admin offers Nessie sandbox reads. Jev / Backboard remain extension points.</small></div>
     </aside>
     <main><header><span>Personal safety workspace</span><span className="user">Demo user · 001</span></header>
+      <div hidden={tab!=='admin'}><Admin/></div>
+      <div hidden={tab==='admin'}>
       <section className="heading"><div><div className="eyebrow">YOUR MONEY, WITH CONTEXT</div><h1>{tab==='memory'?'Memory you control.':'A clearer view of your money.'}</h1><p>{tab==='memory'?'Only explicitly approved, sanitized facts are stored.':'Review unusual patterns, see what AI would receive, and decide what happens next.'}</p></div><button onClick={()=>void refresh()} disabled={loading}>Refresh</button></section>
       <div className="modes"><span>Data: {health?.data_mode||'connecting'}</span><span>Analysis: {health?.analysis_mode||'connecting'}</span><span>Memory: {health?.memory_mode||'connecting'}</span></div>
       {error&&<div className="error" role="alert">{error} <button onClick={()=>void refresh()}>Retry</button></div>}
@@ -80,6 +84,7 @@ function App() {
       {tx&&<section className="panel detail" aria-label="Selected transaction detail"><div className="sectiontop"><h2>{tx.merchant_display}</h2><button onClick={()=>setSelected('')}>Close</button></div><p>{money(tx.amount)} · {tx.source} · {new Date(tx.occurred_at).toLocaleString()}</p><div className="detailgrid"><div><h3>Why it was flagged</h3>{alert?.evidence.map(e=><p key={e}>{e}</p>)}{!alert&&<p>No demo rule was triggered. You can still inspect the safe payload.</p>}<p className="quiet">Rules-only analysis. Confidence 1.0 means a deterministic rule matched, not certainty of fraud. No external AI call has been made.</p>{alert&&<><h3>Your decision</h3><label className="check"><input type="checkbox" checked={consent} disabled={busy||alert.status!=='open'} onChange={e=>setConsent(e.target.checked)}/><span>Remember a sanitized fact if I confirm this is normal. Stored in the local fallback; I can delete it.</span></label><div className="actions"><button className="primary" disabled={busy||!privacy||alert.status!=='open'} onClick={()=>void confirm('normal')}>This is normal</button><button disabled={busy||!privacy||alert.status!=='open'} onClick={()=>void confirm('review')}>Needs review</button></div>{alert.status!=='open'&&<p className="badge">Already confirmed: {alert.status}</p>}</>}</div><div><h3>Privacy Inspector</h3><p>Exact candidate payload for the optional Jev client. Currently nothing is sent externally.</p>{privacy?<><div className="privacyactions">{privacy.inspection.map(i=><div key={i.field}><b>{i.field}</b><span>{i.action}{i.output?' → '+i.output:''}</span></div>)}</div><pre>{JSON.stringify(privacy.safe_payload,null,2)}</pre></>:<p role="status">Loading privacy preview…</p>}</div></div></section>}
       <section className="panel"><div className="sectiontop"><h2>Transactions</h2><span>{transactions.length} synthetic records</span></div><div className="tablewrap"><table><thead><tr><th>Merchant</th><th>Category</th><th>Date</th><th>Amount</th><th>Inspect</th></tr></thead><tbody>{transactions.map(t=><tr key={t.id}><td><b>{t.merchant_display}</b><small>{t.source}</small></td><td>{t.merchant_category.replaceAll('_',' ')}</td><td>{new Date(t.occurred_at).toLocaleDateString()}</td><td>{money(t.amount)}</td><td><button onClick={()=>setSelected(t.id)}>View</button></td></tr>)}</tbody></table></div></section></>}
       <footer>TrustLedger · Technica 2026 · Synthetic development baseline · No bank connection</footer>
+      </div>
     </main>
   </div>;
 }

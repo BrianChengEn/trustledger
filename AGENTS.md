@@ -16,3 +16,9 @@ and contracts/internal-api.openapi.yaml before changing code.
 - Run bash scripts/check.sh. Do not claim tests pass if dependencies could not be installed.
 - Never commit node_modules, .venv, .env, databases, or credentials.
 - Credit AI tools in the submission. This starter includes AI-generated code and documentation.
+
+## Lifecycle and Nessie design work
+
+Use `/Users/kenny/Desktop/project-development-workflow/SKILL.md` and its `rule.md` as the sole lifecycle router; preserve all team ownership, safety, contract, and CI requirements above.
+
+The Nessie console design is indexed at [docs/v0.0.0/README.md](docs/v0.0.0/README.md), with [Traditional Chinese](docs/v0.0.0/README.zh-TW.md). Q020 selects integration through the left WORKSPACE → Admin entry. Preserve the synthetic baseline and consent-based memory; agree on additive Admin contracts before implementation. The fixture check is `python3 scripts/generate_synthetic_data.py --check`.
