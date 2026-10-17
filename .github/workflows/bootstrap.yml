@@ -1,0 +1,84 @@
+name: Bootstrap and verify starter
+on:
+  push:
+    paths: ['starter-source.zip', '.github/workflows/bootstrap.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract generated starter safely
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import PurePosixPath
+          with zipfile.ZipFile('starter-source.zip') as archive:
+              for item in archive.infolist():
+                  path = PurePosixPath(item.filename)
+                  if path.is_absolute() or '..' in path.parts:
+                      raise RuntimeError('Unsafe archive path')
+                  if any(p in {'.git', '.venv', 'node_modules'} for p in path.parts):
+                      raise RuntimeError('Unexpected generated directory')
+              archive.extractall('.')
+          PY
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies and generate locks
+        run: |
+          pip install -r backend/requirements.txt
+          pip freeze > backend/requirements.lock.txt
+          cd frontend
+          npm install
+      - name: Backend lint and tests
+        id: backend
+        continue-on-error: true
+        run: python -m ruff check app tests && python -m pytest -q
+        working-directory: backend
+      - name: Frontend typecheck, tests and build
+        id: frontend
+        continue-on-error: true
+        run: npm run typecheck && npm test && npm run build
+        working-directory: frontend
+      - name: Install test browser
+        if: steps.frontend.outcome == 'success' && steps.backend.outcome == 'success'
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Browser verification
+        id: browser
+        if: steps.frontend.outcome == 'success' && steps.backend.outcome == 'success'
+        continue-on-error: true
+        run: |
+          python -m http.server 8765 --bind 127.0.0.1 --directory docs > /tmp/docs.log 2>&1 &
+          (cd backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log > /tmp/api.log 2>&1) &
+          (cd frontend && npm run dev > /tmp/ui.log 2>&1) &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:5173 >/dev/null && curl -fsS http://127.0.0.1:8000/api/v1/health >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/browser-smoke.mjs
+      - name: Commit complete project and dependency locks
+        if: always()
+        run: |
+          git config user.name 'TrustLedger setup'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .
+          git reset -- .github/workflows/ci.yml
+          git diff --cached --quiet || git commit -m 'chore: initialize TrustLedger starter and dependency locks'
+          git push
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: artifacts/
+          if-no-files-found: ignore
+      - name: Require all checks
+        if: steps.backend.outcome != 'success' || steps.frontend.outcome != 'success' || steps.browser.outcome != 'success'
+        run: exit 1
