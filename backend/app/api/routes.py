@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from typing import Annotated
 
+from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
+
+from app.api.dependencies import Analyses, Transactions
 from app.core.store import ConflictingConfirmation
 from app.schemas.api import (
     Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Health,
@@ -8,70 +11,62 @@ from app.schemas.api import (
 from app.schemas.transaction import Transaction
 from app.services.ai.memory_policy import memory_sentence
 from app.services.ai.privacy import privacy_preview
-from app.services.ai.rules import analyze
 
 router = APIRouter(prefix="/api/v1")
 
 
-def transaction(request: Request, transaction_id: str) -> Transaction:
-    result = next((t for t in request.app.state.transactions if t.id == transaction_id), None)
-    if result is None:
-        raise HTTPException(404, "not_found")
-    return result
-
-
-def alerts(request: Request) -> list[Alert]:
+def alerts(request: Request, analyses: Analyses) -> list[Alert]:
     state = request.app.state
-    result = []
-    for tx in state.transactions:
-        analysis = analyze(tx, state.transactions, request.state.request_id)
-        if analysis.alert_type != "none":
-            aid = "alert_" + tx.id
-            result.append(Alert(**analysis.model_dump(), alert_id=aid,
-                                status=state.store.status(state.settings.demo_user_id, aid)))
+    result = analyses.alerts(request.state.request_id)
+    for alert in result:
+        alert.status = state.store.status(state.settings.demo_user_id, alert.alert_id)
     return result
 
 
 @router.get("/health", response_model=Health)
-def health(request: Request):
-    return Health(status="ok", data_mode="synthetic", analysis_mode="rules-only",
+def health(request: Request, transactions: Transactions):
+    provider_health = transactions.health()
+    return Health(status=provider_health.status, data_mode=provider_health.data_mode, analysis_mode="rules-only",
                   memory_mode="local-fallback" if request.app.state.settings.allow_memory_write else "off",
                   request_id=request.state.request_id)
 
 
 @router.get("/transactions", response_model=list[Transaction])
-def list_transactions(request: Request, limit: int = Query(25, ge=1, le=100)):
-    return sorted(request.app.state.transactions, key=lambda t: t.occurred_at, reverse=True)[:limit]
+def list_transactions(transactions: Transactions, limit: int = Query(25, ge=1, le=100)):
+    return transactions.list_transactions(limit)
 
 
 @router.post("/analyses", response_model=Analysis)
-def analyze_transaction(body: AnalyzeRequest, request: Request):
-    tx = transaction(request, body.transaction_id)
-    return analyze(tx, request.app.state.transactions, request.state.request_id)
+def analyze_transaction(body: AnalyzeRequest, request: Request, analyses: Analyses):
+    return analyses.analyze(body.transaction_id, request.state.request_id)
 
 
 @router.get("/alerts", response_model=list[Alert])
-def list_alerts(request: Request):
-    return alerts(request)
+def list_alerts(request: Request, analyses: Analyses):
+    return alerts(request, analyses)
 
 
 @router.get("/privacy/preview/{transaction_id}", response_model=PrivacyPreview)
-def preview(transaction_id: str, request: Request):
-    tx = transaction(request, transaction_id)
-    return privacy_preview(tx, request.app.state.transactions)
+def preview(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
+            transactions: Transactions):
+    history = transactions.history()
+    tx = transactions.get_transaction(transaction_id)
+    return privacy_preview(tx, history)
 
 
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)
-def confirm(alert_id: str, body: ConfirmationRequest, request: Request):
-    alert = next((a for a in alerts(request) if a.alert_id == alert_id), None)
+def confirm(alert_id: Annotated[str, Path(min_length=1, max_length=80)],
+            body: ConfirmationRequest, request: Request, transactions: Transactions, analyses: Analyses):
+    alert = next((a for a in alerts(request, analyses) if a.alert_id == alert_id), None)
     if alert is None:
         raise HTTPException(404, "not_found")
     state = request.app.state
-    sentence = memory_sentence(transaction(request, alert.transaction_id), body.decision,
+    sentence = memory_sentence(transactions.get_transaction(alert.transaction_id), body.decision,
                                body.consent_to_memory, state.settings.allow_memory_write)
     try:
         return state.store.confirm(state.settings.demo_user_id, alert_id, body.decision,
-                                   body.consent_to_memory, sentence, request.state.request_id)
+                                   body.consent_to_memory, sentence, request.state.request_id,
+                                   memory_enabled=state.settings.allow_memory_write)
     except ConflictingConfirmation:
         raise HTTPException(409, "confirmation_conflict") from None
 
@@ -82,7 +77,7 @@ def memories(request: Request):
 
 
 @router.delete("/memories/{memory_id}", status_code=204)
-def delete(memory_id: str, request: Request):
+def delete(memory_id: Annotated[str, Path(min_length=1, max_length=100)], request: Request):
     if not request.app.state.store.delete_memory(request.app.state.settings.demo_user_id, memory_id):
         raise HTTPException(404, "not_found")
     return Response(status_code=204)

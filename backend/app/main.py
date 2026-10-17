@@ -1,14 +1,14 @@
-from uuid import uuid4
-
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException
 
 from app.adapters.synthetic import load_transactions
 from app.api.routes import router
 from app.core.config import Settings
+from app.core.http import RequestGuardMiddleware, ResponseSecurityMiddleware, error_response
 from app.core.store import Store
+from app.core.transactions import ProviderError, TransactionNotFound
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -17,45 +17,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.transactions = load_transactions()
     app.state.store = Store(app.state.settings.database_path)
     origins = list({app.state.settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"})
+    # Last added is outermost: response headers -> request guard -> CORS -> routes.
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
                        allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type"])
-
-    def error(request, status, code, message):
-        return JSONResponse(status_code=status, content={"error": {
-            "code": code, "message": message,
-            "request_id": getattr(request.state, "request_id", "unavailable"),
-        }})
-
-    @app.middleware("http")
-    async def protect_requests(request: Request, call_next):
-        request.state.request_id = uuid4().hex
-        # Local-only starter: no session cookies or production identity is claimed.
-        # Reject unexpected browser origins (CORS alone would still allow side effects).
-        if request.method in {"POST", "DELETE"}:
-            origin = request.headers.get("origin")
-            if origin and origin not in origins:
-                return error(request, 403, "origin_denied", "Request origin is not allowed.")
-        size = request.headers.get("content-length")
-        if size and (not size.isdigit() or int(size) > 16384):
-            return error(request, 413, "request_too_large", "Request body exceeds the local API limit.")
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request.state.request_id
-        response.headers["Cache-Control"] = "no-store"
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        return response
+    app.add_middleware(RequestGuardMiddleware, origins=origins)
+    app.add_middleware(ResponseSecurityMiddleware)
 
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException):
-        return error(request, exc.status_code, str(exc.detail), "Request could not be completed.")
+        # Exception details may contain upstream URLs, secrets or raw data.
+        code = {404: "not_found", 405: "method_not_allowed", 409: "confirmation_conflict"}.get(
+            exc.status_code, "request_failed")
+        return error_response(request.scope, exc.status_code, code, "Request could not be completed.")
+
+    @app.exception_handler(ProviderError)
+    async def provider_error(request: Request, exc: ProviderError):
+        if isinstance(exc, TransactionNotFound):
+            return error_response(request.scope, 404, "not_found", "Request could not be completed.")
+        # Preserve the existing generic failure envelope; never expose adapter details.
+        return error_response(request.scope, 500, "internal_error",
+                              "Request failed; use the request ID for diagnosis.")
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError):
         # Pydantic errors can include raw input; never return them here.
-        return error(request, 422, "invalid_request", "Request does not match the API contract.")
-
-    @app.exception_handler(Exception)
-    async def unexpected(request: Request, exc: Exception):
-        return error(request, 500, "internal_error", "Request failed; use the request ID for diagnosis.")
+        return error_response(request.scope, 422, "invalid_request", "Request does not match the API contract.")
 
     app.include_router(router)
     return app
