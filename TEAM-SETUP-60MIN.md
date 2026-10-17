@@ -100,12 +100,12 @@ Do this after the shared steps. None of it is required to run the synthetic demo
 
 | Person | Extra local step | Not required for the demo |
 |---|---|---|
-| Brian | Create a TypeSafe key and, separately, a Backboard key. Keep them in `backend/.env` | Jev and Backboard clients still raise `NotImplementedError` after the key is present |
+| Brian | Put a Backboard key in `BACKBOARD_API_KEY`. Jev is called with that key. Do not add a TypeSafe bearer token for the selected route | Memory writes stay in SQLite. An empty key keeps analysis at `rules-only` |
 | Benson | Confirm `bash scripts/check.sh` and the Actions tab on your PR | No deploy target is configured |
 | Ian | Open http://127.0.0.1:5173 after both servers start | Playwright's browser is only needed for `node scripts/browser-smoke.mjs` |
 | Kenny | Create a Nessie sandbox key at [api.nessieisreal.com](http://api.nessieisreal.com/) and keep it in `backend/.env` | `nessie.py` still raises `NessieNotConfigured` after the key is present |
 
-Official TypeSafe call shape, for Brian's later PR: `POST https://api.typesafe.ai/v1/systemone` with a bearer token. See [ARCHITECTURE.md](ARCHITECTURE.md). Do not point the client at `jev-ai.org` from the unused docs example.
+Selected Jev call: Backboard `POST https://app.backboard.io/api/threads/messages` with header `X-API-Key`. See [ARCHITECTURE.md](ARCHITECTURE.md). The direct TypeSafe URL and `jev-ai.org` are not the selected route.
 
 ## Branches
 

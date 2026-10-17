@@ -19,18 +19,18 @@ Personal setup notes that are already merged: [docs/pr/mrkennylee.md](docs/pr/mr
 
 1. **Name and GitHub.** Brian, `BrianChengEn`. Repository admin.
 2. **Main role.** AI Engineer / AI Architecture Lead.
-3. **Technologies owned.** TypeSafe Jev, Backboard memory, the allowlisted payload, rules behavior, and AI tests. He does not own FastAPI routing, Nessie, or React.
+3. **Technologies owned.** Jev through the Backboard System One API, Backboard memory, the allowlisted payload, rules behavior, and AI tests. He does not own FastAPI routing, Nessie, or React. The direct TypeSafe HTTP API is not his selected integration.
 4. **Primary responsibilities.** Jev integration, Backboard integration, classification behavior, persistent memory content, decision routing between rules and a future model, confidence meaning, payload minimization, and AI tests.
 5. **Secondary responsibilities.** Explain AI limits in the demo. Review any API change that adds fields to `SafePayload` or memory text. Keep health modes honest: do not report `rules+jev-live` or `backboard-live` until a real call succeeds.
 6. **Files and directories.** `backend/app/services/ai/**`, `backend/tests/unit/ai/**`. Today that is `privacy.py`, `rules.py`, `memory_policy.py`, `jev_client.py`, `backboard_client.py`, and `test_privacy_rules.py`.
 7. **API interfaces.** He produces `Analysis`, `SafePayload`, and `PrivacyPreview` content. Benson exposes them at `POST /api/v1/analyses`, `GET /api/v1/alerts`, and `GET /api/v1/privacy/preview/{transaction_id}`. Memory sentences are stored by Benson's `Store` and read back through `prior_confirmation`.
 8. **Dependencies.** Kenny supplies canonical `Transaction` records. Benson keeps routes, SQLite, and the OpenAPI contract aligned. Ian displays evidence and the inspector without rebuilding the payload in the browser.
 9. **Coordination.** A new AI field, model version, or memory sentence format is a contract change. Agree with Benson before editing `contracts/internal-api.openapi.yaml` or `backend/app/schemas/api.py`. Agree with Kenny before putting raw banking fields into an AI request.
-10. **Current status.** Rules, allowlist, local-fallback sentences, and `prior_user_confirmation` are on `main`. Jev and Backboard are stubs. No SDK is installed. No outbound AI request exists.
+10. **Current status.** Rules, the allowlist, and local-fallback memory are on `main`. Jev inference goes through Backboard when `BACKBOARD_API_KEY` is set. The direct TypeSafe endpoint is not used. Persistent Backboard memory is still a stub.
 11. **Remaining tasks.**
-    - **P1.** Call Jev directly at `POST https://api.typesafe.ai/v1/systemone` with only `SafePayload`. On timeout or a bad response, keep the rule result and an honest mode.
-    - **P1.** Send a consented sentence to Backboard and delete it there. Keep SQLite labeled `local-fallback` when Backboard is down.
-    - **P2.** Record a small, synthetic evaluation of agreement between rules and Jev. Do not quote accuracy without that evidence.
+    - **P1.** Keep the Backboard request limited to `SafePayload`. A failed or missing response stays `degraded` or `rules-only`, never `rules+jev-live`.
+    - **P1.** Add consented Backboard memory with the isolation, read, and delete behavior in [ARCHITECTURE.md](ARCHITECTURE.md). Keep SQLite labeled `local-fallback` when Backboard memory is down.
+    - **P2.** Record a small synthetic comparison between the rule and Jev's `pattern`. Do not quote accuracy without that evidence.
 12. **Acceptance.** A unit test proves raw id, account token, merchant text, exact amount, and exact timestamp never enter the outbound body. A failed vendor call still returns the three demo alerts. `needs_human` stays true when a rule flags a transaction, including after a prior normal confirmation.
 13. **Required tests.** `backend/tests/unit/ai/test_privacy_rules.py` and the memory section of `backend/tests/integration/test_api.py`. Run `bash scripts/check.sh`.
 14. **Deliverables.** A live-or-fallback Jev client, a live-or-fallback Backboard client, tests, and a short note of the exact request fields. No keys in Git.
