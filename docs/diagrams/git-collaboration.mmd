@@ -1,0 +1,39 @@
+flowchart LR
+  classDef contract fill:#fef3c7,stroke:#b45309,color:#78350f
+  classDef branch fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e
+  classDef gate fill:#dcfce7,stroke:#15803d,color:#14532d
+  classDef stop fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d
+
+  BOOT["Bootstrap\nfolders · env examples · fixture"]:::branch
+  CONTRACT["Contract v0.1 freeze\nIntegration owner"]:::contract
+
+  AI["feat/ai-privacy-memory\nAI-owned files"]:::branch
+  FE["feat/frontend-dashboard\nfrontend/**"]:::branch
+  DATA["feat/data-nessie-adapter\nadapters + fixtures"]:::branch
+  API["feat/api-vertical-slice\nroutes + core + deployment"]:::branch
+
+  PRAI["Small PR\ntests + safe payload"]:::gate
+  PRFE["Small PR\nlint/build + screenshots"]:::gate
+  PRDATA["Small PR\ncontract mocks + fallback"]:::gate
+  PRAPI["Small PR\nintegration + safe errors"]:::gate
+
+  CI{"CI green?\nbackend + frontend + tracked-env"}:::gate
+  REVIEW{"Owner review\ncontract · secret · fallback"}:::gate
+  MAIN["Protected main\nalways demoable"]:::gate
+  REBASE["Fetch + rebase/merge main\nresolve with file owner"]:::contract
+  FREEZE["22:00 feature freeze\nP0/P1 only"]:::stop
+
+  BOOT --> CONTRACT
+  CONTRACT --> AI --> PRAI --> CI
+  CONTRACT --> FE --> PRFE --> CI
+  CONTRACT --> DATA --> PRDATA --> CI
+  CONTRACT --> API --> PRAPI --> CI
+  CI -->|"yes"| REVIEW -->|"approved"| MAIN
+  CI -->|"no"| REBASE
+  REVIEW -->|"changes"| REBASE
+  REBASE --> AI
+  REBASE --> FE
+  REBASE --> DATA
+  REBASE --> API
+  MAIN --> FREEZE
+

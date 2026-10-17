@@ -1,0 +1,350 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>總體架構 · TrustLedger</title><style>
+:root{color-scheme:light;--ink:#192d46;--muted:#61728a;--line:#e0e7ef;--accent:#087f6b;--paper:#fff;--bg:#f4f7fa}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}a{color:#1762b1;text-underline-offset:4px}button,input{font:inherit}button,a,input{touch-action:manipulation}:focus-visible{outline:3px solid #0a997d;outline-offset:4px}button{cursor:pointer}header{background:#112b3e;color:#edf7fc;padding:22px 5%;display:flex;align-items:center;justify-content:space-between;gap:18px}header a{color:inherit;text-decoration:none}.brand{font-size:20px;font-weight:700;letter-spacing:-.4px}.brand small{font-size:12px;letter-spacing:1.6px;font-weight:500;color:#a1cfce;display:block}nav{display:flex;flex-wrap:wrap;gap:20px;font-size:15px}.layout{max-width:1520px;margin:auto;display:grid;grid-template-columns:255px minmax(0,1fr)}aside{padding:28px 18px;border-right:1px solid var(--line);background:#f9fbfc;align-self:start;position:sticky;top:0;max-height:100vh;overflow:auto}aside label{font-size:13px;color:var(--muted)}input{display:block;width:100%;background:white;border:1px solid #ccd7e3;border-radius:8px;padding:9px 12px;margin:8px 0 20px}.navitem{display:block;text-decoration:none;color:#3b526c;padding:8px 12px;font-size:14px;border-radius:8px;margin:2px 0}.navitem.active{background:#e3f3ee;color:#086b5a;font-weight:650}.navitem:hover{background:#eaf0f5}.navgroup{font-size:11px;letter-spacing:2px;font-weight:700;color:#7b8da3;margin:22px 12px 10px}main{padding:44px clamp(20px,4vw,64px) 90px;min-width:0}.eyebrow{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--accent)}h1{font-size:clamp(32px,4vw,54px);line-height:1.2;letter-spacing:-1.5px;margin:12px 0 20px}h2{font-size:27px;line-height:1.4;letter-spacing:-.6px;margin:40px 0 16px}h3{font-size:20px;margin:28px 0 10px}.intro{font-size:18px;color:var(--muted);max-width:780px}.hero{padding-bottom:32px;border-bottom:1px solid var(--line)}.notice{margin:24px 0;padding:18px 22px;background:#e9f6f1;border-left:3px solid #11856b;border-radius:0 10px 10px 0}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.doccard{display:block;text-decoration:none;color:var(--ink);padding:23px;background:#fff;border:1px solid var(--line);border-radius:12px;transition:border-color .15s}.doccard:hover{border-color:#64ae9d}.doccard b{display:block;font-size:20px;margin:6px 0}.doccard small{font-size:12px;letter-spacing:1px;color:var(--accent)}.doccard p{color:var(--muted);margin:5px 0;font-size:15px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0}.toolbar button,.toolbar a,.plainbtn{border:1px solid #ccd7e3;border-radius:7px;padding:7px 12px;color:var(--ink);background:#fff;text-decoration:none;font-size:14px}.toolbar button:hover,.plainbtn:hover{background:#edf4f8}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 18px}.tabs a{border-radius:7px;padding:9px 14px;background:#e8eef4;color:#3d526a;text-decoration:none;font-size:15px}.tabs a.active{background:#087f6b;color:#fff}.viewer{border:1px solid #d9e3ed;border-radius:14px;background:white;padding:18px}.viewer h2{margin:0;font-size:26px}.viewer p{color:var(--muted);margin:6px 0 12px;max-width:850px}.stage{height:680px;max-height:72vh;overflow:auto;background:#fff;border:1px solid #e2e9ef;border-radius:9px}.stage svg{display:block;max-width:none;flex:none}.diagram-caption{font-size:14px;color:var(--muted)}.expanded{position:fixed;inset:12px;z-index:20;display:flex;flex-direction:column;box-shadow:0 0 0 30px #112b3eaa}.expanded .stage{height:auto;max-height:none;flex:1}.expanded p{display:none}.article{max-width:960px;overflow-wrap:anywhere}.article h1{font-size:36px}.article h2{padding-top:18px;border-top:1px solid var(--line);scroll-margin-top:24px}.article p,.article li{max-width:90ch}.article li{margin:5px 0}.article blockquote{margin:20px 0;background:#eaf4f2;border-left:3px solid #11856b;padding:10px 22px}.table-wrap{overflow:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}th,td{padding:12px 14px;border-bottom:1px solid #e0e7ef;text-align:left;vertical-align:top}th{background:#eaf0f5}pre{background:#122b3f;color:#ecf5fc;padding:24px;border-radius:10px;overflow:auto;font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;position:relative}code{font: .9em ui-monospace,SFMono-Regular,Menlo,monospace;background:#e6edf3;padding:2px 5px;border-radius:4px}pre code{background:none;padding:0;color:inherit;font-size:inherit}.copy{display:block;margin-top:-12px;margin-bottom:22px}.toc{padding:15px 20px;background:#fff;border:1px solid var(--line);border-radius:9px;margin:24px 0}.toc summary{cursor:pointer;font-weight:650}.toc a{display:block;font-size:14px;padding:4px 0}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}.hidden,[hidden]{display:none!important}.downloadrow{display:flex;gap:12px;flex-wrap:wrap}.badge{font-size:12px;color:#087f6b;background:#e1f3ed;padding:5px 9px;border-radius:5px}.topbar{display:flex;justify-content:space-between;gap:10px;align-items:center}.back{font-size:14px}.noscript{padding:16px;background:#fff3dc}@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:relative;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:14px 22px}aside details:not([open]) .navlist{display:none}aside input{max-width:480px}.navlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:30px 20px 65px}header{padding:18px 22px;align-items:start}.stage{height:650px}.cards{grid-template-columns:1fr}.article h1{font-size:30px}}@media(max-width:520px){header{display:block}nav{margin-top:14px;gap:16px}.navlist{grid-template-columns:1fr}.expanded{inset:4px;padding:10px}.expanded .toolbar{gap:5px}.toolbar button,.toolbar a{padding:7px 9px}.viewer{padding:12px}.article h1{font-size:28px}}@media print{header,aside,.toolbar,.tabs,.toc,.copy,.topbar{display:none!important}.layout{display:block}main{padding:0}.stage{height:auto;max-height:none;overflow:visible}.stage svg{width:100%!important;height:auto!important}.viewer{border:0}body{background:#fff}pre{white-space:pre-wrap;break-inside:avoid}a{color:inherit}.article{max-width:none}.expanded{position:static;box-shadow:none}}</style></head><body><header><a class="brand" href="../index.html">TrustLedger<small>TECHNICA 2026 · TEAM BUILD KIT</small></a><nav><a href="../index.html">文件首頁</a><a href="../index.html#diagrams">六張流程圖</a><span class="badge">離線可讀 · v2</span></nav></header><div class="layout"><aside><details open><summary>文件導覽</summary><label for="nav-search">找文件</label><input id="nav-search" type="search" placeholder="AI、環境、GitHub…"><div class="navlist"><a class="navitem" data-file="START-HERE.md"  href="START-HERE-md.html">START · 立即開始</a><a class="navitem" data-file="README.md"  href="README-md.html">READ · README</a><a class="navitem" data-file="00-overall-architecture-report.md"  href="00-overall-architecture-report-md.html">00 · 總體架構</a><a class="navitem" data-file="01-ai-engineer-jev-backboard.md"  href="01-ai-engineer-jev-backboard-md.html">01 · AI Engineer</a><a class="navitem" data-file="02-frontend-react-vite.md"  href="02-frontend-react-vite-md.html">02 · React / Vite</a><a class="navitem" data-file="03-nessie-data.md"  href="03-nessie-data-md.html">03 · Nessie / Data</a><a class="navitem" data-file="04-fastapi-integration-deployment.md"  href="04-fastapi-integration-deployment-md.html">04 · FastAPI / Deploy</a><a class="navitem" data-file="05-github-collaboration.md"  href="05-github-collaboration-md.html">05 · GitHub 協作</a><a class="navitem" data-file="06-security-privacy-threat-model.md"  href="06-security-privacy-threat-model-md.html">06 · 資安與隱私</a><a class="navitem" data-file="07-submission-runbook.md"  href="07-submission-runbook-md.html">07 · 提交 Runbook</a><a class="navitem" data-file="SOURCES.md"  href="SOURCES-md.html">SRC · 來源與待驗證</a><a class="navitem" data-file="prompts/ai-engineer.prompt.md"  href="prompts-ai-engineer-prompt-md.html">P1 · AI Prompt</a><a class="navitem" data-file="prompts/frontend.prompt.md"  href="prompts-frontend-prompt-md.html">P2 · Frontend Prompt</a><a class="navitem" data-file="prompts/nessie-data.prompt.md"  href="prompts-nessie-data-prompt-md.html">P3 · Data Prompt</a><a class="navitem" data-file="prompts/backend-integration.prompt.md"  href="prompts-backend-integration-prompt-md.html">P4 · Backend Prompt</a><a class="navitem" data-file="contracts/internal-api.openapi.yaml"  href="contracts-internal-api-openapi-yaml.html">API · Internal OpenAPI</a><a class="navitem" data-file="fixtures/synthetic-transactions.json"  href="fixtures-synthetic-transactions-json.html">DATA · Synthetic fixture</a><a class="navitem" data-file=".env.example"  href="-env-example.html">ENV · Backend env 範本</a><a class="navitem" data-file="frontend.env.example"  href="frontend-env-example.html">ENV · Frontend env 範本</a><a class="navitem" data-file="templates/ci.example.yml"  href="templates-ci-example-yml.html">CI · CI 範本</a><a class="navitem" data-file="templates/PULL_REQUEST_TEMPLATE.md"  href="templates-PULL_REQUEST_TEMPLATE-md.html">PR · PR 範本</a><a class="navitem" data-file="diagrams/index.md"  href="diagrams-index-md.html">MAP · 圖表原始檔導覽</a></div></details></aside><main><div class="topbar"><a class="back" href="../index.html">← 文件首頁</a><button class="plainbtn" data-print>列印 / PDF</button></div><article class="article"><details class="toc"><summary>本頁目錄 · 15 節</summary><a href="#section-2" data-section="section-2">1. 一句話產品故事</a><a href="#section-3" data-section="section-3">2. MVP 邊界</a><a href="#section-6" data-section="section-6">3. 產品成功路徑</a><a href="#section-7" data-section="section-7">4. 邏輯架構</a><a href="#section-8" data-section="section-8">5. 信任邊界與資料分級</a><a href="#section-9" data-section="section-9">6. Canonical transaction model</a><a href="#section-10" data-section="section-10">7. 分析策略</a><a href="#section-14" data-section="section-14">8. Backboard memory policy</a><a href="#section-15" data-section="section-15">9. Privacy Inspector 的 source-of-truth</a><a href="#section-16" data-section="section-16">10. 內部 API 摘要</a><a href="#section-17" data-section="section-17">11. 整合順序</a><a href="#section-18" data-section="section-18">12. Sponsor alignment</a><a href="#section-19" data-section="section-19">13. 可觀測性與誠實 Demo</a><a href="#section-20" data-section="section-20">14. 架構決策紀錄（ADR）</a><a href="#section-21" data-section="section-21">15. 驗收</a></details><h1 id="section-1">TrustLedger 總體架構報告</h1>
+<p><strong>版本：</strong> Technica 2026 B2C MVP<br><strong>截止：</strong> 2026-10-18 12:00 EDT<br><strong>資料政策：</strong> 僅合成資料／Nessie sandbox mock data；零真實金融資料</p>
+<h2 id="section-2">1. 一句話產品故事</h2>
+<p>TrustLedger 是一個 privacy-first 的個人金融安全助手：它找出可能的重複扣款、異常金額與訂閱變化，讓使用者看見實際送給 AI 的最小化資料，並且只在使用者明確確認後記住必要偏好。</p>
+<h2 id="section-3">2. MVP 邊界</h2>
+<h3 id="section-4">必做</h3>
+<ul>
+<li>B2C 單一合成 demo user。</li>
+<li>交易列表、摘要與 alert detail。</li>
+<li>deterministic rules：duplicate、high amount、subscription change 至少兩種真正運作。</li>
+<li>Jev：對已最小化的 feature payload 做 bounded decision；失敗時 rules 仍可工作。</li>
+<li>Backboard：使用者確認後才寫入 sanitized memory；可檢視與刪除。</li>
+<li>Privacy Inspector：顯示「原始欄位 → 移除／轉換 → 實際 outbound payload」。畫面必須由同一個 serializer 產生，不能只是手畫示意。</li>
+<li>人工確認：<code>normal</code> 或 <code>review</code>，不得自動封鎖交易或聲稱詐欺已成立。</li>
+<li>明確的 live/mock/degraded 狀態。</li>
+</ul>
+<h3 id="section-5">不做</h3>
+<ul>
+<li>B2B 銀行後台、多租戶管理、RBAC 管理介面。</li>
+<li>真實銀行連線、付款、轉帳或帳號登入。</li>
+<li>投資建議、信用決策、詐欺自動處置。</li>
+<li>完整 authentication provider、KYC、PCI、SOC 2 或監管合規。</li>
+<li>自訓模型、multi-agent orchestration、同態加密或 confidential computing。</li>
+</ul>
+<h2 id="section-6">3. 產品成功路徑</h2>
+<ol>
+<li>使用者看到合成交易。</li>
+<li>系統標記兩筆同日同類別同金額的 streaming transaction。</li>
+<li>使用者開啟 alert，看到 rules 證據、Jev bounded classification 與 confidence。</li>
+<li>Privacy Inspector 顯示姓名、地址、帳號、原始 merchant label 未送出；只送類別、金額區間、時間特徵與 duplicate count。</li>
+<li>使用者選擇 <code>正常交易</code>，勾選同意記憶。</li>
+<li>後端將最小化的 confirmation memory 寫入該 demo user 專用 Backboard assistant。</li>
+<li>重新分析相似案例時顯示「參考過去確認」，但低信心或金額顯著不同仍要求人工確認。</li>
+</ol>
+<h2 id="section-7">4. 邏輯架構</h2>
+<pre><code class="language-mermaid">flowchart LR
+  U[Demo user] --&gt;|HTTPS| FE[React + Vite]
+  FE --&gt;|Internal API only| API[FastAPI]
+  API --&gt; ID[Request identity\ndemo-user-001]
+  ID --&gt; DATA[Transaction service]
+  DATA --&gt; SYN[Synthetic adapter\ndefault]
+  DATA -. optional live .-&gt; NES[Nessie sandbox adapter]
+  DATA --&gt; PRIV[Privacy guard\nallowlist + redaction + bucketing]
+  PRIV --&gt; RULES[Deterministic rules]
+  PRIV --&gt; JEV[Jev decision client]
+  RULES --&gt; AGG[Alert aggregator]
+  JEV --&gt; AGG
+  AGG --&gt; FE
+  FE --&gt;|explicit confirmation + consent| API
+  API --&gt; MEM[Memory policy]
+  MEM --&gt;|sanitized fact only| BB[Backboard assistant\none demo user]
+  API --&gt; AUDIT[PII-free audit events]
+</code></pre>
+<p>完整可編輯來源：<a href="../diagrams/architecture.mmd">diagrams/architecture.mmd</a>。</p>
+<h2 id="section-8">5. 信任邊界與資料分級</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>分級</th>
+<th>例子</th>
+<th>MVP 位置</th>
+<th>可送外部 AI？</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S0 Public</td>
+<td>category enum、文件</td>
+<td>repo/browser</td>
+<td>可以</td>
+</tr>
+<tr>
+<td>S1 Demo internal</td>
+<td>synthetic transaction id、alert id</td>
+<td>browser/backend</td>
+<td>只在有必要且 tokenized 後</td>
+</tr>
+<tr>
+<td>S2 Sensitive-like</td>
+<td>合成姓名、地址、帳號、原始 merchant、精確時間/金額組合</td>
+<td>backend raw adapter</td>
+<td><strong>不可以</strong></td>
+</tr>
+<tr>
+<td>S3 Secret</td>
+<td>Nessie/Jev/Backboard keys、deploy token</td>
+<td>backend secret store</td>
+<td><strong>絕對不可以</strong></td>
+</tr>
+</tbody></table></div>
+<p>即使資料是合成的，也用真實系統的標準處理，讓 security demo 能反映合理設計。對外簡報必須說明「這些都是合成／sandbox 資料」。</p>
+<h2 id="section-9">6. Canonical transaction model</h2>
+<p>所有 data adapters 都轉成同一個內部模型；React 不依賴 Nessie 原始 schema。</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;txn_syn_001&quot;,
+  &quot;occurred_at&quot;: &quot;2026-10-17T14:03:00-04:00&quot;,
+  &quot;amount&quot;: 11.99,
+  &quot;currency&quot;: &quot;USD&quot;,
+  &quot;direction&quot;: &quot;debit&quot;,
+  &quot;merchant_display&quot;: &quot;StreamWave&quot;,
+  &quot;merchant_category&quot;: &quot;streaming&quot;,
+  &quot;source&quot;: &quot;synthetic&quot;,
+  &quot;account_token&quot;: &quot;acct_demo_a1&quot;,
+  &quot;is_subscription&quot;: true
+}
+</code></pre>
+<p><code>merchant_display</code> 與 <code>account_token</code> 可回到自家 UI，但不可進 Jev/Backboard outbound payload。送 AI 前轉成：</p>
+<pre><code class="language-json">{
+  &quot;merchant_category&quot;: &quot;streaming&quot;,
+  &quot;amount_bucket&quot;: &quot;10-25&quot;,
+  &quot;currency&quot;: &quot;USD&quot;,
+  &quot;local_day_part&quot;: &quot;afternoon&quot;,
+  &quot;same_category_same_amount_24h_count&quot;: 2,
+  &quot;is_subscription&quot;: true,
+  &quot;subscription_delta_bucket&quot;: &quot;none&quot;,
+  &quot;prior_user_confirmation&quot;: &quot;unknown&quot;
+}
+</code></pre>
+<h2 id="section-10">7. 分析策略</h2>
+<h3 id="section-11">Layer A — deterministic rules（可解釋 baseline）</h3>
+<ul>
+<li>duplicate candidate：同一使用者、同類別、同金額、24 小時內至少 2 筆。</li>
+<li>high amount：金額大於合成使用者過去 30 天同類別中位數的 3 倍，且至少大於 USD 100。</li>
+<li>subscription change：相同訂閱類別相較上次增加超過 20%。</li>
+</ul>
+<p>閾值是 demo policy，不是金融判定；集中在一個 config 檔，PR 中可審查。</p>
+<h3 id="section-12">Layer B — Jev bounded decision</h3>
+<p>把已最小化的 feature object 當 <code>state</code>，一次詢問最多三個獨立問題：</p>
+<ul>
+<li><code>alert_type</code>：<code>duplicate</code>、<code>amount_anomaly</code>、<code>subscription_change</code>、<code>none</code>。</li>
+<li><code>needs_human</code>：<code>noul</code> probability。</li>
+<li><code>severity</code>：<code>low</code>、<code>medium</code>、<code>high</code> 的 ordered <code>score</code>。</li>
+</ul>
+<p>Jev 官方 contract 已確認 <code>POST /api/v1/systemone/</code>、<code>choice</code> criteria 為 object、<code>score</code> criteria 為 array、回應含 probability distribution。正式 request 由 AI Engineer 依最新官方文件實作；此文件只固定內部 DTO 與安全 policy。</p>
+<h3 id="section-13">Layer C — human confirmation</h3>
+<ul>
+<li><code>normal</code>：使用者確認正常；如 consent=true，才寫 sanitized memory。</li>
+<li><code>review</code>：使用者想後續檢查；只寫本地 alert status，預設不寫 Backboard。</li>
+<li>任何低信心、vendor error 或新型態案例都不自動處置。</li>
+</ul>
+<h2 id="section-14">8. Backboard memory policy</h2>
+<p>Backboard 官方文件說 memory 是 assistant scope 且跨 threads。MVP 的安全決策：</p>
+<ul>
+<li>只支援一位 <code>demo-user-001</code>，使用專用 assistant。</li>
+<li>禁止把多位使用者的 threads 放進同一 assistant。</li>
+<li><code>ALLOW_MEMORY_WRITE=false</code> 為預設；Demo 前由 backend owner 顯式開啟。</li>
+<li>只儲存經使用者確認的抽象事實，例如：<code>User confirmed that two streaming-category charges in one day can be normal for this demo profile.</code></li>
+<li>不儲存姓名、account token、transaction id、精確金額、精確日期、merchant display 或原始 JSON。</li>
+<li>UI 提供 memory list/delete；Demo 後執行 deletion checklist。</li>
+</ul>
+<h2 id="section-15">9. Privacy Inspector 的 source-of-truth</h2>
+<p>後端的 privacy serializer 回傳同一份物件供兩個用途：</p>
+<ol>
+<li><code>safe_payload</code> 實際送往 Jev 或組成 Backboard memory。</li>
+<li><code>inspection</code> 給前端顯示每個欄位的 action 與理由。</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;inspection&quot;: [
+    {&quot;field&quot;: &quot;account_number&quot;, &quot;action&quot;: &quot;dropped&quot;, &quot;reason&quot;: &quot;not required&quot;},
+    {&quot;field&quot;: &quot;merchant_display&quot;, &quot;action&quot;: &quot;generalized&quot;, &quot;output&quot;: &quot;streaming&quot;},
+    {&quot;field&quot;: &quot;amount&quot;, &quot;action&quot;: &quot;bucketed&quot;, &quot;output&quot;: &quot;10-25&quot;}
+  ],
+  &quot;safe_payload&quot;: {
+    &quot;merchant_category&quot;: &quot;streaming&quot;,
+    &quot;amount_bucket&quot;: &quot;10-25&quot;
+  }
+}
+</code></pre>
+<p>測試必須對 forbidden keys 遞迴掃描，不只檢查 top-level。</p>
+<h2 id="section-16">10. 內部 API 摘要</h2>
+<p>完整 contract：<a href="contracts-internal-api-openapi-yaml.html">contracts/internal-api.openapi.yaml</a>。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>用途</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET</td>
+<td><code>/api/v1/health</code></td>
+<td>模式、vendor readiness，不洩漏 secrets</td>
+<td>Backend</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/transactions</code></td>
+<td>canonical transactions</td>
+<td>Data + Backend</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/analyses</code></td>
+<td>一筆 transaction 的 rules + optional Jev 分析</td>
+<td>AI + Backend</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/alerts</code></td>
+<td>alerts list</td>
+<td>Backend</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/privacy/preview/{transaction_id}</code></td>
+<td>exact safe payload + field actions</td>
+<td>AI + Backend</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/alerts/{alert_id}/confirmations</code></td>
+<td>人工確認與 optional memory consent</td>
+<td>Backend + AI</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/memories</code></td>
+<td>只回 sanitized memory summaries</td>
+<td>AI + Backend</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/v1/memories/{memory_id}</code></td>
+<td>刪除 memory</td>
+<td>AI + Backend</td>
+</tr>
+</tbody></table></div>
+<p>錯誤統一為：</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;VENDOR_UNAVAILABLE&quot;,
+    &quot;message&quot;: &quot;Jev is temporarily unavailable; rules-only analysis returned.&quot;,
+    &quot;request_id&quot;: &quot;req_demo_123&quot;
+  }
+}
+</code></pre>
+<p>不得把 upstream response body、stack trace 或 URL query 中的 Nessie key回傳前端。</p>
+<h2 id="section-17">11. 整合順序</h2>
+<pre><code class="language-text">Contract freeze
+  ├─ Backend: health + fixture transactions
+  ├─ Frontend: contract-based mock client
+  ├─ Data: synthetic adapter → optional Nessie read adapter
+  └─ AI: privacy + rules → Jev → Backboard
+        ↓
+First vertical slice: list → alert → inspector → confirmation
+        ↓
+Live provider toggles one at a time
+        ↓
+Security tests → demo rehearsal → feature freeze
+</code></pre>
+<p>不要等四個 subsystem 都完成才整合。第一個 vertical slice 必須只靠 fixture 在 2026-10-17 16:00 EDT 前打通。</p>
+<h2 id="section-18">12. Sponsor alignment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Challenge</th>
+<th>TrustLedger evidence</th>
+<th>不可誇大</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Capital One — Best Use of Nessie</td>
+<td>至少一個當日文件已確認的 Nessie read endpoint、Nessie sandbox badge、mapping evidence</td>
+<td>synthetic transactions 必須清楚標示；沒有 live call 就不要稱已整合</td>
+</tr>
+<tr>
+<td>T. Rowe Price — NextGen Finance Innovation</td>
+<td>real user problem、AI risk discovery、financial education、透明/accessible/responsible design、人類監督</td>
+<td>不稱 fraud detection、投資回報或監管核准</td>
+</tr>
+<tr>
+<td>MLH — Best Use of Backboard</td>
+<td>refresh 後保留經確認偏好、memory inspect/delete、assistant isolation explanation</td>
+<td>local fallback 不算 Backboard live evidence</td>
+</tr>
+</tbody></table></div>
+<p>官方 Devpost 允許最多 3 個 sponsored challenges；提交前再次確認 UI 中的 selection 與最新規則。</p>
+<h2 id="section-19">13. 可觀測性與誠實 Demo</h2>
+<p><code>/health</code> 和 UI header 必須顯示：</p>
+<ul>
+<li>Data：<code>synthetic</code> 或 <code>nessie-live</code>。</li>
+<li>Analysis：<code>rules-only</code> 或 <code>rules+jev-live</code>。</li>
+<li>Memory：<code>off</code>、<code>local-fallback</code> 或 <code>backboard-live</code>。</li>
+</ul>
+<p>Log 只記 request id、route、status、latency、provider status、model version、payload schema version 與 error class。不得記 body、query string、memory content、姓名、帳號、transaction id 或 key。</p>
+<h2 id="section-20">14. 架構決策紀錄（ADR）</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>決策</th>
+<th>理由</th>
+<th>代價</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>B2C 單一 demo user</td>
+<td>24 小時內可完成、產品故事清楚</td>
+<td>暫不證明多租戶</td>
+</tr>
+<tr>
+<td>Synthetic first</td>
+<td>外部 API/schema 不阻塞</td>
+<td>Nessie award 需另證明 live usage</td>
+</tr>
+<tr>
+<td>FastAPI 是唯一 vendor gateway</td>
+<td>key 不進 browser、集中 redaction/logging</td>
+<td>backend 是關鍵路徑</td>
+</tr>
+<tr>
+<td>Rules before Jev</td>
+<td>可測、可解釋、可降級</td>
+<td>需清楚區分 rule 與 model 結果</td>
+</tr>
+<tr>
+<td>Memory after consent only</td>
+<td>降低誤存與隱私風險</td>
+<td>少一點「全自動」效果</td>
+</tr>
+<tr>
+<td>Pinned <code>jev-1.13</code></td>
+<td>比賽期間可重現</td>
+<td>不自動得到 rolling improvements</td>
+</tr>
+</tbody></table></div>
+<h2 id="section-21">15. 驗收</h2>
+<ul>
+<li>所有流程可以在 flight mode 下用 synthetic fixture 完成。</li>
+<li>outbound payload snapshot 沒有 forbidden fields/values。</li>
+<li>Jev 回應 parser 支援 <code>noul</code>、<code>choice</code>、decimal <code>score</code>，並對 malformed response fail closed。</li>
+<li>Backboard 使用者隔離策略清楚，只有 consent 觸發寫入。</li>
+<li>每個 vendor timeout 都有 2xx degraded response 或安全的 5xx error contract，不會 hang。</li>
+<li>Frontend 可用鍵盤完成 alert、inspector、confirmation；不以顏色作唯一狀態訊號。</li>
+<li>Demo 說法與 <code>/health</code> 一致。</li>
+</ul>
+</article></main></div><script>
+const main=document.querySelector('main');let currentDiagram=0,scale=1;
+function copyButtons(){main.querySelectorAll('pre').forEach(pre=>{const b=document.createElement('button');b.className='plainbtn copy';b.textContent='複製程式區塊';b.onclick=async()=>{try{await navigator.clipboard.writeText(pre.innerText);b.textContent='已複製'}catch{const range=document.createRange();range.selectNodeContents(pre);const sel=getSelection();sel.removeAllRanges();sel.addRange(range);b.textContent='已選取，請按 ⌘C'}};pre.after(b)})}
+document.querySelector('#nav-search')?.addEventListener('input',e=>{document.querySelectorAll('.navitem').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(e.target.value.toLowerCase()))});
+document.addEventListener('click',e=>{const p=e.target.closest('[data-print]');if(p)window.print();const s=e.target.closest('[data-section]');if(s){e.preventDefault();document.getElementById(s.dataset.section)?.scrollIntoView({behavior:'smooth'})}});
+function mount(){const key=decodeURIComponent(location.hash.slice(1));const file=key.startsWith('doc:')?key.slice(4):null;const tpl=file?document.getElementById('doc-'+file.replace(/[^a-zA-Z0-9_-]/g,'-')):document.getElementById('home-content');if(!tpl)return;main.innerHTML=tpl.innerHTML;document.querySelectorAll('.navitem').forEach(a=>a.classList.toggle('active',a.dataset.file===file));copyButtons();if(!file){initDiagram();if(key==='diagrams')document.getElementById('diagrams').scrollIntoView()}else window.scrollTo(0,0);document.title=(file?(document.querySelector('.navitem.active')?.textContent||'文件'):'TrustLedger Build Kit')+' · TrustLedger'}
+function setZoom(value){scale=Math.min(2.2,Math.max(.65,value));const svg=document.querySelector('.stage svg');if(!svg)return;svg.style.width=(Number(svg.getAttribute('width'))*scale)+'px';svg.style.height=(Number(svg.getAttribute('height'))*scale)+'px';document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%'}
+function fit(){const stage=document.querySelector('.stage'),svg=stage?.querySelector('svg');if(svg)setZoom(Math.max(.8,(stage.clientWidth-24)/Number(svg.getAttribute('width'))))}
+function showDiagram(i){currentDiagram=i;const list=JSON.parse(document.getElementById('diagram-meta').textContent),d=list[i];const stage=document.querySelector('.stage');stage.innerHTML=document.getElementById('diagram-'+d.id).innerHTML;document.querySelector('#diagram-title').textContent=d.title;document.querySelector('#diagram-desc').textContent=d.desc;document.querySelectorAll('[data-diagram]').forEach(a=>{a.classList.toggle('active',Number(a.dataset.diagram)===i);a.setAttribute('aria-pressed',String(Number(a.dataset.diagram)===i))});stage.scrollTop=0;stage.scrollLeft=0;fit()}
+function initDiagram(){showDiagram(currentDiagram);document.querySelectorAll('[data-diagram]').forEach(a=>a.onclick=e=>{e.preventDefault();showDiagram(Number(a.dataset.diagram))});document.querySelector('[data-zoom-in]').onclick=()=>setZoom(scale+.15);document.querySelector('[data-zoom-out]').onclick=()=>setZoom(scale-.15);document.querySelector('[data-fit]').onclick=fit;document.querySelector('[data-native]').onclick=()=>setZoom(1);document.querySelector('[data-expand]').onclick=e=>{const viewer=document.querySelector('.viewer');viewer.classList.toggle('expanded');e.currentTarget.textContent=viewer.classList.contains('expanded')?'關閉全螢幕':'全螢幕';fit()};document.querySelector('[data-save-svg]').onclick=()=>{const d=JSON.parse(document.getElementById('diagram-meta').textContent)[currentDiagram],source=document.getElementById('diagram-'+d.id).innerHTML;const url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));const a=document.createElement('a');a.href=url;a.download=d.id+'.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelector('.viewer')?.classList.remove('expanded');const b=document.querySelector('[data-expand]');if(b)b.textContent='全螢幕'}});
+if(document.getElementById('home-content')){window.addEventListener('hashchange',mount);mount()}else copyButtons();
+</script></body></html>

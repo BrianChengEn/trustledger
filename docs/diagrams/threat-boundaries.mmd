@@ -1,0 +1,12 @@
+flowchart TB
+  UI["Boundary 0: Browser"] --> API["Boundary 1: FastAPI"]
+  SEC["Runtime secrets"] --> API
+  API --> NES["Boundary 2: Nessie sandbox"]
+  NES --> RAW["Raw data in request scope"]
+  RAW --> PRIV["Allowlist privacy guard"]
+  PRIV --> J["Boundary 3: Jev safe features"]
+  PRIV --> M["Boundary 3: Backboard confirmed memory"]
+  API --> LOG["PII-free logs"]
+  GH["Boundary 4: GitHub CI"] --> HOST["HTTPS hosting"]
+  HOST --> API
+

@@ -1,0 +1,247 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>React / Vite · TrustLedger</title><style>
+:root{color-scheme:light;--ink:#192d46;--muted:#61728a;--line:#e0e7ef;--accent:#087f6b;--paper:#fff;--bg:#f4f7fa}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}a{color:#1762b1;text-underline-offset:4px}button,input{font:inherit}button,a,input{touch-action:manipulation}:focus-visible{outline:3px solid #0a997d;outline-offset:4px}button{cursor:pointer}header{background:#112b3e;color:#edf7fc;padding:22px 5%;display:flex;align-items:center;justify-content:space-between;gap:18px}header a{color:inherit;text-decoration:none}.brand{font-size:20px;font-weight:700;letter-spacing:-.4px}.brand small{font-size:12px;letter-spacing:1.6px;font-weight:500;color:#a1cfce;display:block}nav{display:flex;flex-wrap:wrap;gap:20px;font-size:15px}.layout{max-width:1520px;margin:auto;display:grid;grid-template-columns:255px minmax(0,1fr)}aside{padding:28px 18px;border-right:1px solid var(--line);background:#f9fbfc;align-self:start;position:sticky;top:0;max-height:100vh;overflow:auto}aside label{font-size:13px;color:var(--muted)}input{display:block;width:100%;background:white;border:1px solid #ccd7e3;border-radius:8px;padding:9px 12px;margin:8px 0 20px}.navitem{display:block;text-decoration:none;color:#3b526c;padding:8px 12px;font-size:14px;border-radius:8px;margin:2px 0}.navitem.active{background:#e3f3ee;color:#086b5a;font-weight:650}.navitem:hover{background:#eaf0f5}.navgroup{font-size:11px;letter-spacing:2px;font-weight:700;color:#7b8da3;margin:22px 12px 10px}main{padding:44px clamp(20px,4vw,64px) 90px;min-width:0}.eyebrow{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--accent)}h1{font-size:clamp(32px,4vw,54px);line-height:1.2;letter-spacing:-1.5px;margin:12px 0 20px}h2{font-size:27px;line-height:1.4;letter-spacing:-.6px;margin:40px 0 16px}h3{font-size:20px;margin:28px 0 10px}.intro{font-size:18px;color:var(--muted);max-width:780px}.hero{padding-bottom:32px;border-bottom:1px solid var(--line)}.notice{margin:24px 0;padding:18px 22px;background:#e9f6f1;border-left:3px solid #11856b;border-radius:0 10px 10px 0}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.doccard{display:block;text-decoration:none;color:var(--ink);padding:23px;background:#fff;border:1px solid var(--line);border-radius:12px;transition:border-color .15s}.doccard:hover{border-color:#64ae9d}.doccard b{display:block;font-size:20px;margin:6px 0}.doccard small{font-size:12px;letter-spacing:1px;color:var(--accent)}.doccard p{color:var(--muted);margin:5px 0;font-size:15px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0}.toolbar button,.toolbar a,.plainbtn{border:1px solid #ccd7e3;border-radius:7px;padding:7px 12px;color:var(--ink);background:#fff;text-decoration:none;font-size:14px}.toolbar button:hover,.plainbtn:hover{background:#edf4f8}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 18px}.tabs a{border-radius:7px;padding:9px 14px;background:#e8eef4;color:#3d526a;text-decoration:none;font-size:15px}.tabs a.active{background:#087f6b;color:#fff}.viewer{border:1px solid #d9e3ed;border-radius:14px;background:white;padding:18px}.viewer h2{margin:0;font-size:26px}.viewer p{color:var(--muted);margin:6px 0 12px;max-width:850px}.stage{height:680px;max-height:72vh;overflow:auto;background:#fff;border:1px solid #e2e9ef;border-radius:9px}.stage svg{display:block;max-width:none;flex:none}.diagram-caption{font-size:14px;color:var(--muted)}.expanded{position:fixed;inset:12px;z-index:20;display:flex;flex-direction:column;box-shadow:0 0 0 30px #112b3eaa}.expanded .stage{height:auto;max-height:none;flex:1}.expanded p{display:none}.article{max-width:960px;overflow-wrap:anywhere}.article h1{font-size:36px}.article h2{padding-top:18px;border-top:1px solid var(--line);scroll-margin-top:24px}.article p,.article li{max-width:90ch}.article li{margin:5px 0}.article blockquote{margin:20px 0;background:#eaf4f2;border-left:3px solid #11856b;padding:10px 22px}.table-wrap{overflow:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}th,td{padding:12px 14px;border-bottom:1px solid #e0e7ef;text-align:left;vertical-align:top}th{background:#eaf0f5}pre{background:#122b3f;color:#ecf5fc;padding:24px;border-radius:10px;overflow:auto;font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;position:relative}code{font: .9em ui-monospace,SFMono-Regular,Menlo,monospace;background:#e6edf3;padding:2px 5px;border-radius:4px}pre code{background:none;padding:0;color:inherit;font-size:inherit}.copy{display:block;margin-top:-12px;margin-bottom:22px}.toc{padding:15px 20px;background:#fff;border:1px solid var(--line);border-radius:9px;margin:24px 0}.toc summary{cursor:pointer;font-weight:650}.toc a{display:block;font-size:14px;padding:4px 0}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}.hidden,[hidden]{display:none!important}.downloadrow{display:flex;gap:12px;flex-wrap:wrap}.badge{font-size:12px;color:#087f6b;background:#e1f3ed;padding:5px 9px;border-radius:5px}.topbar{display:flex;justify-content:space-between;gap:10px;align-items:center}.back{font-size:14px}.noscript{padding:16px;background:#fff3dc}@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:relative;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:14px 22px}aside details:not([open]) .navlist{display:none}aside input{max-width:480px}.navlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:30px 20px 65px}header{padding:18px 22px;align-items:start}.stage{height:650px}.cards{grid-template-columns:1fr}.article h1{font-size:30px}}@media(max-width:520px){header{display:block}nav{margin-top:14px;gap:16px}.navlist{grid-template-columns:1fr}.expanded{inset:4px;padding:10px}.expanded .toolbar{gap:5px}.toolbar button,.toolbar a{padding:7px 9px}.viewer{padding:12px}.article h1{font-size:28px}}@media print{header,aside,.toolbar,.tabs,.toc,.copy,.topbar{display:none!important}.layout{display:block}main{padding:0}.stage{height:auto;max-height:none;overflow:visible}.stage svg{width:100%!important;height:auto!important}.viewer{border:0}body{background:#fff}pre{white-space:pre-wrap;break-inside:avoid}a{color:inherit}.article{max-width:none}.expanded{position:static;box-shadow:none}}</style></head><body><header><a class="brand" href="../index.html">TrustLedger<small>TECHNICA 2026 · TEAM BUILD KIT</small></a><nav><a href="../index.html">文件首頁</a><a href="../index.html#diagrams">六張流程圖</a><span class="badge">離線可讀 · v2</span></nav></header><div class="layout"><aside><details open><summary>文件導覽</summary><label for="nav-search">找文件</label><input id="nav-search" type="search" placeholder="AI、環境、GitHub…"><div class="navlist"><a class="navitem" data-file="START-HERE.md"  href="START-HERE-md.html">START · 立即開始</a><a class="navitem" data-file="README.md"  href="README-md.html">READ · README</a><a class="navitem" data-file="00-overall-architecture-report.md"  href="00-overall-architecture-report-md.html">00 · 總體架構</a><a class="navitem" data-file="01-ai-engineer-jev-backboard.md"  href="01-ai-engineer-jev-backboard-md.html">01 · AI Engineer</a><a class="navitem" data-file="02-frontend-react-vite.md"  href="02-frontend-react-vite-md.html">02 · React / Vite</a><a class="navitem" data-file="03-nessie-data.md"  href="03-nessie-data-md.html">03 · Nessie / Data</a><a class="navitem" data-file="04-fastapi-integration-deployment.md"  href="04-fastapi-integration-deployment-md.html">04 · FastAPI / Deploy</a><a class="navitem" data-file="05-github-collaboration.md"  href="05-github-collaboration-md.html">05 · GitHub 協作</a><a class="navitem" data-file="06-security-privacy-threat-model.md"  href="06-security-privacy-threat-model-md.html">06 · 資安與隱私</a><a class="navitem" data-file="07-submission-runbook.md"  href="07-submission-runbook-md.html">07 · 提交 Runbook</a><a class="navitem" data-file="SOURCES.md"  href="SOURCES-md.html">SRC · 來源與待驗證</a><a class="navitem" data-file="prompts/ai-engineer.prompt.md"  href="prompts-ai-engineer-prompt-md.html">P1 · AI Prompt</a><a class="navitem" data-file="prompts/frontend.prompt.md"  href="prompts-frontend-prompt-md.html">P2 · Frontend Prompt</a><a class="navitem" data-file="prompts/nessie-data.prompt.md"  href="prompts-nessie-data-prompt-md.html">P3 · Data Prompt</a><a class="navitem" data-file="prompts/backend-integration.prompt.md"  href="prompts-backend-integration-prompt-md.html">P4 · Backend Prompt</a><a class="navitem" data-file="contracts/internal-api.openapi.yaml"  href="contracts-internal-api-openapi-yaml.html">API · Internal OpenAPI</a><a class="navitem" data-file="fixtures/synthetic-transactions.json"  href="fixtures-synthetic-transactions-json.html">DATA · Synthetic fixture</a><a class="navitem" data-file=".env.example"  href="-env-example.html">ENV · Backend env 範本</a><a class="navitem" data-file="frontend.env.example"  href="frontend-env-example.html">ENV · Frontend env 範本</a><a class="navitem" data-file="templates/ci.example.yml"  href="templates-ci-example-yml.html">CI · CI 範本</a><a class="navitem" data-file="templates/PULL_REQUEST_TEMPLATE.md"  href="templates-PULL_REQUEST_TEMPLATE-md.html">PR · PR 範本</a><a class="navitem" data-file="diagrams/index.md"  href="diagrams-index-md.html">MAP · 圖表原始檔導覽</a></div></details></aside><main><div class="topbar"><a class="back" href="../index.html">← 文件首頁</a><button class="plainbtn" data-print>列印 / PDF</button></div><article class="article"><details class="toc"><summary>本頁目錄 · 13 節</summary><a href="#section-2" data-section="section-2">任務結果</a><a href="#section-3" data-section="section-3">你的檔案所有權</a><a href="#section-4" data-section="section-4">從零建立環境</a><a href="#section-10" data-section="section-10">Vite env 安全規則</a><a href="#section-11" data-section="section-11">資訊架構</a><a href="#section-15" data-section="section-15">視覺與無障礙</a><a href="#section-16" data-section="section-16">Contract-first API client</a><a href="#section-17" data-section="section-17">先用 mock 打通的 Demo story</a><a href="#section-18" data-section="section-18">Smoke tests</a><a href="#section-19" data-section="section-19">常見錯誤</a><a href="#section-20" data-section="section-20">驗收測試</a><a href="#section-21" data-section="section-21">PR 標準</a><a href="#section-22" data-section="section-22">可直接貼到 Cursor/Codex 的 Prompt</a></details><h1 id="section-1">任務書 2 — Frontend Engineer（React + TypeScript + Vite）</h1>
+<h2 id="section-2">任務結果</h2>
+<p>交付一個精緻、可鍵盤操作、對金融初學者友善的 B2C Demo。三個核心 surface：Overview/Transactions、Alert Detail + Human Confirmation、Privacy &amp; Memory。前端只呼叫自家 FastAPI，從不接觸 Nessie/Jev/Backboard key。</p>
+<h2 id="section-3">你的檔案所有權</h2>
+<pre><code class="language-text">frontend/**
+</code></pre>
+<p><code>contracts/internal-api.openapi.yaml</code> 為只讀；需要變更先向 Integration Engineer 提案。不要在 UI 直接 call vendors，不要在 Vite env 放 secrets。</p>
+<h2 id="section-4">從零建立環境</h2>
+<p>先看 <a href="START-HERE-md.html">START-HERE.md</a>。可立即安裝 Git 與 Node；<code>npm ci</code>、啟動及測試要等 Frontend owner 建立 scaffold、提交 package 與 lock files。macOS <code>brew</code> 指令預設已安裝 Homebrew。</p>
+<h3 id="section-5">必要版本</h3>
+<ul>
+<li>Git 2.40+。</li>
+<li>Node.js 符合目前 Vite 官方要求：20.19+ 或 22.12+。建議 Node 22 LTS。</li>
+<li>npm 隨 Node 安裝。</li>
+</ul>
+<h3 id="section-6">macOS</h3>
+<pre><code class="language-bash">xcode-select --install
+brew install git node@22 gh
+git --version
+node --version
+npm --version
+</code></pre>
+<h3 id="section-7">Windows 11 PowerShell</h3>
+<pre><code class="language-powershell">winget install --id Git.Git -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id GitHub.cli -e
+git --version
+node --version
+npm --version
+</code></pre>
+<p>重新開啟 PowerShell 後再檢查版本。</p>
+<h3 id="section-8">Ubuntu/Debian</h3>
+<pre><code class="language-bash">sudo apt-get update
+sudo apt-get install -y git nodejs npm
+git --version
+node --version
+npm --version
+</code></pre>
+<p>若 <code>node --version</code> 低於 Vite 要求，不要硬跑；改用 Node 官方/團隊既定的 Node 22 安裝方式，再重新檢查。</p>
+<h3 id="section-9">Clone 與安裝</h3>
+<pre><code class="language-bash">git clone https://github.com/&lt;ORG_OR_USER&gt;/trustledger.git
+cd trustledger/frontend
+npm ci
+cp ../frontend.env.example .env.local
+npm run dev
+</code></pre>
+<p>Windows：</p>
+<pre><code class="language-powershell">git clone https://github.com/&lt;ORG_OR_USER&gt;/trustledger.git
+Set-Location trustledger\frontend
+npm ci
+Copy-Item ..\frontend.env.example .env.local
+npm run dev
+</code></pre>
+<p>若 repo 尚未 scaffold，由 Frontend owner 執行一次，其他人不要重複：</p>
+<pre><code class="language-bash">npm create vite@latest frontend -- --template react-ts --no-interactive
+cd frontend
+npm install
+</code></pre>
+<h2 id="section-10">Vite env 安全規則</h2>
+<p>只有下列 public config 可以是 <code>VITE_*</code>：</p>
+<pre><code class="language-text">VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_DEMO_USER_LABEL=Demo user
+</code></pre>
+<p>Vite 會把 <code>VITE_*</code> 編進 browser bundle，所以 Nessie/Jev/Backboard key、database URL、deploy token 永遠不可以放進前端 env。PR 前執行：</p>
+<pre><code class="language-bash">rg -n &quot;NESSIE|JEV_API|BACKBOARD|sk-|api[_-]?key|secret&quot; src . --glob &#39;!node_modules/**&#39;
+</code></pre>
+<p>只允許 UI label、type name 或安全文件文字命中；任何真實值立即 rotate。</p>
+<h2 id="section-11">資訊架構</h2>
+<h3 id="section-12">1. Overview / Transactions</h3>
+<ul>
+<li>Header：TrustLedger、demo mode badge、Data/Analysis/Memory status。</li>
+<li>Summary：月支出、open alerts、已確認件數。只放真正有資料來源的 2–3 個數字。</li>
+<li>Transaction list：日期、merchant display、category、amount、source badge、alert state。</li>
+<li><code>synthetic</code>/<code>nessie</code> 必須明確；不可用模糊「Bank connected」。</li>
+<li>Empty/loading/error/degraded 狀態齊全。</li>
+</ul>
+<h3 id="section-13">2. Alert Detail</h3>
+<ul>
+<li>明確標題：<code>可能的重複扣款</code>、<code>金額明顯不同</code>、<code>訂閱金額變動</code>。</li>
+<li>顯示 evidence、confidence、provider mode。</li>
+<li>文案避免「詐欺」「被盜」等斷言：使用「建議確認」「系統注意到」。</li>
+<li>主要 actions：<code>這是正常交易</code>、<code>我想進一步檢查</code>。</li>
+<li>確認前用 checkbox：<code>允許 TrustLedger 記住這項確認，以改善未來提醒</code>。預設不勾。</li>
+<li>vendor unavailable 時顯示 rules-only，不把技術 error/stack 暴露給使用者。</li>
+</ul>
+<h3 id="section-14">3. Privacy Inspector / Memory</h3>
+<ul>
+<li>Field transformation table：原始欄位名稱、action、output、reason。</li>
+<li>Safe payload JSON viewer 只呈現 backend 回傳 <code>safe_payload</code>；不要在 browser 自行重新建構。</li>
+<li>顯示目的地 Jev 或 Backboard memory。</li>
+<li>記憶列表含 summary、建立時間、source、刪除按鈕。</li>
+<li>刪除需二次確認，但不能做深色迷惑式設計。</li>
+</ul>
+<h2 id="section-15">視覺與無障礙</h2>
+<ul>
+<li>以清楚、可信任、低壓力為主：深海 navy + teal accent，可配合 Technica 2026 <code>Dare to Dive</code>，但不要冒充官方品牌。</li>
+<li>status 不只靠顏色；搭配文字與 icon。</li>
+<li>contrast 達 WCAG AA；focus ring 清楚。</li>
+<li>semantic <code>button</code>/<code>table</code>/headings/landmarks；modal 有 focus management。</li>
+<li>金額使用 <code>Intl.NumberFormat</code>；日期明確顯示 local timezone。</li>
+<li>confidence 顯示百分比 + 說明，不能像信用分數。</li>
+<li>320px 寬不水平破版；transaction table 在窄螢幕改 stacked rows。</li>
+<li>loading 使用 <code>aria-live=&quot;polite&quot;</code>，error 使用可閱讀的 alert；避免不停 announce 動畫。</li>
+<li>尊重 <code>prefers-reduced-motion</code>。</li>
+</ul>
+<h2 id="section-16">Contract-first API client</h2>
+<p>只實作一層 typed API client：</p>
+<pre><code class="language-text">GET    /api/v1/health
+GET    /api/v1/transactions
+POST   /api/v1/analyses
+GET    /api/v1/alerts
+GET    /api/v1/privacy/preview/{transaction_id}
+POST   /api/v1/alerts/{alert_id}/confirmations
+GET    /api/v1/memories
+DELETE /api/v1/memories/{memory_id}
+</code></pre>
+<p>精確 schema：<a href="contracts-internal-api-openapi-yaml.html">contracts/internal-api.openapi.yaml</a>。</p>
+<p>要求：</p>
+<ul>
+<li><code>AbortController</code> timeout/cancel。</li>
+<li>HTTP non-2xx 解析統一 <code>ErrorEnvelope</code>；不直接顯示 upstream body。</li>
+<li>dev mock 與 real API 使用相同 TypeScript interfaces。</li>
+<li>component 不直接呼叫 <code>fetch</code>；只能透過 API client/hooks。</li>
+<li>mutation 後只 invalidates 必要 data，不全頁 reload。</li>
+</ul>
+<h2 id="section-17">先用 mock 打通的 Demo story</h2>
+<ol>
+<li>開啟 dashboard 看見 8 筆 synthetic transactions。</li>
+<li><code>txn_syn_004</code> 有 duplicate alert。</li>
+<li>開啟 detail，看到兩筆 streaming 同金額與 6 分鐘間隔的 evidence。</li>
+<li>Privacy Inspector 顯示 merchant 被 generalized、amount bucketed、account field dropped。</li>
+<li>選 <code>正常交易</code>，不勾 consent → memory status <code>not-requested</code>。</li>
+<li>再次示範勾 consent → <code>written</code> 或 <code>pending</code>；如果 provider unavailable，誠實顯示 skipped/failed。</li>
+</ol>
+<h2 id="section-18">Smoke tests</h2>
+<pre><code class="language-bash">cd frontend
+npm run lint
+npm run build
+npm run dev
+</code></pre>
+<p>預期：</p>
+<ul>
+<li>lint 0 errors。</li>
+<li>build 成功產生 <code>dist/</code>，沒有 unresolved env/key warning。</li>
+<li><code>http://localhost:5173</code> 可載入；backend 沒開時顯示清楚 offline state，不是 blank screen。</li>
+</ul>
+<p>若 repo 有 Vitest/Testing Library：</p>
+<pre><code class="language-bash">npm test -- --run
+</code></pre>
+<p>最低 component tests：</p>
+<ul>
+<li>Health badges 三種 mode。</li>
+<li>Alert detail evidence 與 confidence。</li>
+<li>consent 預設 false，未勾不得送 true。</li>
+<li>confirmation success/error/degraded。</li>
+<li>Privacy Inspector 完全顯示 API 的 safe payload。</li>
+<li>keyboard focus 回到觸發按鈕；delete confirmation 可取消。</li>
+</ul>
+<h2 id="section-19">常見錯誤</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>症狀</th>
+<th>原因</th>
+<th>修正</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Vite 要求較新 Node</td>
+<td>Node 低於 20.19/22.12</td>
+<td>安裝 Node 22 LTS，刪除 node_modules 後 <code>npm ci</code></td>
+</tr>
+<tr>
+<td><code>npm ci</code> 失敗</td>
+<td>lock file 與 package.json 不一致</td>
+<td>由 frontend owner 修 lock；不要各自刪 lock</td>
+</tr>
+<tr>
+<td>CORS blocked</td>
+<td>backend 未允許 5173</td>
+<td>回報 Backend owner；不要用 <code>mode:no-cors</code></td>
+</tr>
+<tr>
+<td><code>VITE_API_BASE_URL</code> undefined</td>
+<td>env file 放錯位置/未重啟 dev server</td>
+<td>放 <code>frontend/.env.local</code>，重啟 Vite</td>
+</tr>
+<tr>
+<td>key 出現在 Network tab</td>
+<td>前端直接 call vendor 或 <code>VITE_*</code> 放 secret</td>
+<td>立即移除、rotate key、改走 FastAPI</td>
+</tr>
+<tr>
+<td>Privacy UI 與 payload 不一致</td>
+<td>前端自行推算</td>
+<td>顯示 backend <code>PrivacyPreview</code></td>
+</tr>
+<tr>
+<td>409 confirmation</td>
+<td>double-click/重送</td>
+<td>disable in-flight action，顯示已確認狀態</td>
+</tr>
+<tr>
+<td>mobile table 爆版</td>
+<td>固定寬度欄位</td>
+<td>使用 stacked rows/可換行，不縮小到不可讀</td>
+</tr>
+</tbody></table></div>
+<h2 id="section-20">驗收測試</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 只需滑鼠以外，Tab/Enter/Space/Escape 可完成核心 flow。</li>
+<li><input disabled="" type="checkbox"> 320px、768px、1440px 無重疊/截斷。</li>
+<li><input disabled="" type="checkbox"> empty/loading/error/degraded/success state 齊全。</li>
+<li><input disabled="" type="checkbox"> UI 不稱 fraud confirmed 或 bank connected（除非 live status 證明）。</li>
+<li><input disabled="" type="checkbox"> source、provider mode、memory status 可見。</li>
+<li><input disabled="" type="checkbox"> consent 預設 false，提交值與 UI 一致。</li>
+<li><input disabled="" type="checkbox"> frontend bundle 搜不到任何真實 vendor key。</li>
+<li><input disabled="" type="checkbox"> <code>npm run lint &amp;&amp; npm run build</code> 通過。</li>
+<li><input disabled="" type="checkbox"> 完成一次真人 90 秒 demo rehearsal。</li>
+</ul>
+<h2 id="section-21">PR 標準</h2>
+<p>PR title：<code>feat(frontend): build privacy-first transaction review flow</code>。</p>
+<p>附上：</p>
+<ul>
+<li>三個 viewport 截圖或短錄影。</li>
+<li>已測的 keyboard flow。</li>
+<li>mock/live data source 說明。</li>
+<li><code>npm run lint</code>、<code>npm run build</code>、tests 結果。</li>
+<li>contract 版本與任何 assumption。</li>
+<li>不含任何個資、key 或真實財務畫面。</li>
+</ul>
+<h2 id="section-22">可直接貼到 Cursor/Codex 的 Prompt</h2>
+<p>完整可複製版本：<a href="prompts-frontend-prompt-md.html">prompts/frontend.prompt.md</a>。</p>
+</article></main></div><script>
+const main=document.querySelector('main');let currentDiagram=0,scale=1;
+function copyButtons(){main.querySelectorAll('pre').forEach(pre=>{const b=document.createElement('button');b.className='plainbtn copy';b.textContent='複製程式區塊';b.onclick=async()=>{try{await navigator.clipboard.writeText(pre.innerText);b.textContent='已複製'}catch{const range=document.createRange();range.selectNodeContents(pre);const sel=getSelection();sel.removeAllRanges();sel.addRange(range);b.textContent='已選取，請按 ⌘C'}};pre.after(b)})}
+document.querySelector('#nav-search')?.addEventListener('input',e=>{document.querySelectorAll('.navitem').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(e.target.value.toLowerCase()))});
+document.addEventListener('click',e=>{const p=e.target.closest('[data-print]');if(p)window.print();const s=e.target.closest('[data-section]');if(s){e.preventDefault();document.getElementById(s.dataset.section)?.scrollIntoView({behavior:'smooth'})}});
+function mount(){const key=decodeURIComponent(location.hash.slice(1));const file=key.startsWith('doc:')?key.slice(4):null;const tpl=file?document.getElementById('doc-'+file.replace(/[^a-zA-Z0-9_-]/g,'-')):document.getElementById('home-content');if(!tpl)return;main.innerHTML=tpl.innerHTML;document.querySelectorAll('.navitem').forEach(a=>a.classList.toggle('active',a.dataset.file===file));copyButtons();if(!file){initDiagram();if(key==='diagrams')document.getElementById('diagrams').scrollIntoView()}else window.scrollTo(0,0);document.title=(file?(document.querySelector('.navitem.active')?.textContent||'文件'):'TrustLedger Build Kit')+' · TrustLedger'}
+function setZoom(value){scale=Math.min(2.2,Math.max(.65,value));const svg=document.querySelector('.stage svg');if(!svg)return;svg.style.width=(Number(svg.getAttribute('width'))*scale)+'px';svg.style.height=(Number(svg.getAttribute('height'))*scale)+'px';document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%'}
+function fit(){const stage=document.querySelector('.stage'),svg=stage?.querySelector('svg');if(svg)setZoom(Math.max(.8,(stage.clientWidth-24)/Number(svg.getAttribute('width'))))}
+function showDiagram(i){currentDiagram=i;const list=JSON.parse(document.getElementById('diagram-meta').textContent),d=list[i];const stage=document.querySelector('.stage');stage.innerHTML=document.getElementById('diagram-'+d.id).innerHTML;document.querySelector('#diagram-title').textContent=d.title;document.querySelector('#diagram-desc').textContent=d.desc;document.querySelectorAll('[data-diagram]').forEach(a=>{a.classList.toggle('active',Number(a.dataset.diagram)===i);a.setAttribute('aria-pressed',String(Number(a.dataset.diagram)===i))});stage.scrollTop=0;stage.scrollLeft=0;fit()}
+function initDiagram(){showDiagram(currentDiagram);document.querySelectorAll('[data-diagram]').forEach(a=>a.onclick=e=>{e.preventDefault();showDiagram(Number(a.dataset.diagram))});document.querySelector('[data-zoom-in]').onclick=()=>setZoom(scale+.15);document.querySelector('[data-zoom-out]').onclick=()=>setZoom(scale-.15);document.querySelector('[data-fit]').onclick=fit;document.querySelector('[data-native]').onclick=()=>setZoom(1);document.querySelector('[data-expand]').onclick=e=>{const viewer=document.querySelector('.viewer');viewer.classList.toggle('expanded');e.currentTarget.textContent=viewer.classList.contains('expanded')?'關閉全螢幕':'全螢幕';fit()};document.querySelector('[data-save-svg]').onclick=()=>{const d=JSON.parse(document.getElementById('diagram-meta').textContent)[currentDiagram],source=document.getElementById('diagram-'+d.id).innerHTML;const url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));const a=document.createElement('a');a.href=url;a.download=d.id+'.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelector('.viewer')?.classList.remove('expanded');const b=document.querySelector('[data-expand]');if(b)b.textContent='全螢幕'}});
+if(document.getElementById('home-content')){window.addEventListener('hashchange',mount);mount()}else copyButtons();
+</script></body></html>

@@ -1,0 +1,53 @@
+sequenceDiagram
+  autonumber
+  actor User as Demo user
+  participant UI as React UI
+  participant API as FastAPI
+  participant Data as Data adapter
+  participant Privacy as Privacy guard
+  participant Rules as Rules
+  participant Jev as Jev optional
+  participant Memory as Memory policy
+  participant BB as Backboard optional
+
+  User->>UI: Open transaction dashboard
+  UI->>API: GET /api/v1/transactions
+  API->>Data: list_transactions(server identity)
+  alt Nessie live and healthy
+    Data-->>API: Canonical sandbox context / transactions
+  else Synthetic default or fallback
+    Data-->>API: Deterministic synthetic transactions
+  end
+  API-->>UI: Transactions with source labels
+
+  User->>UI: Open duplicate candidate
+  UI->>API: POST /api/v1/analyses {transaction_id}
+  API->>Data: get transaction + safe history
+  API->>Privacy: build safe-ai-payload-v1
+  Privacy-->>API: safe payload + inspector actions
+  API->>Rules: analyze safe features
+  Rules-->>API: evidence + baseline classification
+  opt Jev configured and healthy
+    API->>Jev: POST /api/v1/systemone/ with safe payload
+    Jev-->>API: bounded answers + probabilities + model version
+  end
+  API-->>UI: Analysis + provider mode
+
+  User->>UI: View Privacy Inspector
+  UI->>API: GET /api/v1/privacy/preview/{transaction_id}
+  API-->>UI: Exact safe payload + field actions
+
+  User->>UI: Confirm normal/review and consent flag
+  UI->>API: POST /alerts/{alert_id}/confirmations
+  API->>API: Verify server identity, ownership, idempotency
+  API->>Memory: Evaluate memory write gate
+  alt Consent false or policy disabled
+    Memory-->>API: not-requested / skipped
+  else Consent true and safe
+    Memory->>BB: Add sanitized abstract memory
+    BB-->>Memory: written or async pending
+    Memory-->>API: safe memory status
+  end
+  API-->>UI: Confirmation preserved + memory status
+  UI-->>User: Human-readable result and delete control
+

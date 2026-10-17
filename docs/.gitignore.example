@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+!frontend.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+node_modules/
+dist/
+.DS_Store
+*.log
+trustledger-demo.db
+

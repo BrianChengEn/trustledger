@@ -1,0 +1,231 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GitHub 協作 · TrustLedger</title><style>
+:root{color-scheme:light;--ink:#192d46;--muted:#61728a;--line:#e0e7ef;--accent:#087f6b;--paper:#fff;--bg:#f4f7fa}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}a{color:#1762b1;text-underline-offset:4px}button,input{font:inherit}button,a,input{touch-action:manipulation}:focus-visible{outline:3px solid #0a997d;outline-offset:4px}button{cursor:pointer}header{background:#112b3e;color:#edf7fc;padding:22px 5%;display:flex;align-items:center;justify-content:space-between;gap:18px}header a{color:inherit;text-decoration:none}.brand{font-size:20px;font-weight:700;letter-spacing:-.4px}.brand small{font-size:12px;letter-spacing:1.6px;font-weight:500;color:#a1cfce;display:block}nav{display:flex;flex-wrap:wrap;gap:20px;font-size:15px}.layout{max-width:1520px;margin:auto;display:grid;grid-template-columns:255px minmax(0,1fr)}aside{padding:28px 18px;border-right:1px solid var(--line);background:#f9fbfc;align-self:start;position:sticky;top:0;max-height:100vh;overflow:auto}aside label{font-size:13px;color:var(--muted)}input{display:block;width:100%;background:white;border:1px solid #ccd7e3;border-radius:8px;padding:9px 12px;margin:8px 0 20px}.navitem{display:block;text-decoration:none;color:#3b526c;padding:8px 12px;font-size:14px;border-radius:8px;margin:2px 0}.navitem.active{background:#e3f3ee;color:#086b5a;font-weight:650}.navitem:hover{background:#eaf0f5}.navgroup{font-size:11px;letter-spacing:2px;font-weight:700;color:#7b8da3;margin:22px 12px 10px}main{padding:44px clamp(20px,4vw,64px) 90px;min-width:0}.eyebrow{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--accent)}h1{font-size:clamp(32px,4vw,54px);line-height:1.2;letter-spacing:-1.5px;margin:12px 0 20px}h2{font-size:27px;line-height:1.4;letter-spacing:-.6px;margin:40px 0 16px}h3{font-size:20px;margin:28px 0 10px}.intro{font-size:18px;color:var(--muted);max-width:780px}.hero{padding-bottom:32px;border-bottom:1px solid var(--line)}.notice{margin:24px 0;padding:18px 22px;background:#e9f6f1;border-left:3px solid #11856b;border-radius:0 10px 10px 0}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.doccard{display:block;text-decoration:none;color:var(--ink);padding:23px;background:#fff;border:1px solid var(--line);border-radius:12px;transition:border-color .15s}.doccard:hover{border-color:#64ae9d}.doccard b{display:block;font-size:20px;margin:6px 0}.doccard small{font-size:12px;letter-spacing:1px;color:var(--accent)}.doccard p{color:var(--muted);margin:5px 0;font-size:15px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0}.toolbar button,.toolbar a,.plainbtn{border:1px solid #ccd7e3;border-radius:7px;padding:7px 12px;color:var(--ink);background:#fff;text-decoration:none;font-size:14px}.toolbar button:hover,.plainbtn:hover{background:#edf4f8}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 18px}.tabs a{border-radius:7px;padding:9px 14px;background:#e8eef4;color:#3d526a;text-decoration:none;font-size:15px}.tabs a.active{background:#087f6b;color:#fff}.viewer{border:1px solid #d9e3ed;border-radius:14px;background:white;padding:18px}.viewer h2{margin:0;font-size:26px}.viewer p{color:var(--muted);margin:6px 0 12px;max-width:850px}.stage{height:680px;max-height:72vh;overflow:auto;background:#fff;border:1px solid #e2e9ef;border-radius:9px}.stage svg{display:block;max-width:none;flex:none}.diagram-caption{font-size:14px;color:var(--muted)}.expanded{position:fixed;inset:12px;z-index:20;display:flex;flex-direction:column;box-shadow:0 0 0 30px #112b3eaa}.expanded .stage{height:auto;max-height:none;flex:1}.expanded p{display:none}.article{max-width:960px;overflow-wrap:anywhere}.article h1{font-size:36px}.article h2{padding-top:18px;border-top:1px solid var(--line);scroll-margin-top:24px}.article p,.article li{max-width:90ch}.article li{margin:5px 0}.article blockquote{margin:20px 0;background:#eaf4f2;border-left:3px solid #11856b;padding:10px 22px}.table-wrap{overflow:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}th,td{padding:12px 14px;border-bottom:1px solid #e0e7ef;text-align:left;vertical-align:top}th{background:#eaf0f5}pre{background:#122b3f;color:#ecf5fc;padding:24px;border-radius:10px;overflow:auto;font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;position:relative}code{font: .9em ui-monospace,SFMono-Regular,Menlo,monospace;background:#e6edf3;padding:2px 5px;border-radius:4px}pre code{background:none;padding:0;color:inherit;font-size:inherit}.copy{display:block;margin-top:-12px;margin-bottom:22px}.toc{padding:15px 20px;background:#fff;border:1px solid var(--line);border-radius:9px;margin:24px 0}.toc summary{cursor:pointer;font-weight:650}.toc a{display:block;font-size:14px;padding:4px 0}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}.hidden,[hidden]{display:none!important}.downloadrow{display:flex;gap:12px;flex-wrap:wrap}.badge{font-size:12px;color:#087f6b;background:#e1f3ed;padding:5px 9px;border-radius:5px}.topbar{display:flex;justify-content:space-between;gap:10px;align-items:center}.back{font-size:14px}.noscript{padding:16px;background:#fff3dc}@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:relative;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:14px 22px}aside details:not([open]) .navlist{display:none}aside input{max-width:480px}.navlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:30px 20px 65px}header{padding:18px 22px;align-items:start}.stage{height:650px}.cards{grid-template-columns:1fr}.article h1{font-size:30px}}@media(max-width:520px){header{display:block}nav{margin-top:14px;gap:16px}.navlist{grid-template-columns:1fr}.expanded{inset:4px;padding:10px}.expanded .toolbar{gap:5px}.toolbar button,.toolbar a{padding:7px 9px}.viewer{padding:12px}.article h1{font-size:28px}}@media print{header,aside,.toolbar,.tabs,.toc,.copy,.topbar{display:none!important}.layout{display:block}main{padding:0}.stage{height:auto;max-height:none;overflow:visible}.stage svg{width:100%!important;height:auto!important}.viewer{border:0}body{background:#fff}pre{white-space:pre-wrap;break-inside:avoid}a{color:inherit}.article{max-width:none}.expanded{position:static;box-shadow:none}}</style></head><body><header><a class="brand" href="../index.html">TrustLedger<small>TECHNICA 2026 · TEAM BUILD KIT</small></a><nav><a href="../index.html">文件首頁</a><a href="../index.html#diagrams">六張流程圖</a><span class="badge">離線可讀 · v2</span></nav></header><div class="layout"><aside><details open><summary>文件導覽</summary><label for="nav-search">找文件</label><input id="nav-search" type="search" placeholder="AI、環境、GitHub…"><div class="navlist"><a class="navitem" data-file="START-HERE.md"  href="START-HERE-md.html">START · 立即開始</a><a class="navitem" data-file="README.md"  href="README-md.html">READ · README</a><a class="navitem" data-file="00-overall-architecture-report.md"  href="00-overall-architecture-report-md.html">00 · 總體架構</a><a class="navitem" data-file="01-ai-engineer-jev-backboard.md"  href="01-ai-engineer-jev-backboard-md.html">01 · AI Engineer</a><a class="navitem" data-file="02-frontend-react-vite.md"  href="02-frontend-react-vite-md.html">02 · React / Vite</a><a class="navitem" data-file="03-nessie-data.md"  href="03-nessie-data-md.html">03 · Nessie / Data</a><a class="navitem" data-file="04-fastapi-integration-deployment.md"  href="04-fastapi-integration-deployment-md.html">04 · FastAPI / Deploy</a><a class="navitem" data-file="05-github-collaboration.md"  href="05-github-collaboration-md.html">05 · GitHub 協作</a><a class="navitem" data-file="06-security-privacy-threat-model.md"  href="06-security-privacy-threat-model-md.html">06 · 資安與隱私</a><a class="navitem" data-file="07-submission-runbook.md"  href="07-submission-runbook-md.html">07 · 提交 Runbook</a><a class="navitem" data-file="SOURCES.md"  href="SOURCES-md.html">SRC · 來源與待驗證</a><a class="navitem" data-file="prompts/ai-engineer.prompt.md"  href="prompts-ai-engineer-prompt-md.html">P1 · AI Prompt</a><a class="navitem" data-file="prompts/frontend.prompt.md"  href="prompts-frontend-prompt-md.html">P2 · Frontend Prompt</a><a class="navitem" data-file="prompts/nessie-data.prompt.md"  href="prompts-nessie-data-prompt-md.html">P3 · Data Prompt</a><a class="navitem" data-file="prompts/backend-integration.prompt.md"  href="prompts-backend-integration-prompt-md.html">P4 · Backend Prompt</a><a class="navitem" data-file="contracts/internal-api.openapi.yaml"  href="contracts-internal-api-openapi-yaml.html">API · Internal OpenAPI</a><a class="navitem" data-file="fixtures/synthetic-transactions.json"  href="fixtures-synthetic-transactions-json.html">DATA · Synthetic fixture</a><a class="navitem" data-file=".env.example"  href="-env-example.html">ENV · Backend env 範本</a><a class="navitem" data-file="frontend.env.example"  href="frontend-env-example.html">ENV · Frontend env 範本</a><a class="navitem" data-file="templates/ci.example.yml"  href="templates-ci-example-yml.html">CI · CI 範本</a><a class="navitem" data-file="templates/PULL_REQUEST_TEMPLATE.md"  href="templates-PULL_REQUEST_TEMPLATE-md.html">PR · PR 範本</a><a class="navitem" data-file="diagrams/index.md"  href="diagrams-index-md.html">MAP · 圖表原始檔導覽</a></div></details></aside><main><div class="topbar"><a class="back" href="../index.html">← 文件首頁</a><button class="plainbtn" data-print>列印 / PDF</button></div><article class="article"><details class="toc"><summary>本頁目錄 · 15 節</summary><a href="#section-2" data-section="section-2">目標</a><a href="#section-3" data-section="section-3">1. 建立 repository</a><a href="#section-6" data-section="section-6">2. 邀請協作者</a><a href="#section-7" data-section="section-7">3. 分支與 owner</a><a href="#section-8" data-section="section-8">4. Contract freeze</a><a href="#section-9" data-section="section-9">5. PR 流程</a><a href="#section-10" data-section="section-10">6. Main protection</a><a href="#section-11" data-section="section-11">7. Worktrees（給同一台電腦並行工作的成員）</a><a href="#section-12" data-section="section-12">8. 同步與衝突</a><a href="#section-14" data-section="section-14">9. CI</a><a href="#section-15" data-section="section-15">10. Secret management</a><a href="#section-20" data-section="section-20">11. 合併順序</a><a href="#section-21" data-section="section-21">12. 最後 3 小時規則</a><a href="#section-22" data-section="section-22">13. Team sync 模板</a><a href="#section-23" data-section="section-23">合併前總檢查</a></details><h1 id="section-1">GitHub 四人協作手冊</h1>
+<h2 id="section-2">目標</h2>
+<p>四個人可以平行開發，但任何時間 <code>main</code> 都能跑 synthetic vertical slice。協作的核心不是「大家都能改所有檔案」，而是清楚 owner、contract freeze、小 PR、早整合、零 secrets。</p>
+<h2 id="section-3">1. 建立 repository</h2>
+<p>由一位 Integration Engineer 建立 <code>trustledger</code> repository。</p>
+<h3 id="section-4">GitHub UI</h3>
+<ol>
+<li>New repository → <code>trustledger</code>。</li>
+<li>比賽中建議 Private；若 sponsor/Devpost 要求 public，在提交前確認後再切換。</li>
+<li>不勾自動 README/.gitignore/license，若本機已初始化；避免第一次 push 衝突。</li>
+<li>建立後依 GitHub 顯示的 exact remote command 操作。</li>
+</ol>
+<h3 id="section-5">GitHub CLI（若團隊已登入）</h3>
+<pre><code class="language-bash">git init
+git add .
+git commit -m &quot;chore: bootstrap TrustLedger&quot;
+gh repo create trustledger --private --source=. --remote=origin --push
+</code></pre>
+<p>不要在截止前花時間建立 organization，除非團隊本來就有。</p>
+<h2 id="section-6">2. 邀請協作者</h2>
+<p>Repository → Settings → Collaborators/Manage access → Add people → 輸入三位隊友的 exact GitHub username。每位隊友接受 email/GitHub 邀請後：</p>
+<pre><code class="language-bash">git clone https://github.com/&lt;ORG_OR_USER&gt;/trustledger.git
+cd trustledger
+git remote -v
+git fetch origin
+</code></pre>
+<p>不要共享 GitHub 密碼、personal access token 或 deploy token。每人用自己的帳號/SSH key/credential manager。</p>
+<h2 id="section-7">3. 分支與 owner</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>角色</th>
+<th>建議 branch</th>
+<th>主要目錄</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AI</td>
+<td><code>feat/ai-privacy-memory</code></td>
+<td><code>backend/app/services/ai/**</code></td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td><code>feat/frontend-dashboard</code></td>
+<td><code>frontend/**</code></td>
+</tr>
+<tr>
+<td>Data</td>
+<td><code>feat/data-nessie-adapter</code></td>
+<td><code>backend/app/adapters/**</code>、<code>fixtures/**</code></td>
+</tr>
+<tr>
+<td>Integration</td>
+<td><code>feat/api-vertical-slice</code></td>
+<td><code>backend/app/api/**</code>、<code>core/**</code>、<code>contracts/**</code></td>
+</tr>
+</tbody></table></div>
+<p>其他命名：<code>fix/...</code>、<code>docs/...</code>、<code>chore/...</code>。不要用 <code>brian-final-final2</code>。</p>
+<p>開始任務：</p>
+<pre><code class="language-bash">git switch main
+git pull --ff-only
+git switch -c feat/&lt;scope&gt;
+</code></pre>
+<p>每 30–60 分鐘做一個可理解 commit；commit message 示例：</p>
+<pre><code class="language-text">feat(ai): add allowlisted privacy payload
+test(data): cover Nessie timeout fallback
+fix(api): preserve confirmation when memory fails
+docs: credit AI tools used for the project
+</code></pre>
+<h2 id="section-8">4. Contract freeze</h2>
+<p><code>contracts/internal-api.openapi.yaml</code> 由 Integration Engineer 擁有。流程：</p>
+<ol>
+<li>2026-10-17 13:30 EDT 前合併 v0.1。</li>
+<li>Frontend 依 contract 寫 mock/client；Backend 依 contract 寫 routes。</li>
+<li>Contract 變更 PR 必須標：breaking/non-breaking、影響 endpoint/type、migration。</li>
+<li>Frontend + Backend 至少各一人 approve breaking change。</li>
+<li>feature freeze 後只接受修 bug 所需的最小 contract 變更。</li>
+</ol>
+<h2 id="section-9">5. PR 流程</h2>
+<pre><code class="language-bash">git status
+git add &lt;owned-files-only&gt;
+git commit -m &quot;feat(scope): concise outcome&quot;
+git push -u origin feat/&lt;scope&gt;
+gh pr create --fill
+</code></pre>
+<p>PR 必須小而可 review；理想 100–400 changed lines（fixture/generated lock 例外）。每個 PR 填：</p>
+<ul>
+<li>Outcome / scope。</li>
+<li>Files owned/touched。</li>
+<li>Contract impact。</li>
+<li>Tests command + result。</li>
+<li>Screenshots（UI only，零個資/key）。</li>
+<li>Security/privacy checks。</li>
+<li>Fallback/degraded behavior。</li>
+<li>Known limitations / next integration step。</li>
+</ul>
+<p>Review 先看：secret/PII → contract → tests/fallback → code → style。</p>
+<h2 id="section-10">6. Main protection</h2>
+<p>若 GitHub plan/UI 可用，在 Settings → Branches/Rulesets 對 <code>main</code> 設：</p>
+<ul>
+<li>Require pull request before merge。</li>
+<li>Require 1 approval；最後 2 小時可由 integrator依團隊協議 emergency merge，但仍要 CI。</li>
+<li>Require status checks：backend tests、frontend lint/build。</li>
+<li>Block force push、block deletion。</li>
+<li>啟用 conversation resolution。</li>
+</ul>
+<p>不要把「admins 可 bypass」當日常流程。</p>
+<h2 id="section-11">7. Worktrees（給同一台電腦並行工作的成員）</h2>
+<p>每位隊友有自己電腦時用普通 clone 即可。Worktree 適合 integrator 在同一台機器同時保留 main 與多個 branch，不是共享檔案同步工具。</p>
+<p>從 repo root：</p>
+<pre><code class="language-bash">git fetch origin
+git worktree add ../trustledger-ai -b feat/ai-privacy-memory origin/main
+git worktree add ../trustledger-api -b feat/api-vertical-slice origin/main
+git worktree list
+</code></pre>
+<p>規則：</p>
+<ul>
+<li>一個 branch 同時只能 checkout 在一個 worktree。</li>
+<li>每個 worktree 都要獨立 <code>.venv</code>/<code>node_modules</code>/<code>.env</code>；不要 symlink secrets。</li>
+<li>合併後用 <code>git worktree remove ../trustledger-ai</code> 前先確認 clean 且已 push；不要刪有未提交檔案的 worktree。</li>
+<li>不把 worktree 目錄放進 repository 內。</li>
+</ul>
+<h2 id="section-12">8. 同步與衝突</h2>
+<p>每天/每次 PR 前：</p>
+<pre><code class="language-bash">git fetch origin
+git rebase origin/main
+</code></pre>
+<p>衝突時：</p>
+<ol>
+<li>先讀 <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>、<code>=======</code>、<code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> 兩邊語意。</li>
+<li>找檔案 owner；不要直接選「ours/theirs」覆蓋未知改動。</li>
+<li>手動整合、執行相關 tests。</li>
+<li><code>git add &lt;resolved-files&gt;</code> → <code>git rebase --continue</code>。</li>
+<li>已 push 的 feature branch 如需更新，用 <code>git push --force-with-lease</code>，絕不用 plain <code>--force</code>；若團隊不熟 rebase，改用 merge main。</li>
+</ol>
+<h3 id="section-13">高衝突檔案</h3>
+<ul>
+<li><code>contracts/internal-api.openapi.yaml</code>：Integration owner only。</li>
+<li>dependency lock：Frontend/Backend 各自單一 owner。</li>
+<li><code>README.md</code>/Devpost text：最後由 integrator 整理。</li>
+<li><code>.env.example</code>：任何新增變數先審安全與 owner。</li>
+</ul>
+<h2 id="section-14">9. CI</h2>
+<p>CI 不應有 live vendor keys，也不應 call Nessie/Jev/Backboard。使用 mocks/contracts，避免 fork PR 或 log 洩漏。</p>
+<p>建議 checks：</p>
+<pre><code class="language-text">backend: install → pytest
+frontend: npm ci → lint → test (若有) → build
+security: ensure no tracked .env; optional secret scanner
+contract: parse OpenAPI/YAML; optional snapshot diff
+</code></pre>
+<p>可複製草案：<a href="templates-ci-example-yml.html">templates/ci.example.yml</a>。把它複製成 <code>.github/workflows/ci.yml</code> 前，確認 repo 的 Python dependency file、npm scripts 與 GitHub Actions major versions。範例故意沒有 vendor secrets。</p>
+<h2 id="section-15">10. Secret management</h2>
+<h3 id="section-16">本機</h3>
+<ul>
+<li>真實值只在 ignored <code>backend/.env</code> 或 process environment。</li>
+<li><code>frontend/.env.local</code> 只能有 public <code>VITE_API_BASE_URL</code>。</li>
+<li><code>.env.example</code> 永遠空值/placeholder。</li>
+<li>每人各自取得 dev key；無法做到就由一位 backend owner執行 live integration，其他人用 mocks。</li>
+</ul>
+<h3 id="section-17">GitHub Actions</h3>
+<p>Prototype CI 不需要 vendor secrets。若真的需要 deploy secret：Repository Settings → Secrets and variables → Actions，使用最小權限、環境限制與短期 credential；不得在 <code>pull_request</code> from fork 執行會取得 secret 的工作。</p>
+<h3 id="section-18">Push protection</h3>
+<p>啟用 GitHub secret scanning/push protection（方案允許時）。GitHub <a href="https://docs.github.com/en/code-security/how-tos/secure-your-secrets/work-with-leak-prevention/push-protection-in-the-github-ui">官方文件</a> 說明可阻擋支援格式的 secrets，但偵測不是完整保證；不可因有 scanner 就提交 <code>.env</code>。</p>
+<h3 id="section-19">Secret 誤提交事件</h3>
+<p>順序不能顛倒：</p>
+<ol>
+<li>立刻在 vendor 撤銷/rotate。</li>
+<li>通知 integrator；暫停 deploy。</li>
+<li>檢查 Git history、PR diff、Actions logs/artifacts、screenshots。</li>
+<li>依 GitHub 官方程序移除 history；協調隊友重新同步。</li>
+<li>記錄事件，不在公開 issue 重貼 secret。</li>
+</ol>
+<p>只刪最新 commit 不足以保護已曝光 key。</p>
+<h2 id="section-20">11. 合併順序</h2>
+<ol>
+<li><code>chore/bootstrap</code>：目錄、env examples、fixture、CI skeleton。</li>
+<li><code>contracts/v0.1</code>。</li>
+<li>Backend synthetic health/transactions。</li>
+<li>Frontend contract mock vertical slice。</li>
+<li>AI privacy/rules。</li>
+<li>Data synthetic adapter。</li>
+<li>Full synthetic integration。</li>
+<li>Nessie live read（optional flag）。</li>
+<li>Jev live（optional flag）。</li>
+<li>Backboard live memory（optional flag）。</li>
+<li>Security fixes、accessibility、copy、submission docs。</li>
+</ol>
+<p>每個 live integration 都是可單獨 rollback 的 PR。</p>
+<h2 id="section-21">12. 最後 3 小時規則</h2>
+<ul>
+<li>09:00 EDT：只接受 P0/P1 bug、提交素材、accessibility fixes。</li>
+<li>10:00 EDT：部署 cutoff；記 last known good URL/SHA。</li>
+<li>10:30 EDT：Devpost draft 和影片完成。</li>
+<li>11:15 EDT：submit candidate。</li>
+<li>11:30 EDT：停止 merge；只做 submission verification。</li>
+</ul>
+<h2 id="section-22">13. Team sync 模板</h2>
+<p>每 90 分鐘，四人各用 30 秒回答：</p>
+<pre><code class="language-text">Done:
+Next:
+Blocked:
+Contract/security change:
+Branch/PR:
+</code></pre>
+<p>阻塞超過 20 分鐘就切 fallback，不把全隊綁在一個外部 API。</p>
+<h2 id="section-23">合併前總檢查</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 只改 owned files，或已取得 owner同意。</li>
+<li><input disabled="" type="checkbox"> 無 <code>.env</code>、keys、raw vendor body/URL、PII。</li>
+<li><input disabled="" type="checkbox"> contract change 已同步。</li>
+<li><input disabled="" type="checkbox"> tests/lint/build 通過。</li>
+<li><input disabled="" type="checkbox"> fallback 已測。</li>
+<li><input disabled="" type="checkbox"> UI change 有 keyboard/mobile check。</li>
+<li><input disabled="" type="checkbox"> logging/error 不洩漏。</li>
+<li><input disabled="" type="checkbox"> PR 描述列已知限制。</li>
+<li><input disabled="" type="checkbox"> 合併後 <code>main</code> 仍可完成 synthetic Demo。</li>
+</ul>
+</article></main></div><script>
+const main=document.querySelector('main');let currentDiagram=0,scale=1;
+function copyButtons(){main.querySelectorAll('pre').forEach(pre=>{const b=document.createElement('button');b.className='plainbtn copy';b.textContent='複製程式區塊';b.onclick=async()=>{try{await navigator.clipboard.writeText(pre.innerText);b.textContent='已複製'}catch{const range=document.createRange();range.selectNodeContents(pre);const sel=getSelection();sel.removeAllRanges();sel.addRange(range);b.textContent='已選取，請按 ⌘C'}};pre.after(b)})}
+document.querySelector('#nav-search')?.addEventListener('input',e=>{document.querySelectorAll('.navitem').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(e.target.value.toLowerCase()))});
+document.addEventListener('click',e=>{const p=e.target.closest('[data-print]');if(p)window.print();const s=e.target.closest('[data-section]');if(s){e.preventDefault();document.getElementById(s.dataset.section)?.scrollIntoView({behavior:'smooth'})}});
+function mount(){const key=decodeURIComponent(location.hash.slice(1));const file=key.startsWith('doc:')?key.slice(4):null;const tpl=file?document.getElementById('doc-'+file.replace(/[^a-zA-Z0-9_-]/g,'-')):document.getElementById('home-content');if(!tpl)return;main.innerHTML=tpl.innerHTML;document.querySelectorAll('.navitem').forEach(a=>a.classList.toggle('active',a.dataset.file===file));copyButtons();if(!file){initDiagram();if(key==='diagrams')document.getElementById('diagrams').scrollIntoView()}else window.scrollTo(0,0);document.title=(file?(document.querySelector('.navitem.active')?.textContent||'文件'):'TrustLedger Build Kit')+' · TrustLedger'}
+function setZoom(value){scale=Math.min(2.2,Math.max(.65,value));const svg=document.querySelector('.stage svg');if(!svg)return;svg.style.width=(Number(svg.getAttribute('width'))*scale)+'px';svg.style.height=(Number(svg.getAttribute('height'))*scale)+'px';document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%'}
+function fit(){const stage=document.querySelector('.stage'),svg=stage?.querySelector('svg');if(svg)setZoom(Math.max(.8,(stage.clientWidth-24)/Number(svg.getAttribute('width'))))}
+function showDiagram(i){currentDiagram=i;const list=JSON.parse(document.getElementById('diagram-meta').textContent),d=list[i];const stage=document.querySelector('.stage');stage.innerHTML=document.getElementById('diagram-'+d.id).innerHTML;document.querySelector('#diagram-title').textContent=d.title;document.querySelector('#diagram-desc').textContent=d.desc;document.querySelectorAll('[data-diagram]').forEach(a=>{a.classList.toggle('active',Number(a.dataset.diagram)===i);a.setAttribute('aria-pressed',String(Number(a.dataset.diagram)===i))});stage.scrollTop=0;stage.scrollLeft=0;fit()}
+function initDiagram(){showDiagram(currentDiagram);document.querySelectorAll('[data-diagram]').forEach(a=>a.onclick=e=>{e.preventDefault();showDiagram(Number(a.dataset.diagram))});document.querySelector('[data-zoom-in]').onclick=()=>setZoom(scale+.15);document.querySelector('[data-zoom-out]').onclick=()=>setZoom(scale-.15);document.querySelector('[data-fit]').onclick=fit;document.querySelector('[data-native]').onclick=()=>setZoom(1);document.querySelector('[data-expand]').onclick=e=>{const viewer=document.querySelector('.viewer');viewer.classList.toggle('expanded');e.currentTarget.textContent=viewer.classList.contains('expanded')?'關閉全螢幕':'全螢幕';fit()};document.querySelector('[data-save-svg]').onclick=()=>{const d=JSON.parse(document.getElementById('diagram-meta').textContent)[currentDiagram],source=document.getElementById('diagram-'+d.id).innerHTML;const url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));const a=document.createElement('a');a.href=url;a.download=d.id+'.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelector('.viewer')?.classList.remove('expanded');const b=document.querySelector('[data-expand]');if(b)b.textContent='全螢幕'}});
+if(document.getElementById('home-content')){window.addEventListener('hashchange',mount);mount()}else copyButtons();
+</script></body></html>

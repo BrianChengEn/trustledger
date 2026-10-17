@@ -1,0 +1,49 @@
+flowchart LR
+  classDef user fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e
+  classDef app fill:#ecfeff,stroke:#0f766e,color:#134e4a
+  classDef private fill:#fef3c7,stroke:#b45309,color:#78350f
+  classDef vendor fill:#f3e8ff,stroke:#7e22ce,color:#581c87
+  classDef fallback fill:#f1f5f9,stroke:#475569,color:#0f172a,stroke-dasharray: 5 5
+
+  U["Demo user\nB2C consumer"]:::user
+
+  subgraph Browser["Browser — no vendor secrets"]
+    FE["React + TypeScript + Vite\nDashboard · Alerts · Privacy · Memory"]:::app
+  end
+
+  subgraph Backend["TrustLedger FastAPI — security boundary"]
+    API["Internal API\ncontract + safe errors"]:::app
+    ID["Server-derived identity\ndemo-user-001"]:::private
+    TX["Transaction service\ncanonical DTO"]:::app
+    PRIV["Privacy guard\nallowlist · redact · bucket"]:::private
+    RULES["Deterministic rules\nduplicate · amount · subscription"]:::app
+    AGG["Alert aggregator\nevidence · confidence · mode"]:::app
+    POLICY["Consent + memory policy\nfail closed"]:::private
+    LOG["PII-free telemetry\nrequest id · status · latency"]:::private
+  end
+
+  subgraph DataSources["Data sources"]
+    SYN["Synthetic fixture\ndefault and offline-safe"]:::fallback
+    NES["Capital One Nessie\nsandbox read adapter"]:::vendor
+  end
+
+  subgraph AIProviders["External AI vendors — minimized data only"]
+    JEV["Jev decision API\nchoice · noul · score"]:::vendor
+    BB["Backboard\nconfirmed memory only"]:::vendor
+  end
+
+  U -->|"review + explicit consent"| FE
+  FE -->|"HTTPS · internal DTO"| API
+  API --> ID --> TX
+  SYN --> TX
+  NES -. "optional live; timeout/degrade" .-> TX
+  TX --> PRIV
+  PRIV --> RULES --> AGG
+  PRIV -. "safe-ai-payload-v1" .-> JEV
+  JEV -. "bounded answers + model version" .-> AGG
+  AGG --> API --> FE
+  FE -->|"normal/review + consent flag"| API
+  API --> POLICY
+  POLICY -. "sanitized abstract fact" .-> BB
+  API --> LOG
+

@@ -1,0 +1,31 @@
+flowchart LR
+  classDef gate fill:#dcfce7,stroke:#15803d,color:#14532d
+  classDef work fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e
+  classDef choice fill:#fef3c7,stroke:#b45309,color:#78350f
+  classDef fallback fill:#f1f5f9,stroke:#475569,color:#0f172a,stroke-dasharray: 5 5
+  classDef stop fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d
+
+  S["12:00 Scope lock\nB2C · 4 features"]:::gate
+  C["13:30 Contract freeze\nOpenAPI v0.1"]:::gate
+  V1["16:00 Vertical slice\nsynthetic list → UI"]:::work
+  V2["19:00 Core review flow\nalert → inspector → confirmation"]:::work
+  LIVE{"Vendor can pass\n2 smoke tests?"}:::choice
+  N["Nessie read evidence"]:::work
+  J["Jev bounded decision"]:::work
+  B["Backboard confirmed memory"]:::work
+  F["Synthetic + rules-only + memory off/local\ntruthful degraded badges"]:::fallback
+  Q["22:00 Feature freeze\nsecurity + accessibility"]:::gate
+  D{"10:00 Stable deploy?"}:::choice
+  CLOUD["Public last-known-good URL"]:::work
+  LOCAL["Localhost + screen share + backup video"]:::fallback
+  SUB["11:15 Submit candidate\n11:30 stop code"]:::stop
+  HARD["12:00 EDT hard deadline"]:::stop
+
+  S --> C --> V1 --> V2 --> LIVE
+  LIVE -->|"yes, one at a time"| N --> J --> B --> Q
+  LIVE -->|"no or uncertain"| F --> Q
+  Q --> D
+  D -->|"yes"| CLOUD --> SUB
+  D -->|"no"| LOCAL --> SUB
+  SUB --> HARD
+

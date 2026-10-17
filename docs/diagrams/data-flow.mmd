@@ -1,0 +1,13 @@
+flowchart TB
+  RAW["Raw sandbox record"]
+  SAFE["Allowlist and redact PII"]
+  INSPECT["Privacy Inspector"]
+  ANALYZE["Rules and optional Jev"]
+  USER["Human confirmation"]
+  MEMORY["Consent-gated Backboard memory"]
+  RAW --> SAFE
+  SAFE --> INSPECT
+  SAFE --> ANALYZE
+  ANALYZE --> USER
+  USER --> MEMORY
+

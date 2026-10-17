@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest -q
+        env:
+          APP_MODE: synthetic
+          ALLOW_MEMORY_WRITE: 'false'
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test -- --run
+        continue-on-error: false
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:8000
+
+  tracked-secret-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject tracked environment files
+        shell: bash
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$'; then
+            echo 'Tracked environment file detected.'
+            exit 1
+          fi
+
+# Example only. Before copying to .github/workflows/ci.yml:
+# 1. Verify the current major versions of official GitHub actions.
+# 2. Match repository dependency files and npm scripts.
+# 3. Keep vendor secrets out of CI; all external calls must be mocked.

@@ -1,0 +1,291 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Internal OpenAPI · TrustLedger</title><style>
+:root{color-scheme:light;--ink:#192d46;--muted:#61728a;--line:#e0e7ef;--accent:#087f6b;--paper:#fff;--bg:#f4f7fa}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}a{color:#1762b1;text-underline-offset:4px}button,input{font:inherit}button,a,input{touch-action:manipulation}:focus-visible{outline:3px solid #0a997d;outline-offset:4px}button{cursor:pointer}header{background:#112b3e;color:#edf7fc;padding:22px 5%;display:flex;align-items:center;justify-content:space-between;gap:18px}header a{color:inherit;text-decoration:none}.brand{font-size:20px;font-weight:700;letter-spacing:-.4px}.brand small{font-size:12px;letter-spacing:1.6px;font-weight:500;color:#a1cfce;display:block}nav{display:flex;flex-wrap:wrap;gap:20px;font-size:15px}.layout{max-width:1520px;margin:auto;display:grid;grid-template-columns:255px minmax(0,1fr)}aside{padding:28px 18px;border-right:1px solid var(--line);background:#f9fbfc;align-self:start;position:sticky;top:0;max-height:100vh;overflow:auto}aside label{font-size:13px;color:var(--muted)}input{display:block;width:100%;background:white;border:1px solid #ccd7e3;border-radius:8px;padding:9px 12px;margin:8px 0 20px}.navitem{display:block;text-decoration:none;color:#3b526c;padding:8px 12px;font-size:14px;border-radius:8px;margin:2px 0}.navitem.active{background:#e3f3ee;color:#086b5a;font-weight:650}.navitem:hover{background:#eaf0f5}.navgroup{font-size:11px;letter-spacing:2px;font-weight:700;color:#7b8da3;margin:22px 12px 10px}main{padding:44px clamp(20px,4vw,64px) 90px;min-width:0}.eyebrow{font-size:12px;letter-spacing:2px;font-weight:700;color:var(--accent)}h1{font-size:clamp(32px,4vw,54px);line-height:1.2;letter-spacing:-1.5px;margin:12px 0 20px}h2{font-size:27px;line-height:1.4;letter-spacing:-.6px;margin:40px 0 16px}h3{font-size:20px;margin:28px 0 10px}.intro{font-size:18px;color:var(--muted);max-width:780px}.hero{padding-bottom:32px;border-bottom:1px solid var(--line)}.notice{margin:24px 0;padding:18px 22px;background:#e9f6f1;border-left:3px solid #11856b;border-radius:0 10px 10px 0}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.doccard{display:block;text-decoration:none;color:var(--ink);padding:23px;background:#fff;border:1px solid var(--line);border-radius:12px;transition:border-color .15s}.doccard:hover{border-color:#64ae9d}.doccard b{display:block;font-size:20px;margin:6px 0}.doccard small{font-size:12px;letter-spacing:1px;color:var(--accent)}.doccard p{color:var(--muted);margin:5px 0;font-size:15px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0}.toolbar button,.toolbar a,.plainbtn{border:1px solid #ccd7e3;border-radius:7px;padding:7px 12px;color:var(--ink);background:#fff;text-decoration:none;font-size:14px}.toolbar button:hover,.plainbtn:hover{background:#edf4f8}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 18px}.tabs a{border-radius:7px;padding:9px 14px;background:#e8eef4;color:#3d526a;text-decoration:none;font-size:15px}.tabs a.active{background:#087f6b;color:#fff}.viewer{border:1px solid #d9e3ed;border-radius:14px;background:white;padding:18px}.viewer h2{margin:0;font-size:26px}.viewer p{color:var(--muted);margin:6px 0 12px;max-width:850px}.stage{height:680px;max-height:72vh;overflow:auto;background:#fff;border:1px solid #e2e9ef;border-radius:9px}.stage svg{display:block;max-width:none;flex:none}.diagram-caption{font-size:14px;color:var(--muted)}.expanded{position:fixed;inset:12px;z-index:20;display:flex;flex-direction:column;box-shadow:0 0 0 30px #112b3eaa}.expanded .stage{height:auto;max-height:none;flex:1}.expanded p{display:none}.article{max-width:960px;overflow-wrap:anywhere}.article h1{font-size:36px}.article h2{padding-top:18px;border-top:1px solid var(--line);scroll-margin-top:24px}.article p,.article li{max-width:90ch}.article li{margin:5px 0}.article blockquote{margin:20px 0;background:#eaf4f2;border-left:3px solid #11856b;padding:10px 22px}.table-wrap{overflow:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:14px;background:#fff}th,td{padding:12px 14px;border-bottom:1px solid #e0e7ef;text-align:left;vertical-align:top}th{background:#eaf0f5}pre{background:#122b3f;color:#ecf5fc;padding:24px;border-radius:10px;overflow:auto;font:14px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;position:relative}code{font: .9em ui-monospace,SFMono-Regular,Menlo,monospace;background:#e6edf3;padding:2px 5px;border-radius:4px}pre code{background:none;padding:0;color:inherit;font-size:inherit}.copy{display:block;margin-top:-12px;margin-bottom:22px}.toc{padding:15px 20px;background:#fff;border:1px solid var(--line);border-radius:9px;margin:24px 0}.toc summary{cursor:pointer;font-weight:650}.toc a{display:block;font-size:14px;padding:4px 0}footer{margin-top:50px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}.hidden,[hidden]{display:none!important}.downloadrow{display:flex;gap:12px;flex-wrap:wrap}.badge{font-size:12px;color:#087f6b;background:#e1f3ed;padding:5px 9px;border-radius:5px}.topbar{display:flex;justify-content:space-between;gap:10px;align-items:center}.back{font-size:14px}.noscript{padding:16px;background:#fff3dc}@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:relative;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:14px 22px}aside details:not([open]) .navlist{display:none}aside input{max-width:480px}.navlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:30px 20px 65px}header{padding:18px 22px;align-items:start}.stage{height:650px}.cards{grid-template-columns:1fr}.article h1{font-size:30px}}@media(max-width:520px){header{display:block}nav{margin-top:14px;gap:16px}.navlist{grid-template-columns:1fr}.expanded{inset:4px;padding:10px}.expanded .toolbar{gap:5px}.toolbar button,.toolbar a{padding:7px 9px}.viewer{padding:12px}.article h1{font-size:28px}}@media print{header,aside,.toolbar,.tabs,.toc,.copy,.topbar{display:none!important}.layout{display:block}main{padding:0}.stage{height:auto;max-height:none;overflow:visible}.stage svg{width:100%!important;height:auto!important}.viewer{border:0}body{background:#fff}pre{white-space:pre-wrap;break-inside:avoid}a{color:inherit}.article{max-width:none}.expanded{position:static;box-shadow:none}}</style></head><body><header><a class="brand" href="../index.html">TrustLedger<small>TECHNICA 2026 · TEAM BUILD KIT</small></a><nav><a href="../index.html">文件首頁</a><a href="../index.html#diagrams">六張流程圖</a><span class="badge">離線可讀 · v2</span></nav></header><div class="layout"><aside><details open><summary>文件導覽</summary><label for="nav-search">找文件</label><input id="nav-search" type="search" placeholder="AI、環境、GitHub…"><div class="navlist"><a class="navitem" data-file="START-HERE.md"  href="START-HERE-md.html">START · 立即開始</a><a class="navitem" data-file="README.md"  href="README-md.html">READ · README</a><a class="navitem" data-file="00-overall-architecture-report.md"  href="00-overall-architecture-report-md.html">00 · 總體架構</a><a class="navitem" data-file="01-ai-engineer-jev-backboard.md"  href="01-ai-engineer-jev-backboard-md.html">01 · AI Engineer</a><a class="navitem" data-file="02-frontend-react-vite.md"  href="02-frontend-react-vite-md.html">02 · React / Vite</a><a class="navitem" data-file="03-nessie-data.md"  href="03-nessie-data-md.html">03 · Nessie / Data</a><a class="navitem" data-file="04-fastapi-integration-deployment.md"  href="04-fastapi-integration-deployment-md.html">04 · FastAPI / Deploy</a><a class="navitem" data-file="05-github-collaboration.md"  href="05-github-collaboration-md.html">05 · GitHub 協作</a><a class="navitem" data-file="06-security-privacy-threat-model.md"  href="06-security-privacy-threat-model-md.html">06 · 資安與隱私</a><a class="navitem" data-file="07-submission-runbook.md"  href="07-submission-runbook-md.html">07 · 提交 Runbook</a><a class="navitem" data-file="SOURCES.md"  href="SOURCES-md.html">SRC · 來源與待驗證</a><a class="navitem" data-file="prompts/ai-engineer.prompt.md"  href="prompts-ai-engineer-prompt-md.html">P1 · AI Prompt</a><a class="navitem" data-file="prompts/frontend.prompt.md"  href="prompts-frontend-prompt-md.html">P2 · Frontend Prompt</a><a class="navitem" data-file="prompts/nessie-data.prompt.md"  href="prompts-nessie-data-prompt-md.html">P3 · Data Prompt</a><a class="navitem" data-file="prompts/backend-integration.prompt.md"  href="prompts-backend-integration-prompt-md.html">P4 · Backend Prompt</a><a class="navitem" data-file="contracts/internal-api.openapi.yaml"  href="contracts-internal-api-openapi-yaml.html">API · Internal OpenAPI</a><a class="navitem" data-file="fixtures/synthetic-transactions.json"  href="fixtures-synthetic-transactions-json.html">DATA · Synthetic fixture</a><a class="navitem" data-file=".env.example"  href="-env-example.html">ENV · Backend env 範本</a><a class="navitem" data-file="frontend.env.example"  href="frontend-env-example.html">ENV · Frontend env 範本</a><a class="navitem" data-file="templates/ci.example.yml"  href="templates-ci-example-yml.html">CI · CI 範本</a><a class="navitem" data-file="templates/PULL_REQUEST_TEMPLATE.md"  href="templates-PULL_REQUEST_TEMPLATE-md.html">PR · PR 範本</a><a class="navitem" data-file="diagrams/index.md"  href="diagrams-index-md.html">MAP · 圖表原始檔導覽</a></div></details></aside><main><div class="topbar"><a class="back" href="../index.html">← 文件首頁</a><button class="plainbtn" data-print>列印 / PDF</button></div><article class="article"><h1 id="section-1">Internal OpenAPI</h1><pre><code>openapi: 3.1.0
+info:
+  title: TrustLedger Internal API
+  version: 0.1.0-mvp
+  description: &gt;-
+    Team-owned React-to-FastAPI contract for the Technica 2026 B2C MVP.
+    This is not a Capital One, Jev, or Backboard schema.
+servers:
+  - url: http://127.0.0.1:8000
+paths:
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Safe readiness status. Never includes keys or upstream bodies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/transactions:
+    get:
+      operationId: listTransactions
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+      responses:
+        '200':
+          description: Canonical transactions for the current demo user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Transaction' }
+  /api/v1/analyses:
+    post:
+      operationId: analyzeTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [transaction_id]
+              properties:
+                transaction_id: { type: string, minLength: 1, maxLength: 80 }
+      responses:
+        '200':
+          description: Rules result plus optional Jev result.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Analysis' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/alerts:
+    get:
+      operationId: listAlerts
+      responses:
+        '200':
+          description: Alerts for the current demo user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Alert' }
+  /api/v1/privacy/preview/{transaction_id}:
+    get:
+      operationId: previewPrivacyPayload
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '200':
+          description: Exact safe payload and transformation explanation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivacyPreview' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/alerts/{alert_id}/confirmations:
+    post:
+      operationId: confirmAlert
+      parameters:
+        - $ref: '#/components/parameters/AlertId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [decision, consent_to_memory]
+              properties:
+                decision:
+                  type: string
+                  enum: [normal, review]
+                consent_to_memory:
+                  type: boolean
+      responses:
+        '200':
+          description: Confirmation outcome and memory write status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Confirmation' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Conflicting or duplicate confirmation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  /api/v1/memories:
+    get:
+      operationId: listMemories
+      responses:
+        '200':
+          description: Sanitized summaries only.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MemorySummary' }
+  /api/v1/memories/{memory_id}:
+    delete:
+      operationId: deleteMemory
+      parameters:
+        - name: memory_id
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 100 }
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  parameters:
+    TransactionId:
+      name: transaction_id
+      in: path
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 80 }
+    AlertId:
+      name: alert_id
+      in: path
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 80 }
+  responses:
+    NotFound:
+      description: Resource is absent or is not owned by the current demo identity.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  schemas:
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status, data_mode, analysis_mode, memory_mode, request_id]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        data_mode: { type: string, enum: [synthetic, nessie-live, degraded] }
+        analysis_mode: { type: string, enum: [rules-only, rules+jev-live, degraded] }
+        memory_mode: { type: string, enum: [off, local-fallback, backboard-live, degraded] }
+        request_id: { type: string }
+    Transaction:
+      type: object
+      additionalProperties: false
+      required: [id, occurred_at, amount, currency, direction, merchant_display, merchant_category, source, account_token, is_subscription]
+      properties:
+        id: { type: string }
+        occurred_at: { type: string, format: date-time }
+        amount: { type: number, minimum: 0 }
+        currency: { type: string, enum: [USD] }
+        direction: { type: string, enum: [debit, credit] }
+        merchant_display: { type: string, maxLength: 80 }
+        merchant_category: { type: string, maxLength: 40 }
+        source: { type: string, enum: [synthetic, nessie] }
+        account_token: { type: string, pattern: '^acct_[A-Za-z0-9_-]+$' }
+        is_subscription: { type: boolean }
+    Analysis:
+      type: object
+      additionalProperties: false
+      required: [transaction_id, alert_type, severity, needs_human, confidence, evidence, provider_mode, request_id]
+      properties:
+        transaction_id: { type: string }
+        alert_type: { type: string, enum: [duplicate, amount_anomaly, subscription_change, none] }
+        severity: { type: string, enum: [low, medium, high] }
+        needs_human: { type: boolean }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        evidence:
+          type: array
+          maxItems: 8
+          items: { type: string, maxLength: 180 }
+        provider_mode: { type: string, enum: [rules-only, rules+jev-live, degraded] }
+        model_version: { type: [string, 'null'] }
+        request_id: { type: string }
+    Alert:
+      type: object
+      additionalProperties: false
+      required: [transaction_id, alert_type, severity, needs_human, confidence, evidence, provider_mode, request_id, alert_id, status]
+      properties:
+        transaction_id: { type: string }
+        alert_type: { type: string, enum: [duplicate, amount_anomaly, subscription_change, none] }
+        severity: { type: string, enum: [low, medium, high] }
+        needs_human: { type: boolean }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        evidence:
+          type: array
+          maxItems: 8
+          items: { type: string, maxLength: 180 }
+        provider_mode: { type: string, enum: [rules-only, rules+jev-live, degraded] }
+        model_version: { type: [string, 'null'] }
+        request_id: { type: string }
+        alert_id: { type: string }
+        status: { type: string, enum: [open, normal, review] }
+    FieldAction:
+      type: object
+      additionalProperties: false
+      required: [field, action, reason]
+      properties:
+        field: { type: string }
+        action: { type: string, enum: [allowed, dropped, tokenized, generalized, bucketed] }
+        output: {}
+        reason: { type: string, maxLength: 180 }
+    PrivacyPreview:
+      type: object
+      additionalProperties: false
+      required: [transaction_id, destination, schema_version, inspection, safe_payload]
+      properties:
+        transaction_id: { type: string }
+        destination: { type: string, enum: [jev, backboard-memory] }
+        schema_version: { type: string, enum: [safe-ai-payload-v1] }
+        inspection:
+          type: array
+          items: { $ref: '#/components/schemas/FieldAction' }
+        safe_payload:
+          type: object
+          additionalProperties: false
+          required: [merchant_category, amount_bucket, currency, local_day_part, same_category_same_amount_24h_count, is_subscription, subscription_delta_bucket, prior_user_confirmation]
+          properties:
+            merchant_category: { type: string }
+            amount_bucket: { type: string, enum: ['0-10', '10-25', '25-50', '50-100', '100-250', '250+'] }
+            currency: { type: string, enum: [USD] }
+            local_day_part: { type: string, enum: [morning, afternoon, evening, overnight] }
+            same_category_same_amount_24h_count: { type: integer, minimum: 0, maximum: 20 }
+            is_subscription: { type: boolean }
+            subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
+            prior_user_confirmation: { type: string, enum: [normal, review, unknown] }
+    Confirmation:
+      type: object
+      additionalProperties: false
+      required: [alert_id, decision, memory_status, request_id]
+      properties:
+        alert_id: { type: string }
+        decision: { type: string, enum: [normal, review] }
+        memory_status: { type: string, enum: [not-requested, written, pending, skipped, failed] }
+        memory_id: { type: [string, 'null'] }
+        request_id: { type: string }
+    MemorySummary:
+      type: object
+      additionalProperties: false
+      required: [memory_id, summary, created_at, source]
+      properties:
+        memory_id: { type: string }
+        summary: { type: string, maxLength: 240 }
+        created_at: { type: string, format: date-time }
+        source: { type: string, enum: [backboard, local-fallback] }
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, request_id]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            request_id: { type: string }
+
+</code></pre></article></main></div><script>
+const main=document.querySelector('main');let currentDiagram=0,scale=1;
+function copyButtons(){main.querySelectorAll('pre').forEach(pre=>{const b=document.createElement('button');b.className='plainbtn copy';b.textContent='複製程式區塊';b.onclick=async()=>{try{await navigator.clipboard.writeText(pre.innerText);b.textContent='已複製'}catch{const range=document.createRange();range.selectNodeContents(pre);const sel=getSelection();sel.removeAllRanges();sel.addRange(range);b.textContent='已選取，請按 ⌘C'}};pre.after(b)})}
+document.querySelector('#nav-search')?.addEventListener('input',e=>{document.querySelectorAll('.navitem').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(e.target.value.toLowerCase()))});
+document.addEventListener('click',e=>{const p=e.target.closest('[data-print]');if(p)window.print();const s=e.target.closest('[data-section]');if(s){e.preventDefault();document.getElementById(s.dataset.section)?.scrollIntoView({behavior:'smooth'})}});
+function mount(){const key=decodeURIComponent(location.hash.slice(1));const file=key.startsWith('doc:')?key.slice(4):null;const tpl=file?document.getElementById('doc-'+file.replace(/[^a-zA-Z0-9_-]/g,'-')):document.getElementById('home-content');if(!tpl)return;main.innerHTML=tpl.innerHTML;document.querySelectorAll('.navitem').forEach(a=>a.classList.toggle('active',a.dataset.file===file));copyButtons();if(!file){initDiagram();if(key==='diagrams')document.getElementById('diagrams').scrollIntoView()}else window.scrollTo(0,0);document.title=(file?(document.querySelector('.navitem.active')?.textContent||'文件'):'TrustLedger Build Kit')+' · TrustLedger'}
+function setZoom(value){scale=Math.min(2.2,Math.max(.65,value));const svg=document.querySelector('.stage svg');if(!svg)return;svg.style.width=(Number(svg.getAttribute('width'))*scale)+'px';svg.style.height=(Number(svg.getAttribute('height'))*scale)+'px';document.getElementById('zoom-label').textContent=Math.round(scale*100)+'%'}
+function fit(){const stage=document.querySelector('.stage'),svg=stage?.querySelector('svg');if(svg)setZoom(Math.max(.8,(stage.clientWidth-24)/Number(svg.getAttribute('width'))))}
+function showDiagram(i){currentDiagram=i;const list=JSON.parse(document.getElementById('diagram-meta').textContent),d=list[i];const stage=document.querySelector('.stage');stage.innerHTML=document.getElementById('diagram-'+d.id).innerHTML;document.querySelector('#diagram-title').textContent=d.title;document.querySelector('#diagram-desc').textContent=d.desc;document.querySelectorAll('[data-diagram]').forEach(a=>{a.classList.toggle('active',Number(a.dataset.diagram)===i);a.setAttribute('aria-pressed',String(Number(a.dataset.diagram)===i))});stage.scrollTop=0;stage.scrollLeft=0;fit()}
+function initDiagram(){showDiagram(currentDiagram);document.querySelectorAll('[data-diagram]').forEach(a=>a.onclick=e=>{e.preventDefault();showDiagram(Number(a.dataset.diagram))});document.querySelector('[data-zoom-in]').onclick=()=>setZoom(scale+.15);document.querySelector('[data-zoom-out]').onclick=()=>setZoom(scale-.15);document.querySelector('[data-fit]').onclick=fit;document.querySelector('[data-native]').onclick=()=>setZoom(1);document.querySelector('[data-expand]').onclick=e=>{const viewer=document.querySelector('.viewer');viewer.classList.toggle('expanded');e.currentTarget.textContent=viewer.classList.contains('expanded')?'關閉全螢幕':'全螢幕';fit()};document.querySelector('[data-save-svg]').onclick=()=>{const d=JSON.parse(document.getElementById('diagram-meta').textContent)[currentDiagram],source=document.getElementById('diagram-'+d.id).innerHTML;const url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml'}));const a=document.createElement('a');a.href=url;a.download=d.id+'.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelector('.viewer')?.classList.remove('expanded');const b=document.querySelector('[data-expand]');if(b)b.textContent='全螢幕'}});
+if(document.getElementById('home-content')){window.addEventListener('hashchange',mount);mount()}else copyButtons();
+</script></body></html>

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "txn_syn_001",
+    "occurred_at": "2026-10-16T09:15:00-04:00",
+    "amount": 6.45,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Campus Coffee",
+    "merchant_category": "dining",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false
+  },
+  {
+    "id": "txn_syn_002",
+    "occurred_at": "2026-10-16T18:32:00-04:00",
+    "amount": 42.18,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Fresh Basket",
+    "merchant_category": "groceries",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false
+  },
+  {
+    "id": "txn_syn_003",
+    "occurred_at": "2026-10-17T13:57:00-04:00",
+    "amount": 11.99,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "StreamWave",
+    "merchant_category": "streaming",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": true
+  },
+  {
+    "id": "txn_syn_004",
+    "occurred_at": "2026-10-17T14:03:00-04:00",
+    "amount": 11.99,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "StreamWave",
+    "merchant_category": "streaming",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": true
+  },
+  {
+    "id": "txn_syn_005",
+    "occurred_at": "2026-10-17T15:10:00-04:00",
+    "amount": 849.0,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Tech Harbor",
+    "merchant_category": "electronics",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false
+  },
+  {
+    "id": "txn_syn_006",
+    "occurred_at": "2026-10-15T20:44:00-04:00",
+    "amount": 18.5,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Metro Ride",
+    "merchant_category": "transportation",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false
+  },
+  {
+    "id": "txn_syn_007",
+    "occurred_at": "2026-09-17T08:00:00-04:00",
+    "amount": 24.99,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "FitFlow",
+    "merchant_category": "fitness_subscription",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": true
+  },
+  {
+    "id": "txn_syn_008",
+    "occurred_at": "2026-10-17T08:00:00-04:00",
+    "amount": 34.99,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "FitFlow",
+    "merchant_category": "fitness_subscription",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": true
+  }
+]
