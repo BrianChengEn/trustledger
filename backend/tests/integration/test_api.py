@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import yaml
@@ -64,6 +65,34 @@ def test_origin_size_and_safe_errors(client):
     assert response.status_code == 422
     assert "secret" not in response.text
     assert set(response.json()["error"]) == {"code", "message", "request_id"}
+
+
+def test_consented_memory_is_used_on_the_next_analysis(client):
+    declined = client.post("/api/v1/alerts/alert_txn_syn_005/confirmations",
+                           json={"decision": "normal", "consent_to_memory": False})
+    assert declined.json()["memory_status"] == "not-requested"
+    review = client.post("/api/v1/alerts/alert_txn_syn_008/confirmations",
+                         json={"decision": "review", "consent_to_memory": True})
+    assert review.json()["memory_status"] == "skipped"
+    assert client.get("/api/v1/privacy/preview/txn_syn_005").json()["safe_payload"][
+        "prior_user_confirmation"] == "unknown"
+    assert client.get("/api/v1/privacy/preview/txn_syn_008").json()["safe_payload"][
+        "prior_user_confirmation"] == "unknown"
+
+    saved = client.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                        json={"decision": "normal", "consent_to_memory": True})
+    assert saved.status_code == 200 and saved.json()["memory_status"] == "written"
+    preview = client.get("/api/v1/privacy/preview/txn_syn_003").json()
+    assert preview["safe_payload"]["prior_user_confirmation"] == "normal"
+    assert "StreamWave" not in json.dumps(preview["safe_payload"])
+    same = client.post("/api/v1/analyses", json={"transaction_id": "txn_syn_004"}).json()
+    assert same["alert_type"] == "duplicate" and same["needs_human"] is True
+    assert any("category as normal" in line for line in same["evidence"])
+    unrelated = client.get("/api/v1/privacy/preview/txn_syn_005").json()["safe_payload"]
+    assert unrelated["prior_user_confirmation"] == "unknown"
+    assert client.delete(f"/api/v1/memories/{saved.json()['memory_id']}").status_code == 204
+    cleared = client.get("/api/v1/privacy/preview/txn_syn_004").json()["safe_payload"]
+    assert cleared["prior_user_confirmation"] == "unknown"
 
 
 def test_analysis_matches_preview_and_get_limit(client):

@@ -46,13 +46,19 @@ function App() {
         method: 'POST', body: JSON.stringify({decision, consent_to_memory: consent}),
       });
       await refresh();
+      const next = await request<PrivacyPreview>('/privacy/preview/'+encodeURIComponent(selected));
+      setPrivacy(next);
       setNotice(`Confirmed ${result.decision}. Memory: ${result.memory_status} (${health?.memory_mode}).`);
     } catch(e) {setError(e instanceof Error ? e.message : 'Confirmation failed.');}
     finally {setBusy(false);}
   }
   async function removeMemory(id: string) {
     setBusy(true); setError('');
-    try {await request<void>('/memories/'+encodeURIComponent(id), {method: 'DELETE'}); await refresh();}
+    try {
+      await request<void>('/memories/'+encodeURIComponent(id), {method: 'DELETE'});
+      await refresh();
+      if (selected) setPrivacy(await request<PrivacyPreview>('/privacy/preview/'+encodeURIComponent(selected)));
+    }
     catch {setError('Could not delete memory. Please retry.');}
     finally {setBusy(false);}
   }
