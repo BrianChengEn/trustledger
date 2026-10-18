@@ -1,0 +1,140 @@
+TrustLedger Kenny data closeout — 2026-10-18
+Basis: fetched main 74fd70d38bc64708e48ede7bb748a259ac6334b8;
+Merged backend baseline: 04f8ee2b737778b9cd92b73fc066157f2710b223. PR41/43/44 merged.
+Latest fetched backend is 1ad9663 (PR45 open: fraud review/memory lifecycle).
+Its mapping/client/configuration files are unchanged from this audited baseline.
+Brian's Memory Lab launcher fix is separately open in PR46; do not duplicate it.
+PR42 is the focused offline-launcher cleanup. PR40 is open, conflicting, targets
+mrkennylee and includes broad historical changes; do not merge it for port isolation.
+No external Capital One request was authorized or performed in this task.
+
+HANDOFF TO BENSON
+
+Configuration (backend runtime secrets/.env only):
+- TRANSACTION_PROVIDER=nessie (current default); APP_ENV=development or production.
+- NESSIE_API_KEY is required. Never put it in frontend, command arguments or logs.
+- NESSIE_CUSTOMER_ID is the actual remote sandbox customer _id, exactly lowercase
+  24 hex characters OR lowercase UUID form 8-4-4-4-12. No whitespace, uppercase,
+  customer_ token, account ID or URL. Syntax validation does not prove existence.
+- Explicit NESSIE_CUSTOMER_ID is recommended. Without it, context() requires the
+  confirmed baseline customer record for identifier('c', 1), matched by DEMO_USER_ID,
+  BASELINE_SHA256, API_BASE and current key fingerprint; otherwise 409 workspace_not_linked.
+- Keep DEMO_USER_ID stable (default demo-user-001). Persist DATABASE_PATH (default
+  backend/data/trustledger-demo.db); its resource_aliases table defines identity.
+  SOURCE_DATABASE_DIR is an optional separate structured SQLite source-cache path.
+- FRAUD_PROVIDER=rules-only needs no inference key. Backboard inference requires
+  explicit backboard-jev selection plus BACKBOARD_API_KEY; a key alone does not enable it.
+  ALLOW_MEMORY_WRITE defaults false. Use explicit consent for permitted memory writes.
+  Auth/passcodes, FRONTEND_ORIGIN and deployment policy remain Benson's responsibility.
+
+Existing client and flow:
+- backend/app/adapters/nessie.py: NessieClient.request()/query(), API_BASE,
+  REMOTE_ID and QUERIES. Reuse this client; no second HTTP client was added.
+- backend/app/services/workspace.py: context(), refresh(), collection(), movements(),
+  token(), account_codes(), require_nessie().
+- refresh GET /customers/{remote_customer}/accounts requires row.customer_id to
+  equal the selected remote customer, and validates account IDs/type/balance/rewards.
+- Each account is fetched through /accounts/{remote_account}/{purchases|transfers|
+  deposits|withdrawals}; collection rejects duplicate/malformed remote IDs.
+  Both _id and id are accepted, but conflicting simultaneous values reject.
+- scope = SHA256(NESSIE_API_KEY UTF-8).hexdigest() (64 lowercase hex).
+  customer_code = persisted customer_<uuid4.hex> alias scoped to root user + key hash.
+  owner = DEMO_USER_ID + ':nessie:' + scope + ':' + customer_code.
+  account_token = 'acct_' + SHA256(owner + ':' + remote_account)[:32].
+  transaction_id = 'txn_' + SHA256(owner + ':' + plural_collection_kind + ':' +
+      remote_account + ':' + remote_transaction_id)[:32]. All hashes are hex strings.
+- The same transfer can yield two distinct account legs. Payer leg is debit,
+  payee leg credit. Both/neither matching when parties exist rejects the collection;
+  absent payer AND payee produces unknown direction, not an invented party.
+- Save replaces a successful per-owner/account/kind collection, with owner-keyed
+  constraints; repeated retrieval does not append duplicates. Failed collections
+  retain the safe cache, while live product actions fail rather than use fixtures.
+  Snapshot exposes at most the current 100-record analysis window.
+- Transaction service, reviews, analyses and memory operations derive the same owner
+  through workspace.owner(); customer codes cannot resolve outside root/key scope.
+- KEY ROTATION CHANGES owner, account and transaction tokens and memory/review identity.
+  Returning to the old key reuses old aliases only while the original DB persists.
+  A fresh DB regenerates random customer aliases even with the same key/customer.
+  Do not change this algorithm or migrate owners without coordinated approved design.
+
+Verified gap for Benson (runtime implementation deliberately unchanged):
+backend/app/services/workspace.py movements() validates transfer parties but ignores
+non-transfer account fields. A purchase row with account_id/payer_id for account B
+passed to movements(... account A, 'purchases') is accepted under A. A local pure-
+function probe reproduced this. Existing account-scoped GET URLs are the membership
+boundary; source-code validation does not independently guarantee upstream contents.
+Smallest proposed runtime fix after Benson confirms the provider field contract:
+reject conflicting non-transfer membership fields when present, add a MockTransport
+regression and retain compatibility with actual absent-field responses. Do not guess
+mandatory fields or rewrite the adapter. This task makes no live API success claim.
+
+Offline checks Benson should run from backend/:
+.venv/bin/python -m pytest -q tests/unit/data/test_nessie.py tests/integration/test_workspace.py tests/integration/test_live_runtime.py
+These verify transport allowlisting, customer/account scope, repeated refresh,
+transfer legs, cache freshness, isolated decisions/memories and fail-closed runtime.
+Add the conflicting-membership regression in Benson's coordinated runtime work.
+From repo root: bash scripts/check.sh (no opt-in live variables).
+Only with separate upstream authorization and configured sandbox credentials:
+NESSIE_LIVE_TEST=1 .venv/bin/python -m pytest -s tests/integration/test_nessie_live.py
+Do not execute that live command as part of ordinary checks.
+
+HANDOFF TO BRIAN AND IAN
+
+BankSim original bs140513_032310.csv; dataset_id:
+banksim:e37006f76d993bfaec3a02d717b4f0bdc1ebfa5d36449e91fb7c07e225278377
+Dataset release binding: dataset-2026-10-18-v3 / account-demo-v3.
+Original CSV SHA-256:
+e37006f76d993bfaec3a02d717b4f0bdc1ebfa5d36449e91fb7c07e225278377
+Pinned Release ZIP SHA-256:
+d3ab5139fa2af6f45958c71600f88df1d19e0e7cfaa6db9603430b5f400843f5
+Installed released BankSim DB SHA-256:
+1a30f4852c42278e46f8bfad79a1df67b62e96509007e114f2c040bcf6fa22dd
+Original BankSim-only JSONL SHA-256 (also in the embedded Release manifest):
+2c7133a1268a1b2b545730fe918a32ef10589faeecd29777ba30405a7ac208cf
+Deterministic gzip SHA-256:
+f80ed0484c2997badcf3e24487525a37392a38c91dffcc66e421bd615abf57aa
+Verified counts: 594643 labels, 7200 positives, 587443 negatives, 594643 unique
+transaction IDs; coverage 100%. Every original row, ID, source_record_key,
+origin/customer/account binding and retained normalized source field verified.
+
+Local artifact directory: /private/tmp/trustledger-banksim-ground-truth-v1/
+Release publication: PENDING KENNY'S SEPARATE APPROVAL. No label download URL yet.
+This handoff does not authorize an external message, upload, merge or deployment.
+
+Label schema: {id, account_token, fraud: boolean, label_origin:'banksim-ground-truth'}.
+Source key = one-based original CSV data-row index padded to 12 decimal digits.
+Transaction id = 'txn_' + SHA256(dataset_id + ':' + source_key)[:32].
+The released BankSim account histories preserve original transaction IDs;
+account_origins maps source dataset/key/customer. Account token =
+'acct_' + SHA256(dataset_id + ':' + original_customer_token)[:32].
+Account-demo owner is batch-specific; it must not be treated as Live Nessie identity.
+
+Fraud Intelligence Lab use:
+1. Validate the asset checksum and SHA256SUMS, decompress JSONL, check its original
+   label digest against manifest.json. Keep offline research data outside git/runtime.
+2. Restrict transactions to the exact BankSim dataset_id; join by exact id and verify
+   account_token. Assert full uniqueness and complete desired-slice coverage. Missing
+   labels remain unknown; stop on mismatch. Never join by amount/merchant/time.
+3. When using saved model scores, establish original CSV row alignment and preserve
+   the frozen train/select/confirm/test protocol. The existing frontend exporter uses
+   saved benchmark y arrays; this sidecar does not silently replace them or provide
+   model scores. No model was trained and no prediction result was invented here.
+4. Keep original BankSim truth, Nessie sandbox simulated-allocation labels, rule alerts
+   and ML predictions separate. Never label Live Nessie with BankSim truth.
+
+Reproduce the artifact from repo root (existing verified inputs only):
+backend/.venv/bin/python -m evaluation.banksim_labels --database <installed-v3-banksim.db> --truth-csv <original-CSV> --labels <original-banksim.jsonl> --release-archive <v3-ZIP> --output-dir <new-directory-outside-git>
+No full database regeneration, runtime database write, new endpoint or UI change.
+CC BY-NC-SA 4.0 attribution and use instructions accompany the sidecar.
+
+VERIFICATION RECEIPT
+Sidecar branch: bash scripts/check.sh passed: 773 backend tests, 3 opt-in skips,
+including backend lint/pytest,
+frontend typecheck/70 unit tests/build and Admin/auth/Labs/FraudLab browser suites.
+16 dedicated sidecar tests pass, including corrupt inputs, missing labels and
+provenance mismatch; the complete dataset was independently streamed again.
+Local prepared asset: /private/tmp/trustledger-banksim-ground-truth-2026-10-18-v1.zip
+Asset size: 24662593 bytes. ZIP SHA-256:
+c050f496573d6d063e2d9d099c029339ac861561173bb2abc11ad4b38ccf3266
+Checksum file: same asset path plus .sha256. ZIP integrity and internal
+SHA256SUMS passed. Release URL remains unavailable until approved publication.
