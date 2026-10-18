@@ -93,7 +93,9 @@ async def write_consented_memory(store: Store, owner, sentence, api_key, client=
 
 
 async def consented_summaries(store, owner, api_key, client=None):
-    local = [summary for summary in store.consented_memory_summaries(owner) if approved_memory(summary)]
+    # Management reads use the normal database deadline; optional analysis context stays short.
+    local = [summary for summary in store.consented_memory_summaries(owner, timeout=5)
+             if approved_memory(summary)]
     if not api_key.strip():
         return local, None
     assistant_id = store.assistant_id(owner)
