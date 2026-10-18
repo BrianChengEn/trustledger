@@ -1,6 +1,7 @@
 import {labels, money} from './api';
 import {Icon, type IconName} from './icons';
 import {alertHints, byPriority, day} from './lib';
+import Pager from './Pager';
 import {Chip, PageHead, stagger} from './ui';
 import Widgets from './Widgets';
 import {useWorkspace} from './workspace';
@@ -66,6 +67,7 @@ export default function Today() {
           </li>;
         })}
       </ul>
+      <Pager/>
     </section>}
 
     {!ordered.length && <div className="empty">

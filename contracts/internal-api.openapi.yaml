@@ -1241,6 +1241,431 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Explanation' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/auth/me:
+    get:
+      tags:
+      - demo-auth
+      operationId: me_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionView'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Current demo session. No sign-in needed; reports whether the server enforces sign-in.
+  /api/v1/auth/login:
+    post:
+      tags:
+      - demo-auth
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionView'
+        '401':
+          description: Wrong passcode (invalid_credentials)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Admin sign-in is not configured (admin_not_configured)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Too many failed attempts (too_many_attempts)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Demo sign-in by role and passcode. Sets an HttpOnly, SameSite=Strict session cookie. Not production authentication.
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - demo-auth
+      operationId: logout_api_v1_auth_logout_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionView'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Ends the demo session.
+  /api/v1/admin/demo/status:
+    get:
+      tags:
+      - local-admin
+      operationId: status_api_v1_admin_demo_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoStatus'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/transactions:
+    get:
+      tags:
+      - local-admin
+      operationId: list_rows_api_v1_admin_demo_transactions_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DemoRow'
+                type: array
+                title: Response List Rows Api V1 Admin Demo Transactions Get
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+    post:
+      tags:
+      - local-admin
+      operationId: create_api_v1_admin_demo_transactions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoTransactionIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoRow'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/transactions/{tx_id}:
+    patch:
+      tags:
+      - local-admin
+      operationId: update_api_v1_admin_demo_transactions__tx_id__patch
+      parameters:
+      - name: tx_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: ^txn_[A-Za-z0-9_-]+$
+          title: Tx Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoTransactionPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoRow'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown transaction (not_found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+    delete:
+      tags:
+      - local-admin
+      operationId: delete_api_v1_admin_demo_transactions__tx_id__delete
+      parameters:
+      - name: tx_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: ^txn_[A-Za-z0-9_-]+$
+          title: Tx Id
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown transaction (not_found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/scenarios/{name}:
+    post:
+      tags:
+      - local-admin
+      operationId: scenario_api_v1_admin_demo_scenarios__name__post
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          enum:
+          - duplicate
+          - large_purchase
+          - price_hike
+          type: string
+          title: Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioResult'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/reset:
+    post:
+      tags:
+      - local-admin
+      operationId: reset_api_v1_admin_demo_reset_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetResult'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/log:
+    get:
+      tags:
+      - local-admin
+      operationId: log_api_v1_admin_demo_log_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DemoLogEntry'
+                title: Response Log Api V1 Admin Demo Log Get
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+
 components:
   parameters:
     TransactionId:
@@ -1885,3 +2310,286 @@ components:
       - transactions
       - sync
       title: WorkspaceSnapshot
+    DemoLogEntry:
+      properties:
+        id:
+          type: integer
+          title: Id
+        at:
+          type: string
+          title: At
+        action:
+          type: string
+          enum:
+          - create
+          - update
+          - delete
+          - scenario
+          - reset
+          title: Action
+        tx_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Tx Id
+        summary:
+          type: string
+          title: Summary
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - at
+      - action
+      - tx_id
+      - summary
+      title: DemoLogEntry
+    ScenarioResult:
+      properties:
+        scenario:
+          type: string
+          enum:
+          - duplicate
+          - large_purchase
+          - price_hike
+          title: Scenario
+        created:
+          items:
+            $ref: '#/components/schemas/DemoRow'
+          type: array
+          title: Created
+      additionalProperties: false
+      type: object
+      required:
+      - scenario
+      - created
+      title: ScenarioResult
+    DemoRow:
+      properties:
+        id:
+          type: string
+          title: Id
+        occurred_at:
+          type: string
+          title: Occurred At
+        amount:
+          type: number
+          title: Amount
+        merchant_display:
+          type: string
+          title: Merchant Display
+        merchant_category:
+          type: string
+          title: Merchant Category
+        direction:
+          type: string
+          enum:
+          - debit
+          - credit
+          - unknown
+          title: Direction
+        is_subscription:
+          type: boolean
+          title: Is Subscription
+        kind:
+          type: string
+          enum:
+          - purchase
+          - transfer
+          - deposit
+          - withdrawal
+          title: Kind
+        origin:
+          type: string
+          enum:
+          - baseline
+          - admin
+          title: Origin
+        edited_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Edited At
+        decided:
+          type: boolean
+          title: Decided
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - occurred_at
+      - amount
+      - merchant_display
+      - merchant_category
+      - direction
+      - is_subscription
+      - kind
+      - origin
+      - edited_at
+      - decided
+      title: DemoRow
+    DemoTransactionIn:
+      properties:
+        merchant:
+          type: string
+          title: Merchant
+        category:
+          type: string
+          title: Category
+        amount:
+          anyOf:
+          - type: number
+            maximum: 99999.99
+            exclusiveMinimum: 0.0
+          - type: string
+          title: Amount
+        occurred_at:
+          type: string
+          format: date-time
+          title: Occurred At
+        direction:
+          type: string
+          enum:
+          - debit
+          - credit
+          title: Direction
+          default: debit
+        is_subscription:
+          type: boolean
+          title: Is Subscription
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - merchant
+      - category
+      - amount
+      - occurred_at
+      title: DemoTransactionIn
+      description: A synthetic charge entered by an admin. The id, source and account are always chosen by the server.
+    ResetResult:
+      properties:
+        restored:
+          type: integer
+          title: Restored
+        cleared_decisions:
+          type: integer
+          title: Cleared Decisions
+        cleared_memories:
+          type: integer
+          title: Cleared Memories
+      additionalProperties: false
+      type: object
+      required:
+      - restored
+      - cleared_decisions
+      - cleared_memories
+      title: ResetResult
+    LoginRequest:
+      properties:
+        role:
+          type: string
+          enum:
+          - user
+          - admin
+          title: Role
+        passcode:
+          type: string
+          maxLength: 64
+          title: Passcode
+          default: ''
+      additionalProperties: false
+      type: object
+      required:
+      - role
+      title: LoginRequest
+    SessionView:
+      properties:
+        authenticated:
+          type: boolean
+          title: Authenticated
+        role:
+          anyOf:
+          - type: string
+            enum:
+            - user
+            - admin
+          - type: 'null'
+          title: Role
+        login_required:
+          type: boolean
+          title: Login Required
+        admin_available:
+          type: boolean
+          title: Admin Available
+        demo_edit_enabled:
+          type: boolean
+          title: Demo Edit Enabled
+      additionalProperties: false
+      type: object
+      required:
+      - authenticated
+      - login_required
+      - admin_available
+      - demo_edit_enabled
+      title: SessionView
+    DemoTransactionPatch:
+      properties:
+        merchant:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Merchant
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
+        amount:
+          anyOf:
+          - type: number
+            maximum: 99999.99
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Amount
+        occurred_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Occurred At
+        direction:
+          anyOf:
+          - type: string
+            enum:
+            - debit
+            - credit
+          - type: 'null'
+          title: Direction
+        is_subscription:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Subscription
+      additionalProperties: false
+      type: object
+      title: DemoTransactionPatch
+    DemoStatus:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+        rows:
+          type: integer
+          title: Rows
+        cap:
+          type: integer
+          title: Cap
+      additionalProperties: false
+      type: object
+      required:
+      - enabled
+      - rows
+      - cap
+      title: DemoStatus

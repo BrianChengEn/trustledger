@@ -1,11 +1,11 @@
 import {useEffect, useRef} from 'react';
 import Activity from './Activity';
 import Case from './Case';
-import {Icon} from './icons';
 import MemoryView from './MemoryView';
 import PrivacyView from './PrivacyView';
 import type {Route} from './route';
 import Today from './Today';
+import {Toasts} from './ui';
 import {useWorkspace} from './workspace';
 
 export default function WorkspaceView({route}: {route: Route}) {
@@ -20,13 +20,7 @@ export default function WorkspaceView({route}: {route: Route}) {
     previousView.current = route.view;
   }, [route.view, refresh, loading, busy]);
   return <div className="workspace" style={{display: 'contents'}}>
-    {(error || notice) && <div className="banners">
-      {error && <div className="banner error" role="alert"><Icon name="alertTriangle" size={18}/><span>{error}</span>
-        <button onClick={() => void refresh()} disabled={loading || busy}>Retry</button>
-        <button className="iconbtn" aria-label="Dismiss" onClick={dismissNotice}><Icon name="x" size={15}/></button></div>}
-      {notice && <div className="banner notice" role="status"><Icon name="checkCircle" size={18}/><span>{notice}</span>
-        <button className="iconbtn" aria-label="Dismiss" onClick={dismissNotice}><Icon name="x" size={15}/></button></div>}
-    </div>}
+    <Toasts error={error} notice={notice} busy={loading || busy} onRetry={() => void refresh()} onDismiss={dismissNotice}/>
     {route.view === 'sources' ? null
       : !loaded ? (loading ? <p className="loading" role="status">Loading your workspace…</p> : null)
       : !ready && route.view === 'today'

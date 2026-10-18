@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import httpx
 
 from app.api.dependencies import Analyses, Explanations, Transactions
+from app.core.auth import require_admin_when_enforced, require_session
 from app.core.store import ConflictingConfirmation
 from app.schemas.api import (
     Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Explanation, Health,
@@ -17,9 +18,9 @@ from app.services.ai.backboard_client import MemoryCallError
 from app.services.ai.memory_sync import consented_summaries, remove_remote_memory, write_consented_memory
 from app.services.workspace import owner as workspace_owner, require_nessie, select_customer
 
-router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_nessie)])
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_session), Depends(require_nessie)])
 customer_router = APIRouter(prefix='/api/v1/admin/nessie/customers/{customer_code}',
-                            dependencies=[Depends(select_customer), Depends(require_nessie)])
+                            dependencies=[Depends(require_admin_when_enforced), Depends(select_customer), Depends(require_nessie)])
 
 
 def private_markers(tx: Transaction) -> tuple[str, ...]:
