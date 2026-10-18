@@ -133,6 +133,17 @@ The BankSim CSV stays outside Git. With the checked 4,112-customer CSV and 18-ac
 
 Offline labels are stored separately under ignored `evaluation/datasets/account-demo-labels`: 4,979 original BankSim positive cases and 22 explicitly simulated Nessie positives, about 1.2109% combined. Each account has one or two positive slots; exact 1.2108% is impossible in 100 integer rows. Labels never enter runtime SQLite, the browser, rules, Gemini, Jev or Backboard. BankSim preserves EUR and simulation days; Nessie uses only its own account's templates and preserves USD, date precision and unknown direction. Generated histories are constructed examples, not original customer histories or measured detector accuracy. Databases and offline labels are not distributed in the PR; collaborators supply their local synthetic source files.
 
+To use one generated Nessie account in the **user's Today / Activity / Case / Privacy / Memory** workspace, start the explicit offline account demo after generating the batch:
+
+```bash
+bash scripts/dev-account-demo-backend.sh
+# In a second terminal:
+cd frontend
+API_PROXY_TARGET=http://127.0.0.1:8001 npm run dev -- --port 5174
+```
+
+Open `http://127.0.0.1:5174`. The launcher selects the first registered Nessie account and prints its local code; set `DEMO_ACCOUNT_TOKEN=acct_...` before launching to select another Nessie account. It reads the same 100 transaction IDs and fields as the source browser, uses a separate `account-user-demo.db` for account-scoped decisions/memory, clears vendor keys and reports **Synthetic demo data**. Missing or incomplete account data fails without falling back to 18 fixtures. Existing synthetic and live Nessie modes are unchanged. The USD product workspace only accepts Nessie-derived accounts; BankSim remains in the source browser with EUR and simulation days. Date-only rows retain their precision, with no invented merchant identity or recurring-payment inference.
+
 ## Tests
 
 ```bash
