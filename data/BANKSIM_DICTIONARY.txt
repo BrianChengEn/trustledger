@@ -1,0 +1,151 @@
+BankSim 資料字典
+給 Kenny 設計統一資料庫用。這不是產品 Transaction schema。
+不要把這些列寫進 demo_transactions，也不要改 production rules。
+
+來源
+Lopez-Rojas, Edgar Alonso 與 Axelsson, Stefan。
+BankSim: A Bank Payment Simulation for Fraud Detection Research。
+26th European Modeling and Simulation Symposium, EMSS 2014，頁 144–152。
+https://www.researchgate.net/publication/265736405_BankSim_A_Bank_Payment_Simulation_for_Fraud_Detection_Research
+Kaggle：https://www.kaggle.com/datasets/ealaxi/banksim1
+檔名：bs140513_032310.csv
+授權：CC BY-NC-SA 4.0。原始 CSV 不進 git。
+本機核對檔 sha256：
+e37006f76d993bfaec3a02d717b4f0bdc1ebfa5d36449e91fb7c07e225278377
+48,986,035 bytes。下載與核對見 data/manifests/banksim.yaml。
+
+已核對的規模
+594,643 筆模擬交易。
+ground-truth fraud = 1 有 7,200 筆。fraud = 0 有 587,443 筆。
+step 從 0 到 179，連續、沒有缺號，一共 180 個 step。
+檔案順序裡 step 只會停留或上升，沒有倒退。
+這些數字對過上述 sha256 的本地檔，也與 Kaggle 頁面和 EMSS 2014 論文一致。
+
+step 是什麼
+論文與 Kaggle 頁面寫：模擬跑了 180 steps，大約六個月。
+作者把「每個 step」和「每天」當成同一個節奏：每步約三張卡、每天約兩筆詐欺。
+所以一個 step 是一個模擬日。
+step 不是真實時間戳。同一 step 裡沒有核對過的時、分、秒。
+CSV 沒有 hour、timestamp 或 occurred_at 欄。
+不要發明精確時間。不要把 step 換成午夜，也不要用檔案順序當作當天的先後。
+檔案順序只是出處順序，要保留，但不能當成時鐘。
+整數 step 必須原樣保留。
+
+原始欄位
+表頭順序固定：
+step, customer, age, gender, zipcodeOri, merchant, zipMerchant, category, amount, fraud
+
+字串儲存格含有單引號字元。第一筆資料列是：
+step=0
+customer='C1093826151'
+merchant='M348934600'
+category='es_transportation'
+amount=4.55
+fraud=0
+這是原始檔的第一列，用來說明引號。下面的 C001 例子不是真實列。
+
+欄位
+step
+  整數 0–179。一個模擬日。保留整數。
+customer
+  合成客戶代碼，形狀是單引號包住的 C 開頭代碼。沒有人名。保留原始代碼。
+age
+  類別代碼，不是歲數。本地檔看到的值是 '0'、'1'、'2'、'3'、'4'、'5'、'6'、'U'。
+gender
+  本地檔看到的值是 'F'、'M'、'E'、'U'。
+zipcodeOri
+  這份檔每一列都是 '28007'。仍要保留。
+merchant
+  合成商家代碼，形狀是單引號包住的 M 開頭代碼。不是店名。不要丟掉。
+zipMerchant
+  這份檔每一列都是 '28007'。仍要保留。
+category
+  15 個原始類別，都保留 es_ 前綴。不要合併。
+  es_transportation、es_food、es_health、es_wellnessandbeauty、es_fashion、
+  es_barsandrestaurants、es_hyper、es_sportsandtoys、es_tech、es_home、
+  es_hotelservices、es_otherservices、es_contents、es_travel、es_leisure。
+  es_food 與 es_hyper 是兩個欄位值。研究樣本曾把它們都映成 groceries，
+  那是別的實驗假設，不能寫進這份正規化。
+amount
+  CSV 裡的十進位原值。不要改成美分，不要四捨五入。
+fraud
+  0 或 1。這是模擬時注入的 ground truth。它不是營運交易的欄位，
+  也不是模型預測。
+
+金額單位
+CSV 沒有 currency 欄。
+EMSS 2014 論文在來源樣本的統計表處寫："All prices given are in euro."
+模擬器是依那份西班牙銀行樣本校正的。資料字典把金額單位記成 EUR。
+這是論文的單位，不是從儲存格讀到的幣別代碼。
+不要默默換成 USD。產品示範交易用 USD，那是另一份合成資料，不是 BankSim。
+
+正規化
+正規化必須能對回原始列。保留原始列，或保留下列全部出處：
+檔名、sha256、原始資料列號、原始十個欄位、引號處理規則。
+
+穩定 ID：
+banksim:bs140513_032310.csv:<source_row>
+source_row 是表頭之後的 1-based 列號，依原始檔順序。
+第 1 筆資料列的 ID 是 banksim:bs140513_032310.csv:1。
+
+若要去掉一對包住全文的單引號，規則要寫死並與原始儲存格一起留著：
+cleaned = 去掉最外層一對單引號後的文字。
+customer_id 與 merchant_id 用 cleaned。原始儲存格仍留在 raw 列。
+
+研究用的正規化記錄，不是 FastAPI Transaction：
+source = banksim
+simulation_step = 原始 step 整數
+customer_id = cleaned customer
+merchant_id = cleaned merchant
+merchant_category = cleaned category，不改名
+amount = 原始十進位數
+currency = EUR
+occurred_at = null
+
+產品 schema 的 source 目前只有 synthetic 與 nessie，而且 occurred_at 必填。
+不要為了塞進現有 API 而填上時間或改成 USD。
+BankSim 研究表與 demo 交易表分開。
+
+ground truth 另表
+transaction_id = 上面的穩定 ID
+ground_truth_fraud = true 只在原始 fraud 是 1 時成立
+推論、規則引擎、Gemini、Jev、Backboard 都不讀這張表。
+歷史詐欺率只能用「預測點之前」看得到的標籤。
+對一列來說，之前只包含 simulation_step 更小的列。
+同一個 step 的其他列沒有核對過的先後，不能拿來當特徵。
+不能用這一列自己的標籤，也不能用未來的 step。
+
+例子
+這只是形狀說明。C001、M002 不是這份 CSV 裡的列。
+
+原始 BankSim：
+step=100
+customer=C001
+merchant=M002
+category=es_health
+amount=180.50
+fraud=1
+
+正規化交易：
+source=banksim
+simulation_step=100
+customer_id=C001
+merchant_id=M002
+merchant_category=es_health
+amount=180.50
+currency=EUR
+occurred_at=null
+
+研究標籤：
+transaction_id=<與該列相同的穩定 ID>
+ground_truth_fraud=true
+
+資料庫規則
+1. 不要發明精確時間戳。occurred_at 保持 null。
+2. 不要默默把 EUR 換成 USD。
+3. 不要合併不同的 merchant category。
+4. 不要丟掉原始 merchant ID。
+5. 不要把 fraud ground truth 暴露給推論。
+6. 歷史詐欺率只能用預測點之前的標籤。同一 step 不算之前。
+7. 保留資料出處與原始順序。source_row 就是順序。
+8. 正規化要可還原或可稽核。原始列或原始欄位必須留著。
