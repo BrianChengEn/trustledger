@@ -2,12 +2,16 @@ import {useEffect, useRef, useState} from 'react';
 import Pager from './Pager';
 import {request, type Execution, type HistoryItem, type HistoryPage,
   type NessieQuery, type ResourceOption} from './api';
+import {go, useRoute} from './route';
+import {WorkspaceProvider} from './workspace';
+import {CustomerReview} from './WorkspaceView';
 
 const prefix = '/admin/nessie';
 const queries: [NessieQuery, string][] = [
   ['customers.list', '列出客戶'], ['accounts.list', '列出帳戶'], ['accounts.get', '查詢單一帳戶'],
   ['accounts.by_customer', '客戶的帳戶'], ['deposits.by_account', '帳戶的存款'],
   ['withdrawals.by_account', '帳戶的提款'],
+  ['purchases.by_account', '帳戶的消費'], ['transfers.by_account', '帳戶的轉帳'],
 ];
 const text = (value: unknown) => typeof value === 'string' ? value : JSON.stringify(value);
 
@@ -36,8 +40,41 @@ function Metadata({result}: {result: Omit<HistoryItem, 'history_id'>}) {
   </div>;
 }
 
-export default function Admin() {
-  const [view, setView] = useState<'query'|'history'>('query');
+function Customers({active}: {active: boolean}) {
+  const [options, setOptions] = useState<ResourceOption[]>([]);
+  const route = useRoute();
+  const customer = route.customer ?? '';
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function load() {
+    setBusy(true); setError('');
+    try {
+      const rows = await request<ResourceOption[]>(prefix+'/customers', undefined, 25000);
+      setOptions(rows);
+    } catch {setError('無法取得客戶，請重試。');}
+    finally {setBusy(false);}
+  }
+  useEffect(()=>{void load();}, []);
+  return <section id="V-CUSTOMERS">
+    <div className="panel"><label htmlFor="C-SELECT">選擇合成客戶</label>
+      <select id="C-SELECT" value={customer} disabled={busy} onChange={event=>{
+        go(event.target.value ? {view: 'today', customer: event.target.value} : {view: 'sources'});
+      }}><option value="">請選擇</option>{options.map(row=><option key={row.resource_id} value={row.resource_id}>
+        {row.resource_id}</option>)}</select>
+      <button disabled={busy} onClick={()=>void load()}>重新載入客戶</button>
+      {busy&&<p role="status">讀取客戶中…</p>}{error&&<p role="alert" className="error">{error}</p>}
+      {!busy&&!error&&!options.length&&<p className="empty">沒有可查詢的合成客戶。</p>}
+    </div>
+    {customer&&<WorkspaceProvider key={customer} customerId={customer} active={active}>
+      <CustomerReview route={route}/>
+    </WorkspaceProvider>}
+  </section>;
+}
+
+export default function Admin({active = true}: {active?: boolean}) {
+  const [view, setView] = useState<'query'|'history'|'customers'>('query');
+  const route = useRoute();
+  useEffect(() => {if (route.customer) setView('customers');}, [route.customer]);
   const [query, setQuery] = useState<NessieQuery>('customers.list');
   const [resourceId, setResourceId] = useState('');
   const [resources, setResources] = useState<ResourceOption[]>([]);
@@ -100,7 +137,9 @@ export default function Admin() {
     <nav className="actions admin-tabs" aria-label="控制台分頁">
       <button id="NAV-Q" aria-current={view==='query'?'page':undefined} onClick={() => setView('query')}>查詢</button>
       <button id="NAV-H" aria-current={view==='history'?'page':undefined} onClick={() => {setView('history'); void loadHistory();}}>歷史</button>
+      <button id="NAV-CUSTOMERS" aria-current={view==='customers'?'page':undefined} onClick={()=>setView('customers')}>使用者交易</button>
     </nav>
+    {view==='customers'&&<Customers active={active}/>}
     {error && <p className="error" role="alert">{error}</p>}
     <div id="V-QUERY" hidden={view!=='query'} className="admin-query">
       <form className="panel" onSubmit={event => {event.preventDefault(); void run();}}>

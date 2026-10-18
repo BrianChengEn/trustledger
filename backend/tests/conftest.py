@@ -14,8 +14,11 @@ def client(tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def deny_external_network(monkeypatch):
+def deny_external_network(monkeypatch, request):
     """Block Python internet sockets/DNS, even when fallback swallows the exception."""
+    if request.node.get_closest_marker("live_network"):
+        yield
+        return
     import socket
 
     attempts = []

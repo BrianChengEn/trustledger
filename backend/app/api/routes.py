@@ -1,22 +1,39 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 
 from contextlib import asynccontextmanager
 import httpx
 
-from app.api.dependencies import Analyses, Transactions
+from app.api.dependencies import Analyses, Explanations, Transactions
 from app.core.store import ConflictingConfirmation
 from app.schemas.api import (
-    Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Health,
+    Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Explanation, Health,
     MemorySummary, PrivacyPreview,
 )
 from app.schemas.transaction import Transaction
 from app.services.ai.memory_policy import memory_sentence
 from app.services.ai.backboard_client import MemoryCallError
 from app.services.ai.memory_sync import consented_summaries, remove_remote_memory, write_consented_memory
+from app.services.workspace import owner as workspace_owner, require_nessie, select_customer
 
-router = APIRouter(prefix="/api/v1")
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_nessie)])
+customer_router = APIRouter(prefix='/api/v1/admin/nessie/customers/{customer_code}',
+                            dependencies=[Depends(select_customer), Depends(require_nessie)])
+
+
+def private_markers(tx: Transaction) -> tuple[str, ...]:
+    """Local denylist for model output. These values are not placed in the Gemini document."""
+    amount = tx.amount
+    markers = [
+        tx.id, tx.account_token, tx.merchant_display, tx.occurred_at.isoformat(),
+        str(amount), f"{amount:.2f}", f"{amount:.1f}", f"{amount:g}",
+    ]
+    unique: list[str] = []
+    for marker in markers:
+        if len(marker) >= 3 and marker not in unique:
+            unique.append(marker)
+    return tuple(unique)
 
 
 def api_key(request: Request) -> str:
@@ -42,7 +59,7 @@ async def remembered(request: Request) -> list[str]:
     state = request.app.state
     async with vendor_http(request) as http:
         summaries, outcome = await consented_summaries(
-            state.store, state.settings.demo_user_id, api_key(request), http)
+            state.store, workspace_owner(request), api_key(request), http)
     if outcome and (outcome == "degraded" or getattr(state, "memory_outcome", None) != "degraded"):
         state.memory_outcome = outcome
     return summaries
@@ -53,11 +70,12 @@ def alerts(request: Request, analyses: Analyses) -> list[Alert]:
     # GET and confirmation never invoke a fraud provider.
     result = analyses.alerts(request.state.request_id)
     for alert in result:
-        alert.status = state.store.status(state.settings.demo_user_id, alert.alert_id)
+        alert.status = state.store.status(workspace_owner(request), alert.alert_id)
     return result
 
 
 @router.get("/health", response_model=Health)
+@customer_router.get('/health', response_model=Health)
 def health(request: Request, transactions: Transactions):
     # Report current data readiness, not a previous request's cached AI outcome.
     # Public analysis remains rules-authoritative; failures are request-specific.
@@ -71,31 +89,50 @@ def health(request: Request, transactions: Transactions):
 
 
 @router.get("/transactions", response_model=list[Transaction])
+@customer_router.get('/transactions', response_model=list[Transaction])
 def list_transactions(transactions: Transactions, limit: int = Query(25, ge=1, le=100)):
     return transactions.list_transactions(limit)
 
 
 @router.post("/analyses", response_model=Analysis)
+@customer_router.post('/analyses', response_model=Analysis)
 def analyze_transaction(body: AnalyzeRequest, request: Request, analyses: Analyses):
     return analyses.analyze(body.transaction_id, request.state.request_id)
 
 
 @router.get("/alerts", response_model=list[Alert])
+@customer_router.get('/alerts', response_model=list[Alert])
 def list_alerts(request: Request, analyses: Analyses):
     return alerts(request, analyses)
 
 
 @router.get("/privacy/preview/{transaction_id}", response_model=PrivacyPreview)
+@customer_router.get('/privacy/preview/{transaction_id}', response_model=PrivacyPreview)
 def preview(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
             analyses: Analyses):
     return analyses.preview(transaction_id)
 
 
+@router.post("/transactions/{transaction_id}/explanation", response_model=Explanation)
+@customer_router.post('/transactions/{transaction_id}/explanation', response_model=Explanation)
+def explain_transaction(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
+                        request: Request, analyses: Analyses, explanations: Explanations):
+    """User-triggered explanation. Rules stay authoritative; Gemini is not called by analysis."""
+    analysis, features = analyses.rules_view(transaction_id, request.state.request_id)
+    before = analysis.model_dump_json()
+    transaction = analyses.transactions.get_transaction(transaction_id)
+    result = explanations.explain(analysis, features, private_markers(transaction))
+    if analysis.model_dump_json() != before:
+        raise HTTPException(500, "internal_error")
+    return result
+
+
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)
+@customer_router.post('/alerts/{alert_id}/confirmations', response_model=Confirmation)
 async def confirm(alert_id: Annotated[str, Path(min_length=1, max_length=80)],
                   body: ConfirmationRequest, request: Request, transactions: Transactions, analyses: Analyses):
     state = request.app.state
-    owner = state.settings.demo_user_id
+    owner = workspace_owner(request)
     try:
         replay = state.store.replay_confirmation(
             owner, alert_id, body.decision, body.consent_to_memory, request.state.request_id)
@@ -136,15 +173,17 @@ async def confirm(alert_id: Annotated[str, Path(min_length=1, max_length=80)],
 
 
 @router.get("/memories", response_model=list[MemorySummary])
+@customer_router.get('/memories', response_model=list[MemorySummary])
 async def memories(request: Request):
     await remembered(request)
-    return request.app.state.store.list_memories(request.app.state.settings.demo_user_id)
+    return request.app.state.store.list_memories(workspace_owner(request))
 
 
 @router.delete("/memories/{memory_id}", status_code=204)
+@customer_router.delete('/memories/{memory_id}', status_code=204)
 async def delete(memory_id: Annotated[str, Path(min_length=1, max_length=100)], request: Request):
     state = request.app.state
-    owner = state.settings.demo_user_id
+    owner = workspace_owner(request)
     try:
         async with vendor_http(request) as http:
             removed = await remove_remote_memory(

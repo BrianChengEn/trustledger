@@ -2,13 +2,12 @@ import {useState} from 'react';
 import {labels} from './api';
 import {Icon} from './icons';
 import {memoryCategory, memoryModeCopy, memoryStore, prettyCategory} from './lib';
-import {go} from './route';
 import {Callout, Chip, PageHead, stagger} from './ui';
 import {useWorkspace} from './workspace';
 
 /** Memory is the management view: what was allowed, where it lives, what it affects, and how to remove it. */
 export default function MemoryView() {
-  const {memories, alerts, transactions, health, forget, busy, loading, refresh} = useWorkspace();
+  const {memories, alerts, transactions, health, forget, busy, loading, refresh, ready, go, href} = useWorkspace();
   const [confirming, setConfirming] = useState<string | null>(null);
   const mode = memoryModeCopy(health?.memory_mode);
   const affected = (summary: string) => {
@@ -18,7 +17,7 @@ export default function MemoryView() {
   };
   return <div className="page">
     <PageHead eyebrow="Memory" title="What you’ve allowed it to remember."
-      actions={<button className="iconbtn" aria-label="Refresh memories" onClick={() => void refresh()} disabled={loading}><Icon name="refresh" size={16}/></button>}>
+      actions={<button className="iconbtn" aria-label="Refresh memories" onClick={() => void refresh()} disabled={loading || busy}><Icon name="refresh" size={16}/></button>}>
       TrustLedger remembers only category-level preferences you explicitly approve. Never a merchant, an amount or an ID.</PageHead>
     <Callout tone={mode.tone === 'good' ? 'good' : mode.tone === 'warn' ? 'warn' : 'neutral'} icon="hardDrive" title={`Storage: ${mode.label}`}>{mode.detail}</Callout>
 
@@ -41,14 +40,14 @@ export default function MemoryView() {
           <div className="effect"><b>How it affects analysis</b>
             <p>For <em>{memoryCategory(m.summary) ? prettyCategory(memoryCategory(m.summary)!) : 'this category'}</em> charges, the AI request carries “prior confirmation: normal” as context. Rules still decide and the alert is still shown.</p>
             {touched.length > 0 && <ul>{touched.map(({alert, tx}) => <li key={alert.alert_id}>
-              <a href={'#/case/' + encodeURIComponent(tx.id)}>{tx.merchant_display}: {labels[alert.alert_type]}</a></li>)}</ul>}
+              <a href={href({view: 'case', tx: tx.id})}>{tx.merchant_display}: {labels[alert.alert_type]}</a></li>)}</ul>}
           </div>
           <div className="actions">
             {confirming === m.memory_id ? <>
-              <button className="danger" disabled={busy} onClick={async () => { await forget(m.memory_id); setConfirming(null); }}>
+              <button className="danger" disabled={busy || !ready} onClick={async () => { await forget(m.memory_id); setConfirming(null); }}>
                 <Icon name="trash" size={16}/>{busy ? 'Deleting…' : 'Yes, delete this memory'}</button>
               <button disabled={busy} onClick={() => setConfirming(null)}>Keep it</button></>
-              : <button onClick={() => setConfirming(m.memory_id)}><Icon name="trash" size={16}/>Delete memory</button>}
+              : <button disabled={busy || !ready} onClick={() => setConfirming(m.memory_id)}><Icon name="trash" size={16}/>Delete memory</button>}
           </div>
         </li>;
       })}

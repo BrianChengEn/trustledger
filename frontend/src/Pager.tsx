@@ -18,7 +18,8 @@ export default function Pager() {
       if (!el) return;
       const step = Math.max(1, el.clientHeight);
       const pages = Math.max(1, Math.ceil((el.scrollHeight - 2) / step));
-      setState({pages, page: Math.min(pages - 1, Math.round(el.scrollTop / step))});
+      const page = el.scrollTop >= el.scrollHeight - step - 1 ? pages - 1 : Math.round(el.scrollTop / step);
+      setState({pages, page: Math.min(pages - 1, page)});
     };
     measure();
     // The region may not have its final size on the first frame (flex layout, entrance animation), so measure again.

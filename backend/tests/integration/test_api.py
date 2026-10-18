@@ -56,7 +56,7 @@ def test_transactions_use_persistent_sqlite_instead_of_json(client):
 
     with TestClient(create_app(client.app.state.settings)) as restarted:
         rows = restarted.get("/api/v1/transactions").json()
-        assert len(rows) == 8
+        assert len(rows) == 18
         assert next(row for row in rows if row["id"] == "txn_syn_005")["amount"] == 12.34
 
 
@@ -71,7 +71,7 @@ def test_contract_smoke(client):
         assert r.status_code == 200
         schema = {"$ref": f"#/components/schemas/{schema_name}", "components": components}
         Draft202012Validator(schema).validate(r.json())
-    assert len(client.get("/api/v1/transactions").json()) == 8
+    assert len(client.get("/api/v1/transactions").json()) == 18
     assert len(client.get("/api/v1/alerts").json()) == 3
 
 

@@ -115,6 +115,7 @@ def provider_call(method, *args):
 
 
 def canonical(value) -> Transaction:
+    original = value
     try:
         # Revalidate even model instances: model_copy/model_construct can bypass validation.
         if isinstance(value, Transaction):
@@ -123,6 +124,11 @@ def canonical(value) -> Transaction:
         # JSON numbers and rule arithmetic require finite canonical amounts.
         if not isfinite(result.amount):
             raise ProviderMalformedData()
+        if isinstance(original, Transaction):
+            if type(original._date_only) is not bool or original._settlement_status not in {'pending', 'completed', 'cancelled'}:
+                raise ProviderMalformedData()
+            result._date_only = original._date_only
+            result._settlement_status = original._settlement_status
         return result
     except (ValidationError, TypeError, ValueError):
         raise ProviderMalformedData() from None

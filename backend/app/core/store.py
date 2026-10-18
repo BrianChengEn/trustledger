@@ -14,7 +14,8 @@ HISTORY_SCHEMA = """CREATE TABLE IF NOT EXISTS query_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
     source TEXT NOT NULL CHECK(source IN ('nessie','synthetic')),
     query_name TEXT NOT NULL CHECK(query_name IN ('customers.list','accounts.list',
-        'accounts.get','accounts.by_customer','deposits.by_account','withdrawals.by_account')),
+        'accounts.get','accounts.by_customer','deposits.by_account','withdrawals.by_account',
+        'purchases.by_account','transfers.by_account')),
     requested_at TEXT NOT NULL, http_status INTEGER CHECK(http_status BETWEEN 100 AND 599),
     duration_ms INTEGER NOT NULL CHECK(duration_ms>=0),
     transport_error TEXT CHECK(transport_error IN ('timeout','connection'))
@@ -53,6 +54,27 @@ class Store:
                 CREATE TABLE IF NOT EXISTS confirmations (
                     owner TEXT, alert_id TEXT, decision TEXT, consent INTEGER, result TEXT,
                     PRIMARY KEY(owner, alert_id));
+                CREATE TABLE IF NOT EXISTS workspace_accounts (
+                    owner TEXT NOT NULL, account_token TEXT NOT NULL,
+                    type TEXT NOT NULL CHECK(type IN ('Checking','Savings','Credit Card')),
+                    balance_cents INTEGER NOT NULL CHECK(typeof(balance_cents)='integer'),
+                    rewards INTEGER NOT NULL CHECK(typeof(rewards)='integer' AND rewards>=0),
+                    PRIMARY KEY(owner,account_token));
+                CREATE TABLE IF NOT EXISTS workspace_movements (
+                    owner TEXT NOT NULL, id TEXT NOT NULL, account_token TEXT NOT NULL,
+                    kind TEXT NOT NULL CHECK(kind IN ('purchase','transfer','deposit','withdrawal')),
+                    occurred_at TEXT NOT NULL, date_only INTEGER NOT NULL CHECK(date_only IN (0,1)),
+                    amount_cents INTEGER NOT NULL CHECK(typeof(amount_cents)='integer' AND amount_cents>=0),
+                    direction TEXT NOT NULL CHECK(direction IN ('debit','credit','unknown')),
+                    settlement_status TEXT NOT NULL CHECK(settlement_status IN ('pending','completed','cancelled')),
+                    PRIMARY KEY(owner,id), FOREIGN KEY(owner,account_token)
+                        REFERENCES workspace_accounts(owner,account_token) ON DELETE CASCADE);
+                CREATE TABLE IF NOT EXISTS workspace_sync (
+                    owner TEXT NOT NULL, account_token TEXT NOT NULL, kind TEXT NOT NULL
+                        CHECK(kind IN ('accounts','purchases','transfers','deposits','withdrawals')),
+                    requested_at TEXT NOT NULL, synced_at TEXT, http_status INTEGER,
+                    error TEXT CHECK(error IN ('upstream','timeout','connection','schema')),
+                    PRIMARY KEY(owner,account_token,kind));
                 CREATE TABLE IF NOT EXISTS memories (
                     memory_id TEXT PRIMARY KEY, owner TEXT, summary TEXT, created_at TEXT,
                     source TEXT NOT NULL DEFAULT 'local-fallback', assistant_id TEXT);
@@ -78,6 +100,12 @@ class Store:
                     remote_id TEXT NOT NULL, local_id TEXT NOT NULL,
                     PRIMARY KEY(owner,credential_scope,kind,remote_id),
                     UNIQUE(owner,credential_scope,local_id));
+                CREATE TABLE IF NOT EXISTS admin_query_rows (
+                    owner TEXT NOT NULL, credential_scope TEXT NOT NULL, query_name TEXT NOT NULL,
+                    resource_code TEXT NOT NULL, position INTEGER NOT NULL,
+                    resource_id TEXT, account_type TEXT, balance_cents INTEGER, rewards INTEGER,
+                    amount_cents INTEGER, medium TEXT, settlement_status TEXT,
+                    PRIMARY KEY(owner,credential_scope,query_name,resource_code,position));
                 CREATE TABLE IF NOT EXISTS seed_runs (
                     id INTEGER PRIMARY KEY, owner TEXT NOT NULL, dataset_sha256 TEXT NOT NULL,
                     api_base_url TEXT NOT NULL, credential_fingerprint TEXT NOT NULL,
@@ -101,6 +129,24 @@ class Store:
                           OR (kind IN ('deposit','withdrawal') AND parent_kind='account'
                               AND parent_local_id IS NOT NULL)));
             """)
+            alias_columns = {row[1] for row in db.execute('PRAGMA table_info(resource_aliases)')}
+            if 'display_id' not in alias_columns:
+                db.execute('ALTER TABLE resource_aliases ADD COLUMN display_id TEXT')
+            db.execute('CREATE UNIQUE INDEX IF NOT EXISTS resource_display_code ON '
+                       'resource_aliases(owner,credential_scope,display_id) WHERE display_id IS NOT NULL')
+            demo_columns = {row[1] for row in db.execute('PRAGMA table_info(demo_transactions)')}
+            if 'kind' not in demo_columns:
+                db.execute("ALTER TABLE demo_transactions ADD COLUMN kind TEXT NOT NULL DEFAULT 'purchase' "
+                           "CHECK(kind IN ('purchase','transfer','deposit','withdrawal'))")
+            movement_schema = db.execute("SELECT sql FROM sqlite_master "
+                                         "WHERE name='workspace_movements'").fetchone()[0]
+            if "'unknown'" not in movement_schema:
+                db.execute("BEGIN IMMEDIATE")
+                db.execute("ALTER TABLE workspace_movements RENAME TO workspace_movements_legacy")
+                db.execute(movement_schema.replace("('debit','credit')", "('debit','credit','unknown')"))
+                db.execute("INSERT INTO workspace_movements SELECT * FROM workspace_movements_legacy")
+                db.execute("DROP TABLE workspace_movements_legacy")
+                db.commit()
             columns = {row[1] for row in db.execute("PRAGMA table_info(memories)")}
             if "source" not in columns:
                 db.execute("ALTER TABLE memories ADD COLUMN source TEXT NOT NULL DEFAULT 'local-fallback'")
@@ -147,6 +193,20 @@ class Store:
                 if checkpoint[0]:
                     raise sqlite3.OperationalError("History privacy migration is still locked.")
                 db.execute("DELETE FROM privacy_cleanup WHERE name='history-metadata-v1'")
+            schema = db.execute("SELECT sql FROM sqlite_master WHERE name='query_history'").fetchone()[0]
+            if "purchases.by_account" not in schema:
+                db.commit()
+                db.execute("BEGIN IMMEDIATE")
+                sequence = db.execute("SELECT seq FROM sqlite_sequence WHERE name='query_history'").fetchone()
+                db.execute("ALTER TABLE query_history RENAME TO query_history_legacy")
+                db.execute(HISTORY_SCHEMA)
+                db.execute("INSERT INTO query_history SELECT * FROM query_history_legacy")
+                db.execute("DROP TABLE query_history_legacy")
+                if sequence:
+                    updated = db.execute("UPDATE sqlite_sequence SET seq=MAX(seq,?) "
+                                         "WHERE name='query_history'", (sequence[0],)).rowcount
+                    if not updated:
+                        db.execute("INSERT INTO sqlite_sequence VALUES('query_history',?)", (sequence[0],))
             db.execute("CREATE INDEX IF NOT EXISTS history_owner ON query_history(owner,id)")
         filename.chmod(0o600)
 
@@ -171,12 +231,24 @@ class Store:
                 raise ValueError("Demo transactions require synthetic data and exact cents.")
             values.append((owner, row.id, row.occurred_at.isoformat(), int(cents), row.currency,
                            row.direction, row.merchant_display, row.merchant_category, row.source,
-                           row.account_token, int(row.is_subscription)))
+                           row.account_token, int(row.is_subscription), row.kind))
         with self.connect() as db:
             initialized = db.execute("INSERT OR IGNORE INTO demo_transaction_sets VALUES(?,?)",
-                                     (owner, "synthetic-v1")).rowcount
+                                     (owner, "synthetic-v2")).rowcount
             if initialized:
-                db.executemany("INSERT INTO demo_transactions VALUES(?,?,?,?,?,?,?,?,?,?,?)", values)
+                db.executemany("INSERT INTO demo_transactions VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", values)
+            elif db.execute('SELECT version FROM demo_transaction_sets WHERE owner=?',
+                            (owner,)).fetchone()[0] == 'synthetic-v1':
+                existing = db.execute('SELECT id,account_token,kind FROM demo_transactions WHERE owner=?',
+                                      (owner,)).fetchall()
+                for account in {row['account_token'] for row in existing}:
+                    missing = max(0, 10 - sum(row['account_token'] == account and row['kind'] == 'transfer'
+                                              for row in existing))
+                    ids = {row['id'] for row in existing}
+                    additions = [row for row in values if row[9] == account and row[11] == 'transfer'
+                                 and row[1] not in ids][:missing]
+                    db.executemany('INSERT INTO demo_transactions VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', additions)
+                db.execute("UPDATE demo_transaction_sets SET version='synthetic-v2' WHERE owner=?", (owner,))
 
     def list_transactions(self, owner):
         with self.connect() as db:
@@ -256,6 +328,50 @@ class Store:
             db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
                        (written.model_dump_json(), owner, result.alert_id))
         return written
+
+    def save_workspace_collection(self, owner, account_token, kind, rows, requested_at,
+                                  http_status, error):
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            previous = db.execute('SELECT requested_at FROM workspace_sync WHERE owner=? AND account_token=? AND kind=?',
+                                  (owner, account_token, kind)).fetchone()
+            if previous and previous['requested_at'] > requested_at:
+                return
+            if kind != 'accounts' and not db.execute(
+                    'SELECT 1 FROM workspace_accounts WHERE owner=? AND account_token=?',
+                    (owner, account_token)).fetchone():
+                return
+            if rows is not None:
+                if kind == 'accounts':
+                    db.executemany('INSERT INTO workspace_accounts VALUES(?,?,?,?,?) '
+                                   'ON CONFLICT(owner,account_token) DO UPDATE SET type=excluded.type,'
+                                   'balance_cents=excluded.balance_cents,rewards=excluded.rewards',
+                                   [(owner, *row) for row in rows])
+                    tokens = [row[0] for row in rows]
+                    clause = ' AND account_token NOT IN (' + ','.join('?' for _ in tokens) + ')' if tokens else ''
+                    db.execute('DELETE FROM workspace_accounts WHERE owner=?' + clause, (owner, *tokens))
+                    db.execute("DELETE FROM workspace_sync WHERE owner=? AND account_token<>''" + clause,
+                               (owner, *tokens))
+                else:
+                    db.execute('DELETE FROM workspace_movements WHERE owner=? AND account_token=? AND kind=?',
+                               (owner, account_token, kind[:-1]))
+                    db.executemany('INSERT INTO workspace_movements VALUES(?,?,?,?,?,?,?,?,?)',
+                                   [(owner, *row) for row in rows])
+            db.execute('INSERT INTO workspace_sync VALUES(?,?,?,?,?,?,?) '
+                       'ON CONFLICT(owner,account_token,kind) DO UPDATE SET '
+                       'requested_at=excluded.requested_at,http_status=excluded.http_status,error=excluded.error,'
+                       'synced_at=COALESCE(excluded.synced_at,workspace_sync.synced_at)',
+                       (owner, account_token, kind, requested_at, requested_at if error is None else None,
+                        http_status, error))
+
+    def workspace_rows(self, owner):
+        with self.connect() as db:
+            db.execute('BEGIN')
+            return tuple([dict(row) for row in db.execute(
+                f'SELECT * FROM {table} WHERE owner=? ORDER BY {order}', (owner,))]
+                for table, order in [('workspace_accounts', 'account_token'),
+                                     ('workspace_movements', 'occurred_at DESC,id'),
+                                     ('workspace_sync', 'account_token,kind')])
 
     def claim_confirmation(self, owner, alert_id, decision, consent, wants_memory, request_id):
         ConfirmationRequest(decision=decision, consent_to_memory=consent)
@@ -417,10 +533,10 @@ class Store:
                                         created_at=row["created_at"], source=source))
         return listed
 
-    def consented_memory_summaries(self, owner: str) -> list[str]:
+    def consented_memory_summaries(self, owner: str, *, timeout: float = 0.1) -> list[str]:
         """Only extant memories linked to this owner's successful consented write."""
         # Optional context must not consume the frontend deadline on lock contention.
-        with self.connect(timeout=0.1) as db:
+        with self.connect(timeout=timeout) as db:
             rows = db.execute("""
                 SELECT m.summary FROM confirmations c JOIN memories m
                   ON m.owner = c.owner AND m.memory_id = json_extract(
@@ -438,6 +554,35 @@ class Store:
             ids = (job["local_id"], job["remote_id"]) if job else (memory_id, memory_id)
             return db.execute("DELETE FROM memories WHERE owner=? AND memory_id IN (?,?)",
                               (owner, *ids)).rowcount > 0
+
+    def cache_query_rows(self, owner, scope, query, resource_code, body):
+        fields = ('resource_id', 'type', 'balance', 'rewards', 'amount', 'medium', 'status')
+        rows = [body] if isinstance(body, dict) else body
+        values = []
+        for index, row in enumerate(rows):
+            projected = []
+            for field in fields:
+                value = row.get(field)
+                if value is not None and field in {'amount', 'balance'}:
+                    value = Decimal(str(value)) * 100
+                    if value != value.to_integral_value() or abs(value) > 9007199254740991:
+                        raise ValueError('Invalid query cents')
+                    value = int(value)
+                projected.append(value)
+            values.append((owner, scope, query, resource_code or '', index, *projected))
+        with self.lock, self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            key = (owner, scope, query, resource_code or '')
+            db.execute('DELETE FROM admin_query_rows WHERE owner=? AND credential_scope=? '
+                       'AND query_name=? AND resource_code=?', key)
+            db.executemany('INSERT INTO admin_query_rows VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', values)
+            stored = db.execute('SELECT resource_id,account_type,balance_cents,rewards,amount_cents,'
+                                'medium,settlement_status FROM admin_query_rows WHERE owner=? '
+                                'AND credential_scope=? AND query_name=? AND resource_code=? '
+                                'ORDER BY position', key).fetchall()
+        result = [{field: value / 100 if field in {'amount', 'balance'} else value
+                   for field, value in zip(fields, row) if value is not None} for row in stored]
+        return result[0] if isinstance(body, dict) else result
 
     def append_history(self, owner, result):
         transport = result["transport_error"]
@@ -470,16 +615,31 @@ class Store:
 
     def alias_resources(self, owner, scope, kind, remote_ids):
         with self.connect() as db:
-            db.executemany("INSERT OR IGNORE INTO resource_aliases VALUES(?,?,?,?,?)",
+            db.executemany("INSERT OR IGNORE INTO resource_aliases "
+                           "(owner,credential_scope,kind,remote_id,local_id) VALUES(?,?,?,?,?)",
                            [(owner, scope, kind, remote_id, kind + "_" + uuid4().hex)
                             for remote_id in remote_ids])
-            rows = db.execute("SELECT remote_id,local_id FROM resource_aliases WHERE owner=? "
+            rows = db.execute("SELECT remote_id,COALESCE(display_id,local_id) AS local_id "
+                              "FROM resource_aliases WHERE owner=? "
                               "AND credential_scope=? AND kind=?", (owner, scope, kind)).fetchall()
         return {row["remote_id"]: row["local_id"] for row in rows}
 
+    def bind_account_codes(self, owner, scope, codes):
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            for remote, code in codes.items():
+                existing = db.execute("SELECT display_id FROM resource_aliases WHERE owner=? "
+                                      "AND credential_scope=? AND kind='account' AND remote_id=?",
+                                      (owner, scope, remote)).fetchone()
+                if existing is None or existing['display_id'] not in {None, code}:
+                    raise ValueError('Account membership changed; reconcile the existing mapping.')
+                db.execute("UPDATE resource_aliases SET display_id=? WHERE owner=? "
+                           "AND credential_scope=? AND kind='account' AND remote_id=?",
+                           (code, owner, scope, remote))
+
     def list_resources(self, owner, scope):
         with self.connect() as db:
-            rows = db.execute("SELECT local_id AS resource_id,kind FROM resource_aliases "
+            rows = db.execute("SELECT COALESCE(display_id,local_id) AS resource_id,kind FROM resource_aliases "
                               "WHERE owner=? AND credential_scope=? ORDER BY local_id",
                               (owner, scope)).fetchall()
         return [dict(row) for row in rows]
@@ -487,7 +647,8 @@ class Store:
     def resolve_resource(self, owner, scope, local_id):
         with self.connect() as db:
             row = db.execute("SELECT remote_id FROM resource_aliases WHERE owner=? "
-                             "AND credential_scope=? AND local_id=?", (owner, scope, local_id)).fetchone()
+                             "AND credential_scope=? AND (local_id=? OR display_id=?)",
+                             (owner, scope, local_id, local_id)).fetchone()
         return row["remote_id"] if row else None
 
     def get_history(self, owner, history_id):

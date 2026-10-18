@@ -1,0 +1,238 @@
+{
+  "amount_slices": [
+    {
+      "detected_fraud": 16,
+      "false_positives": 2,
+      "fraud": 45,
+      "missed_fraud": 29,
+      "rows": 40965,
+      "slice": "[0,20)"
+    },
+    {
+      "detected_fraud": 235,
+      "false_positives": 20,
+      "fraud": 454,
+      "missed_fraud": 219,
+      "rows": 69435,
+      "slice": "[20,250)"
+    },
+    {
+      "detected_fraud": 641,
+      "false_positives": 5,
+      "fraud": 701,
+      "missed_fraud": 60,
+      "rows": 906,
+      "slice": ">=250"
+    }
+  ],
+  "category_breakdown": {
+    "es_barsandrestaurants": {
+      "FN": 16,
+      "FP": 1,
+      "TP": 10,
+      "fraud": 26,
+      "precision": 0.9090909090909091,
+      "recall": 0.38461538461538464
+    },
+    "es_contents": {
+      "FN": 0,
+      "FP": 0,
+      "TP": 0,
+      "fraud": 0,
+      "precision": null,
+      "recall": null
+    },
+    "es_fashion": {
+      "FN": 8,
+      "FP": 0,
+      "TP": 10,
+      "fraud": 18,
+      "precision": 1.0,
+      "recall": 0.5555555555555556
+    },
+    "es_food": {
+      "FN": 0,
+      "FP": 0,
+      "TP": 0,
+      "fraud": 0,
+      "precision": null,
+      "recall": null
+    },
+    "es_health": {
+      "FN": 57,
+      "FP": 9,
+      "TP": 227,
+      "fraud": 284,
+      "precision": 0.961864406779661,
+      "recall": 0.7992957746478874
+    },
+    "es_home": {
+      "FN": 18,
+      "FP": 1,
+      "TP": 18,
+      "fraud": 36,
+      "precision": 0.9473684210526315,
+      "recall": 0.5
+    },
+    "es_hotelservices": {
+      "FN": 17,
+      "FP": 1,
+      "TP": 85,
+      "fraud": 102,
+      "precision": 0.9883720930232558,
+      "recall": 0.8333333333333334
+    },
+    "es_hyper": {
+      "FN": 31,
+      "FP": 0,
+      "TP": 17,
+      "fraud": 48,
+      "precision": 1.0,
+      "recall": 0.3541666666666667
+    },
+    "es_leisure": {
+      "FN": 0,
+      "FP": 0,
+      "TP": 74,
+      "fraud": 74,
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    "es_otherservices": {
+      "FN": 12,
+      "FP": 0,
+      "TP": 28,
+      "fraud": 40,
+      "precision": 1.0,
+      "recall": 0.7
+    },
+    "es_sportsandtoys": {
+      "FN": 52,
+      "FP": 8,
+      "TP": 250,
+      "fraud": 302,
+      "precision": 0.9689922480620154,
+      "recall": 0.8278145695364238
+    },
+    "es_tech": {
+      "FN": 15,
+      "FP": 0,
+      "TP": 19,
+      "fraud": 34,
+      "precision": 1.0,
+      "recall": 0.5588235294117647
+    },
+    "es_transportation": {
+      "FN": 0,
+      "FP": 0,
+      "TP": 0,
+      "fraud": 0,
+      "precision": null,
+      "recall": null
+    },
+    "es_travel": {
+      "FN": 18,
+      "FP": 3,
+      "TP": 74,
+      "fraud": 92,
+      "precision": 0.961038961038961,
+      "recall": 0.8043478260869565
+    },
+    "es_wellnessandbeauty": {
+      "FN": 64,
+      "FP": 4,
+      "TP": 80,
+      "fraud": 144,
+      "precision": 0.9523809523809523,
+      "recall": 0.5555555555555556
+    }
+  },
+  "columns": 29,
+  "confirm": {
+    "FN": 19,
+    "FP": 338,
+    "TN": 53763,
+    "TP": 581,
+    "accuracy": 0.9934736110857205,
+    "alerts": 919,
+    "average_precision": 0.9532637288978407,
+    "balanced_accuracy": 0.9810428796756684,
+    "f1": 0.7649769585253456,
+    "fpr": 0.006247573981996636,
+    "n": 54701,
+    "precision": 0.6322089227421109,
+    "recall": 0.9683333333333334,
+    "review_budget": 919,
+    "roc_auc": 0.9992485967603804,
+    "score_unique_values": 2252
+  },
+  "fidelity": "TRUSTLEDGER_REPRODUCTION",
+  "fingerprints": {
+    "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+    "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+    "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+    "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+    "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+    "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+  },
+  "fit_rows": 374914,
+  "hgb_params": {
+    "l2_regularization": 0.1,
+    "learning_rate": 0.08,
+    "max_iter": 80,
+    "max_leaf_nodes": 31,
+    "min_samples_leaf": 40,
+    "random_state": 20261017
+  },
+  "inference_rows": 219729,
+  "information_set": "original_frozen",
+  "merchant_rate": "bundle merchant_rate from steps 0-119, including own and later train labels",
+  "model": "v2_merchant",
+  "reproduction_status": "MATCH",
+  "score_type": "predicted_probability",
+  "select": {
+    "FN": 20,
+    "FP": 339,
+    "TN": 52783,
+    "TP": 580,
+    "accuracy": 0.9933174490897584,
+    "alerts": 919,
+    "average_precision": 0.9565651330224543,
+    "balanced_accuracy": 0.9801425649134696,
+    "f1": 0.7636603028308097,
+    "fpr": 0.00638153683972742,
+    "n": 53722,
+    "precision": 0.6311207834602829,
+    "recall": 0.9666666666666667,
+    "review_budget": 919,
+    "roc_auc": 0.999197256629394,
+    "score_unique_values": 2437
+  },
+  "test": {
+    "FN": 308,
+    "FP": 27,
+    "TN": 110079,
+    "TP": 892,
+    "accuracy": 0.9969902790505454,
+    "alerts": 919,
+    "average_precision": 0.9584845166158367,
+    "balanced_accuracy": 0.8715440575445479,
+    "f1": 0.8419065596979707,
+    "fpr": 0.0002452182442373713,
+    "n": 111306,
+    "precision": 0.970620239390642,
+    "recall": 0.7433333333333333,
+    "review_budget": 919,
+    "roc_auc": 0.9993716774441597,
+    "score_unique_values": 4163
+  },
+  "test_fraud": 1200,
+  "test_rows": 111306,
+  "timing": {
+    "feature_seconds": 0.08477645800000033,
+    "fit_seconds": 1.7750053329999993,
+    "predict_seconds": 0.10682704100000251
+  },
+  "trained": true,
+  "weight_mode": "none"
+}

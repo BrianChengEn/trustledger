@@ -227,7 +227,7 @@ def test_invalid_cors_configuration(origin):
 
 def test_secrets_remain_masked():
     settings = Settings(_env_file=None, nessie_api_key=SENSITIVE, jev_api_key=SENSITIVE,
-                        backboard_api_key=SENSITIVE)
+                        backboard_api_key=SENSITIVE, gemini_api_key=SENSITIVE)
     assert isinstance(settings.nessie_api_key, SecretStr)
     assert SENSITIVE not in repr(settings)
     assert SENSITIVE not in settings.model_dump_json()

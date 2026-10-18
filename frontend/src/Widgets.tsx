@@ -3,7 +3,6 @@ import {money, type Alert} from './api';
 import {cellsUsed, WIDGET_CELLS, WIDGETS, widgetStore, useWidgets} from './homeStore';
 import {Icon, type IconName} from './icons';
 import {dataModeCopy, day, memoryModeCopy} from './lib';
-import {go} from './route';
 import {stagger} from './ui';
 import {useWorkspace} from './workspace';
 
@@ -18,18 +17,19 @@ const shortName: Record<Alert['alert_type'], string> = {
 /** Customizable mini tools under the Review queue. Layout is the user's own and is saved in this browser. */
 export default function Widgets() {
   const {ids, editing, gallery} = useWidgets();
-  const {transactions, alerts, memories, health} = useWorkspace();
+  const {transactions, alerts, memories, health, ready, go} = useWorkspace();
 
   const open = alerts.filter(a => a.status === 'open');
   const byDate = [...transactions].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
   const maxAmount = Math.max(1, ...byDate.map(t => t.amount));
   const spending = transactions.filter(t => t.direction === 'debit').reduce((n, t) => n + t.amount, 0);
-  const largest = [...transactions].sort((a, b) => b.amount - a.amount)[0];
+  const largest = transactions.filter(t => t.direction === 'debit' && t.kind === 'purchase')
+    .sort((a, b) => b.amount - a.amount)[0];
   const subscriptions = [...new Map(byDate.filter(t => t.is_subscription && t.direction === 'debit').map(t => [t.merchant_display, t])).values()];
   const subscriptionTotal = subscriptions.reduce((n, t) => n + t.amount, 0);
   const flagged = (id: string) => alerts.some(a => a.transaction_id === id);
   const priorityTx = (open[0] ?? alerts[0])?.transaction_id ?? transactions[0]?.id;
-  const data = dataModeCopy(health?.data_mode), memory = memoryModeCopy(health?.memory_mode);
+  const data = dataModeCopy(ready ? health?.data_mode : 'degraded'), memory = memoryModeCopy(health?.memory_mode);
 
   const target: Record<string, () => void> = {
     spending: () => go({view: 'activity'}),
@@ -45,7 +45,7 @@ export default function Widgets() {
   const body = (id: string): ReactNode => {
     switch (id) {
       case 'spending': return <>
-        <span className="wbig"><span className="num">{money(spending)}</span><span className="unit">across {transactions.length} synthetic transactions</span></span>
+        <span className="wbig"><span className="num">{money(spending)}</span><span className="unit">across {transactions.length} {transactions.some(t => t.source === 'nessie') ? 'Nessie sandbox' : 'synthetic'} transactions</span></span>
         <span className="spend" aria-hidden="true">{byDate.map(t =>
           <span key={t.id} className={'spendbar' + (flagged(t.id) ? ' flag' : '')} style={{height: `${Math.max(10, t.amount / maxAmount * 100)}%`}}/>)}</span></>;
       case 'status': return <span className="wlist cols">
@@ -70,7 +70,7 @@ export default function Widgets() {
         <span className="wbig"><span className="num">{largest ? money(largest.amount) : '—'}</span><span className="unit">largest charge</span></span>
         <span className="wnote">{largest ? `${largest.merchant_display} · ${day(largest.occurred_at)}` : ''}</span></>;
       case 'nessie': return <>
-        <span className="wbig"><span className="num">6</span><span className="unit">read-only queries</span></span>
+        <span className="wbig"><span className="num">8</span><span className="unit">read-only queries</span></span>
         <span className="wnote">Capital One Nessie sandbox</span></>;
       default: return null;
     }
@@ -117,4 +117,3 @@ export default function Widgets() {
     </div>}
   </section>;
 }
-

@@ -1,7 +1,6 @@
 import {labels, money} from './api';
 import {Icon, type IconName} from './icons';
 import {alertHints, byPriority, day} from './lib';
-import {go} from './route';
 import {Chip, PageHead, stagger} from './ui';
 import Widgets from './Widgets';
 import {useWorkspace} from './workspace';
@@ -13,7 +12,7 @@ export const statusText = {open: 'Waiting for you', normal: 'You marked it norma
 
 /** Today answers one question: does anything need me, and what first? It never lists every transaction. */
 export default function Today() {
-  const {alerts, transactions, memories} = useWorkspace();
+  const {alerts, transactions, memories, go} = useWorkspace();
   const ordered = byPriority(alerts, transactions);
   const open = ordered.filter(a => a.status === 'open');
   const decided = ordered.length - open.length;

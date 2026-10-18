@@ -17,4 +17,7 @@ backend/data/
 coverage/
 artifacts/
 *.log
+evaluation/datasets/
+evaluation/**/*.jsonl
+evaluation/**/*.csv
 .idea/

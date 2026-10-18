@@ -21,10 +21,10 @@ from app.services.ai.backboard_client import (
 )
 from app.services.ai.memory_sync import ensure_assistant, write_consented_memory
 
-pytestmark = pytest.mark.skipif(
+pytestmark = [pytest.mark.live_network, pytest.mark.skipif(
     os.environ.get("BACKBOARD_LIVE_TEST") != "1",
     reason="Set BACKBOARD_LIVE_TEST=1 to spend Backboard credits on a live memory check.",
-)
+)]
 
 BACKEND = Path(__file__).resolve().parents[2]
 OWNER_A = "trustledger_backboard_test_user"

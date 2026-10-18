@@ -1,4 +1,4 @@
-import type {Alert, Confirmation, Health, Memory, Transaction} from './api';
+import type {Alert, Confirmation, Explanation, Health, Memory, Transaction} from './api';
 
 export const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
 export const time = (iso: string) => new Date(iso).toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'});
@@ -38,7 +38,7 @@ export const memoryStore = (source: Memory['source']): {label: string; detail: s
 export function memoryModeCopy(mode: Health['memory_mode'] | undefined): {label: string; detail: string; tone: Tone} {
   switch (mode) {
     case 'backboard-live': return {label: 'Backboard live', tone: 'good', detail: 'A Backboard memory call has succeeded in this server session. Each saved memory still shows where it is stored.'};
-    case 'degraded': return {label: 'Memory degraded', tone: 'warn', detail: 'The last Backboard memory call did not complete. Anything saved falls back to local storage and is labelled that way.'};
+    case 'degraded': return {label: 'Memory degraded', tone: 'warn', detail: 'The last Backboard memory call did not complete. Each row keeps its own source label; an unconfirmed write is not reported as saved.'};
     case 'off': return {label: 'Memory off', tone: 'neutral', detail: 'Memory writes are disabled on this server. Decisions still work; nothing is remembered.'};
     case 'local-fallback': return {label: 'Local memory', tone: 'neutral', detail: 'No Backboard call has been confirmed this session. Memories are saved in local SQLite and labelled local fallback.'};
     default: return {label: 'Connecting…', tone: 'neutral', detail: 'Waiting for the server.'};
@@ -64,4 +64,25 @@ export function outcomeCopy(c: Confirmation, source?: Memory['source']): {title:
     case 'skipped': return {title: 'Nothing remembered', tone: 'neutral', detail: 'Memory did not apply to this confirmation.'};
     default: return {title: 'Nothing remembered', tone: 'neutral', detail: 'No memory was saved for this decision.'};
   }
+}
+
+/** Labels explanation provenance. Template and fallback text are never called Gemini output. */
+export function explanationModeCopy(mode: Explanation['explanation_mode'], fromCache: boolean):
+  {title: string; detail: string; tone: Tone} {
+  if (mode === 'gemini-live' && fromCache) return {
+    title: 'Gemini explanation reused', tone: 'ai',
+    detail: 'This text came from Gemini earlier in this session. No new Gemini call was made.',
+  };
+  if (mode === 'gemini-live') return {
+    title: 'Live Gemini explanation', tone: 'ai',
+    detail: 'Gemini wrote this from the privacy-safe summary. It does not decide whether the charge is fraud.',
+  };
+  if (mode === 'fallback') return {
+    title: 'Rules explanation', tone: 'warn',
+    detail: 'Gemini did not return a usable explanation. This text comes from the rules, not from Gemini.',
+  };
+  return {
+    title: 'Rules explanation', tone: 'neutral',
+    detail: 'Gemini was not called. This text is written from the rules and the privacy-safe summary.',
+  };
 }

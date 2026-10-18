@@ -1,82 +1,35 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import Activity from './Activity';
 import {type Alert} from './api';
-import Case from './Case';
 import {widgetStore} from './homeStore';
 import {Icon, type IconName} from './icons';
 import {dataModeCopy, memoryModeCopy, type Tone} from './lib';
-import MemoryView from './MemoryView';
-import PrivacyView from './PrivacyView';
 import {useRoute, go, type Route} from './route';
 import {Admin, SourcesIntro} from './Sources';
-import Today from './Today';
 import {applyTheme, storedTheme, type ThemeChoice} from './theme';
 import {stagger} from './ui';
 import {WorkspaceProvider, useWorkspace} from './workspace';
+import WorkspaceView from './WorkspaceView';
 import './styles.css';
 
-/*
- * Fit-to-window: on desktop widths the whole UI is laid out in a "virtual" window and scaled to the real one, so no page
- * can overflow at any window size or browser zoom. Nothing on screen is scrollable. As a guard, after every layout change
- * the page measures itself and, if anything is ever too big (a different font, more data), enlarges the virtual window a
- * little so the whole UI shrinks to fit. Only touch phones use normal flowing layout instead.
- */
-const STAGE_W = 1360, STAGE_H = 920, STAGE_MAX_SCALE = 1.25, STAGE_MAX_EXTRA = 900;
-/** Only real phones (narrow and touch) use the flowing, scrolling layout; every desktop window is fitted. */
-const isPhone = () => window.matchMedia('(max-width: 699px) and (pointer: coarse)').matches;
-let extraH = 0, extraW = 0;
-function applyStage(): boolean {
+// Keep one scale for each viewport; content changes stay inside their own panels.
+const STAGE_W = 1360, STAGE_H = 920, STAGE_MAX_SCALE = 1.25;
+function applyStage() {
   const root = document.documentElement;
   const w = window.innerWidth, h = window.innerHeight;
-  if (isPhone()) {
+  if (window.matchMedia('(max-width: 699px) and (pointer: coarse)').matches) {
     root.removeAttribute('data-stage');
     for (const name of ['--stage-scale', '--stage-w', '--stage-h']) root.style.removeProperty(name);
-    return false;
+    return;
   }
-  const scale = Math.min(h / (STAGE_H + extraH), w / (STAGE_W + extraW), STAGE_MAX_SCALE);
+  const scale = Math.min(h / STAGE_H, w / STAGE_W, STAGE_MAX_SCALE);
   root.dataset.stage = 'on';
   root.style.setProperty('--stage-scale', String(scale));
   root.style.setProperty('--stage-w', `${w / scale}px`);
   root.style.setProperty('--stage-h', `${h / scale}px`);
-  return true;
-}
-// Raw data in the Nessie console may scroll inside its own panels; everything else must fit.
-const GUARDED = 'main, .page, .adminview, .steps, .step, .privgrid, .privside, .flowpanel, .payloadpanel, .tablewrap, .memlist, .queue, .gallerylist, .widgets, .widgetgrid, .widget, .startcard, .panel, .facts';
-function overflow() {
-  let h = 0, w = 0;
-  for (const el of document.querySelectorAll<HTMLElement>(GUARDED)) {
-    if (!el.offsetParent || el.closest('.admin-query, #V-HISTORY')) continue;
-    h = Math.max(h, el.scrollHeight - el.clientHeight);
-    w = Math.max(w, el.scrollWidth - el.clientWidth);
-  }
-  return {h, w};
-}
-function fit() {
-  extraH = 0; extraW = 0;
-  if (!applyStage()) return;
-  for (let round = 0; round < 12; round++) {
-    const {h, w} = overflow();
-    if (h <= 1 && w <= 1) break;
-    // Growing the window only gives each flexible area a share of the extra, so ask for a little more than the overflow.
-    extraH = Math.min(STAGE_MAX_EXTRA, extraH + Math.max(0, Math.ceil(h * 1.6)));
-    extraW = Math.min(STAGE_MAX_EXTRA, extraW + Math.max(0, Math.ceil(w * 1.6)));
-    applyStage();
-  }
-}
-let settle = 0;
-/** Re-fit once entrance animations have finished (moving elements would otherwise look like overflow). */
-function scheduleFit() {
-  window.clearTimeout(settle);
-  settle = window.setTimeout(async () => {
-    const running = document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished);
-    await Promise.race([Promise.allSettled(running), new Promise(resolve => window.setTimeout(resolve, 1500))]);
-    fit();
-  }, 60);
 }
 applyStage();
-window.addEventListener('resize', () => { fit(); scheduleFit(); });
-window.addEventListener('hashchange', scheduleFit);
+window.addEventListener('resize', applyStage);
 
 const nav: {view: Route['view']; label: string; icon: IconName; id?: string}[] = [
   {view: 'today', label: 'Today', icon: 'bell'},
@@ -91,7 +44,7 @@ interface Menu {eyebrow: string; title: string; blurb: string; groups: {heading:
 
 /** Truthful system status. /health describes readiness, never the outcome of an individual analysis. */
 function StatusMenu() {
-  const {health, runs, transactions} = useWorkspace();
+  const {health, runs, transactions, ready, loading} = useWorkspace();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -106,7 +59,7 @@ function StatusMenu() {
     document.addEventListener('mousedown', away); document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc); };
   }, [open]);
-  const data = dataModeCopy(health?.data_mode), mem = memoryModeCopy(health?.memory_mode);
+  const data = dataModeCopy(!ready && !loading ? 'degraded' : health?.data_mode), mem = memoryModeCopy(health?.memory_mode);
   const done = Object.entries(runs).flatMap(([id, r]) => r.state === 'done' ? [{id, ...r}] : []).sort((a, b) => b.at - a.at)[0];
   const last = done && {tx: transactions.find(t => t.id === done.id)?.merchant_display ?? done.id, mode: done.result.provider_mode};
   const lastText = !last ? 'No AI analysis requested yet this session.'
@@ -146,7 +99,7 @@ function ThemeSwitch() {
 
 function Shell() {
   const route = useRoute();
-  const {error, notice, loaded, loading, refresh, alerts, transactions, memories, dismissNotice} = useWorkspace();
+  const {alerts, transactions, memories} = useWorkspace();
   const [menu, setMenu] = useState<Route['view'] | null>(null);
   // The group that was just clicked stays closed until the pointer leaves it, so a click never leaves a menu covering the page.
   const [quiet, setQuiet] = useState<Route['view'] | null>(null);
@@ -157,7 +110,8 @@ function Shell() {
   }, []);
 
   const open = alerts.filter(a => a.status === 'open').length;
-  const active = route.view === 'case' ? 'today' : route.view;
+  const sources = route.view === 'sources' || !!route.customer;
+  const active = sources ? 'sources' : route.view === 'case' ? 'today' : route.view;
   const badge = (view: Route['view']) => view === 'today' ? open : view === 'memory' ? memories.length : 0;
 
   // Sub-features shown in the drop-down menus (each jumps straight to the right place).
@@ -182,7 +136,7 @@ function Shell() {
     ]},
     activity: {eyebrow: 'ACTIVITY', title: 'Every transaction.', blurb: 'Find any charge, whatever its alert status.', groups: [
       {heading: 'Browse', items: [
-        {label: 'All transactions', hint: `${transactions.length} synthetic records`, icon: 'wallet', go: () => go({view: 'activity'})},
+        {label: 'All transactions', hint: `${transactions.length} ${transactions.some(t => t.source === 'nessie') ? 'Nessie sandbox' : 'synthetic'} records`, icon: 'wallet', go: () => go({view: 'activity'})},
         {label: 'Flagged only', hint: `${flagged} with an alert`, icon: 'bell', go: () => go({view: 'activity', filter: 'flagged'})},
         {label: 'Recurring charges', hint: `${recurring} subscriptions`, icon: 'repeat', go: () => go({view: 'activity', filter: 'recurring'})},
       ]},
@@ -202,7 +156,7 @@ function Shell() {
     ]},
     sources: {eyebrow: 'DATA SOURCES', title: 'Where transactions come from.', blurb: 'The workspace works the same whichever source feeds it.', groups: [
       {heading: 'Capital One Nessie sandbox', items: [
-        {label: 'Run a query', hint: 'Six read-only functions', icon: 'search', go: consoleGo('NAV-Q')},
+        {label: 'Run a query', hint: 'Eight read-only functions', icon: 'search', go: consoleGo('NAV-Q')},
         {label: 'Query history', hint: 'Status and timing only', icon: 'clock', go: consoleGo('NAV-H')},
         {label: 'Where data comes from', hint: 'Synthetic fixtures or the sandbox', icon: 'database', go: () => go({view: 'sources'})},
       ]},
@@ -210,7 +164,6 @@ function Shell() {
   };
 
   return <div className="app">
-    {menu && <div className="scrim" aria-hidden="true"/>}
     <div className="frame">
     <header className="topbar" onMouseLeave={() => { setMenu(null); setQuiet(null); }} onKeyDown={e => { if (e.key === 'Escape') setMenu(null); }}>
       <a className="logo" href="#/today" aria-label="TrustLedger home"><span className="logomark"><Icon name="shieldCheck" size={20} weight={1.4}/></span>
@@ -249,20 +202,8 @@ function Shell() {
       <StatusMenu/>
     </header>
     <main id="main">
-      {(error || notice) && <div className="banners">
-        {error && <div className="banner error" role="alert"><Icon name="alertTriangle" size={18}/><span>{error}</span>
-          <button onClick={() => void refresh()}>Retry</button><button className="iconbtn" aria-label="Dismiss" onClick={dismissNotice}><Icon name="x" size={15}/></button></div>}
-        {notice && <div className="banner notice" role="status"><Icon name="checkCircle" size={18}/><span>{notice}</span>
-          <button className="iconbtn" aria-label="Dismiss" onClick={dismissNotice}><Icon name="x" size={15}/></button></div>}
-      </div>}
-      <div hidden={route.view !== 'sources'} className="adminview"><SourcesIntro/><Admin/></div>
-      {route.view !== 'sources' && (!loaded
-        ? (loading ? <p className="loading" role="status">Loading your workspace…</p> : null)
-        : route.view === 'today' ? <Today/>
-        : route.view === 'activity' ? <Activity key={route.filter ?? 'all'} initial={route.filter}/>
-        : route.view === 'privacy' ? <PrivacyView txId={route.tx}/>
-        : route.view === 'memory' ? <MemoryView/>
-        : <Case key={route.tx} id={route.tx} from={route.from}/>)}
+      <WorkspaceView route={sources ? {view: 'sources'} : route}/>
+      <div hidden={!sources} className="adminview"><SourcesIntro/><Admin active={sources}/></div>
     </main>
     <footer className="foot">Synthetic data only · no real accounts · rules decide, you confirm · AI-assisted code, credited in the submission.</footer>
     </div>

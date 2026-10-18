@@ -9,14 +9,15 @@ from app.schemas.api import StrictModel
 
 class QueryRequest(StrictModel):
     query: Literal["customers.list", "accounts.list", "accounts.get", "accounts.by_customer",
-                   "deposits.by_account", "withdrawals.by_account"]
+                   "deposits.by_account", "withdrawals.by_account",
+                   "purchases.by_account", "transfers.by_account"]
     resource_id: str | None = Field(default=None, max_length=41,
                                    description="Server-issued local customer/account code only.")
 
     @model_validator(mode="after")
     def validate_id(self):
         if "{id}" in QUERIES[self.query]:
-            kind = "customer" if self.query == "accounts.by_customer" else "account"
+            kind = "customer" if self.query == "accounts.by_customer" else "(?:account|acct)"
             if not re.fullmatch(kind + r"_[0-9a-f]{32}", self.resource_id or ""):
                 raise ValueError("Select a server-issued local resource code")
         elif self.resource_id is not None:

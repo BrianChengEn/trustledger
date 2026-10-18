@@ -12,7 +12,8 @@ def analyze(
 ) -> Analysis:
     """Deterministic demo heuristics, not a fraud probability or financial decision."""
     prior = prior_transactions(tx, history)
-    duplicate = any(h.merchant_display == tx.merchant_display and h.amount == tx.amount
+    # shortcut: Nessie has no validated merchant grouping; enable duplicate checks after adding one.
+    duplicate = tx.source != 'nessie' and not tx._date_only and any(not h._date_only and h.merchant_display == tx.merchant_display and h.amount == tx.amount
                     and 0 <= (tx.occurred_at - h.occurred_at).total_seconds() <= 86400
                     for h in prior)
     delta = subscription_delta(tx, history)
@@ -26,6 +27,8 @@ def analyze(
     elif delta is not None and delta > .2 and tx.direction == "debit":
         kind, severity = "subscription_change", "medium"
         evidence = ["This recurring charge increased by more than 20 percent versus the previous charge."]
+    if tx._settlement_status != 'completed':
+        kind, severity, evidence = 'none', 'low', ['This record is not completed; completed-charge rules do not apply.']
     if prior_user_confirmation == "normal" and kind != "none":
         evidence = [*evidence, "A prior consented confirmation marked this category as normal. "
                     "This match still needs a person."]

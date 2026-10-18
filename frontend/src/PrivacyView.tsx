@@ -1,9 +1,8 @@
 import {useState} from 'react';
-import {money, type PrivacyPreview, type Transaction} from './api';
+import {money, type PrivacyPreview, type Movement} from './api';
 import {Icon, type IconName} from './icons';
 import {fullDate, prettyCategory} from './lib';
 import {usePreview} from './preview';
-import {go} from './route';
 import {Callout, PageHead} from './ui';
 import {useWorkspace} from './workspace';
 
@@ -17,20 +16,20 @@ const payloadKey: Record<string, string> = {
   prior_user_confirmation: 'prior_user_confirmation',
 };
 // Local side of each row: what the app holds. Labels describe local data; shared values come only from the backend.
-function localValue(field: string, tx: Transaction): string {
+function localValue(field: string, tx: Movement): string {
   switch (field) {
     case 'id / account_token': return `${tx.id} · ${tx.account_token}`;
     case 'merchant_display': return tx.merchant_display;
     case 'merchant_category': return prettyCategory(tx.merchant_category);
     case 'amount': return money(tx.amount);
-    case 'occurred_at': return fullDate(tx.occurred_at);
+    case 'occurred_at': return tx.date_only ? tx.occurred_at.slice(0, 10) + ' (date only)' : fullDate(tx.occurred_at);
     case 'prior_user_confirmation': return 'Your saved, consented confirmations';
     default: return 'Anything else, including API keys';
   }
 }
 const readable = (v: unknown) => typeof v === 'boolean' ? (v ? 'yes' : 'no') : String(v);
 
-function Inspector({preview, tx}: {preview: PrivacyPreview; tx: Transaction}) {
+function Inspector({preview, tx}: {preview: PrivacyPreview; tx: Movement}) {
   const [active, setActive] = useState<string | null>(null);
   const [raw, setRaw] = useState(false);
   const payload = Object.entries(preview.safe_payload);
@@ -73,7 +72,7 @@ function Inspector({preview, tx}: {preview: PrivacyPreview; tx: Transaction}) {
 
 /** Privacy answers: what does the app know versus what the AI could actually receive. */
 export default function PrivacyView({txId}: {txId?: string}) {
-  const {transactions, alerts, memoryKey} = useWorkspace();
+  const {transactions, alerts, memoryKey, go} = useWorkspace();
   const fallback = alerts.find(a => a.status === 'open')?.transaction_id ?? transactions[0]?.id;
   const id = txId && transactions.some(t => t.id === txId) ? txId : fallback;
   const tx = transactions.find(t => t.id === id);

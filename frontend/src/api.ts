@@ -1,7 +1,8 @@
 export interface Transaction {
-  id: string; occurred_at: string; amount: number; currency: 'USD'; direction: 'debit'|'credit';
+  id: string; occurred_at: string; amount: number; currency: 'USD'; direction: 'debit'|'credit'|'unknown';
   merchant_display: string; merchant_category: string; source: 'synthetic'|'nessie';
   account_token: string; is_subscription: boolean;
+  kind?: 'purchase'|'transfer'|'deposit'|'withdrawal';
 }
 export interface Analysis {
   transaction_id: string; alert_type: 'duplicate'|'amount_anomaly'|'subscription_change'|'none';
@@ -9,12 +10,53 @@ export interface Analysis {
   evidence: string[]; provider_mode: string; model_version: string|null; request_id: string;
 }
 export interface Alert extends Analysis {alert_id: string; status: 'open'|'normal'|'review'}
+export function inspectionStatus(alert?: Alert): 'normal'|'needreviews'|'pending' {
+  if (!alert || alert.status==='normal') return 'normal';
+  return alert.status==='open' ? 'pending' : 'needreviews';
+}
+export interface Movement extends Transaction {
+  kind: 'purchase'|'transfer'|'deposit'|'withdrawal';
+  settlement_status: 'pending'|'completed'|'cancelled'; date_only: boolean;
+}
+export interface WorkspaceSnapshot {
+  customer_id: string|null; data_mode: string;
+  accounts: {account_token: string; type: string; balance: number; rewards: number}[];
+  transactions: Movement[];
+  sync: {account_token: string; kind: string; requested_at: string; synced_at: string|null;
+    http_status: number|null; error: string|null}[];
+}
 export interface PrivacyPreview {
   transaction_id: string; destination: string; schema_version: string;
   inspection: {field: string; action: string; output: string|null; reason: string}[];
   safe_payload: Record<string, string|number|boolean>;
 }
 export interface Memory {memory_id: string; summary: string; source: string; created_at: string}
+export interface SharedExplanation {
+  task: 'explain_existing_alert';
+  alert_type: Analysis['alert_type'];
+  severity: Analysis['severity'];
+  needs_human: boolean;
+  reason_codes: string[];
+  features: PrivacyPreview['safe_payload'];
+}
+export interface Explanation {
+  transaction_id: string;
+  alert_type: Analysis['alert_type'];
+  severity: Analysis['severity'];
+  needs_human: boolean;
+  why_flagged: string;
+  supporting_evidence: string;
+  what_it_means: string;
+  what_to_check: string;
+  next_steps: string[];
+  explanation_mode: 'gemini-live' | 'template' | 'fallback';
+  model_version: string | null;
+  failure: 'timeout' | 'unavailable' | 'quota' | 'rate_limited' | 'invalid_output' | 'provider_error' | 'invalid_input' | null;
+  safe_payload: PrivacyPreview['safe_payload'];
+  shared: SharedExplanation;
+  sent_to_provider: boolean;
+  from_cache: boolean;
+}
 export interface Health {status: string; data_mode: string; analysis_mode: string; memory_mode: string}
 export interface Confirmation {decision: string; memory_status: string; memory_id: string|null}
 const base = import.meta.env.VITE_API_BASE_URL || '';
@@ -22,7 +64,7 @@ const base = import.meta.env.VITE_API_BASE_URL || '';
 export class ApiError extends Error {
   constructor(message: string, readonly status: number, readonly code: string|null) {super(message);}
 }
-export async function request<T>(path: string, options?: RequestInit, timeoutMs = 8000): Promise<T> {
+export async function request<T>(path: string, options?: RequestInit, timeoutMs = 180000): Promise<T> {
   const response = await fetch(base + '/api/v1' + path, {
     ...options, headers: {'Content-Type': 'application/json', ...options?.headers},
     signal: AbortSignal.timeout(timeoutMs),
@@ -41,7 +83,7 @@ export const labels: Record<Analysis['alert_type'], string> = {
 export const money = (amount: number) => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
 
 export type NessieQuery = 'customers.list'|'accounts.list'|'accounts.get'|'accounts.by_customer'|
-  'deposits.by_account'|'withdrawals.by_account';
+  'deposits.by_account'|'withdrawals.by_account'|'purchases.by_account'|'transfers.by_account';
 export interface ResourceOption {resource_id: string; kind: 'customer'|'account'}
 export interface HistoryItem {
   history_id: number; source: 'nessie'|'synthetic'; query: NessieQuery;

@@ -1,0 +1,117 @@
+TrustLedger 基線重現與 merchant rate 洩漏審計
+
+這份筆記只記錄這次測量。不建議部署任何模型。
+steps 150–179 已經在 PR #14 與 PR #15 看過。這是可重現對照，不是未接觸的盲測。
+沒有依 test 分數調整模型。HGB 只用 fw.fit_hgb 的固定參數：
+max_iter 80、learning_rate 0.08、max_leaf_nodes 31、min_samples_leaf 40、
+l2_regularization 0.1、random_state 20261017。
+
+人口數
+TRAIN steps 0–119：374,914 筆、4,800 件詐欺。
+SELECT steps 120–134：53,722 筆、600 件詐欺。
+CONFIRM steps 135–149：54,701 筆、600 件詐欺。
+TEST steps 150–179：111,306 筆、1,200 件詐欺。
+人口數和契約不一致時，這次執行會停止。這次相符。
+
+original_frozen 有沒有把標籤放進特徵
+original_frozen 是 v2_merchant 的 merchant_rate，也就是 PR #15 的凍結訓練聚合。
+merchant_rate 是商家詐欺率：用訓練期的詐欺筆數做收縮，再填回每一列。
+
+1. 訓練列自己的標籤：有進入。
+   凍結率把該列自己的 fraud 標籤算進該商家的聚合。
+   拿掉該列再算一次的絕對差距（own-label gap）：
+   訓練列平均 1.9636312546803278e-05
+   訓練詐欺列平均 0.0008757162664799481
+   訓練列最大 0.013641193354449077
+   差距大於 0 的訓練列：374914 / 374914
+
+2. 較晚的訓練標籤：有進入。
+   對照是「含該列所在 step、但不含更晚 step」的商家率。
+   這個對照仍含自己的標籤與同一個 step 的其他標籤，所以差距只來自更晚的訓練 step。
+   被改變的訓練列：371371 / 374914
+   平均絕對差 0.0021280282910159445
+   最大絕對差 0.7779909302800466
+
+3. select、confirm、test 的標籤：沒有進入。
+   凍結率與只用 steps 0–119 重算的率，最大絕對差是 0.0。
+   契約審計的 select_labels_included、confirm_labels_included、test_labels_included 都是 0。
+   上面的最大絕對差是這次實際比較的結果，不是只抄這三個欄位。
+   若把 select 標籤加進聚合，test 會有 111306 列改變，最大絕對差 0.09907819283931896。
+   若改加 confirm 標籤，test 會有 111306 列改變，最大絕對差 0.10616163524335298。
+   若改加 test 標籤，test 會有 111306 列改變，最大絕對差 0.08544328474230023。
+   這些是反事實。凍結特徵本身沒有用到這三個切分的標籤。
+
+test 商家有沒有在訓練出現過
+test 未見過的 merchant id：0。
+落在未見過 merchant 的 test 列：0。
+訓練筆數少於 20 的 test 列：4，
+其中詐欺 0。
+訓練筆數至少 20 的 test 詐欺：1200。
+這個切分沒有未見過的 test 商家，不能用它證明新商家泛化。
+
+step_causal 相對 original_frozen
+step_causal 的訓練列只用更早的 step。同一個 step 的標籤彼此看不見。
+select、confirm、test 仍使用凍結的 steps 0–119 聚合，不含這三個切分的標籤。
+step 120 之後與凍結率的最大絕對差：0.0。
+test 與凍結率的最大絕對差：0.0。
+因此 step_causal 的 test 特徵沒有使用 steps 120 以後的標籤。
+訓練列與凍結率的最大絕對差：0.8320817163569871，
+不同的訓練列有 374914。
+兩個模型的訓練特徵不同，所以 test 分數可以不同；這不是 test 標籤洩漏。
+
+original_frozen test AP 0.9584845166158367，TP 892，FP 27。
+step_causal test AP 0.9576284114131959，TP 896，FP 23。
+step_causal 減 original_frozen：AP -0.0008561052026407889，TP 4，FP -4。
+test 點估計有改變。AP 絕對差小於 0.01，契約會先把這個 AP 差距看成接近。這次沒有做 bootstrap，所以不把這個差距說成統計上已經分得出來。
+詐欺重疊只算 test 的 1,200 件詐欺，警報是分數最高的 919 筆。
+A 是 v2_merchant，B 是 v2_merchant_step_causal。
+兩邊都抓到 848，只有 A 44，只有 B 48，兩邊都沒抓到 260。
+
+expanding 分開報告
+expanding 不是 PR #15 的重現，資訊集不同，不能取代 original_frozen。
+每一列只用已經結束的較早 step。test 列因此看得到 steps 120–149 的標籤。
+與凍結率不同的 test 列：111306，最大絕對差 0.1795012931979003。
+與「steps 0–149 一次聚合」不同的 test 列：106774，最大絕對差 0.04558629985418927。
+這個數量大於 0，所以較晚的 test 列還看得到更早 test step 的標籤，不只 120–149。
+expanding 的訓練列與 step_causal 訓練列最大絕對差：0.0。
+expanding test AP 0.9567773299814882，TP 897，FP 22。
+這個數字另列，沒有拿來覆蓋 v2_merchant 的重現結果。
+
+確認延遲假設
+BankSim 沒有標籤延遲欄位。兩種修正都是假設，不是資料裡的事實。
+凍結特徵假設每一筆訓練標籤在 step 120 之前都已經知道。
+expanding 假設一筆標籤在它自己的 step 結束時知道，而且在下一個 step 開始前可以使用。
+step_causal 與 expanding 都看不到同一個 step 的其他標籤。
+original_frozen 則把整個 steps 0–119 的標籤，包含較晚的訓練列與該列自己的標籤，放進訓練特徵。
+
+四個舊模型的重現
+MATCH 是 TP、FP、TN、FN 與 Average Precision 都和 PREVIOUSLY_REPORTED 相同。
+BLAS_DRIFT 是這四個筆數相同，而且 AP 絕對差小於 1e-4。
+MISMATCH 是筆數或 AP 不同。保留這次測量，沒有改分數去貼舊數字。
+prod_rules：MATCH，測量 AP 0.45007707926977253，舊 AP 0.45007707926977253，AP 絕對差 0.0，TP 相同=True，FP 相同=True，TN 相同=True，FN 相同=True。
+pr14_mapped_hgb：MATCH，測量 AP 0.8153928294023746，舊 AP 0.8153928294023746，AP 絕對差 0.0，TP 相同=True，FP 相同=True，TN 相同=True，FN 相同=True。
+v2_enriched_sqrt：MATCH，測量 AP 0.8852597833910728，舊 AP 0.8852597833910728，AP 絕對差 0.0，TP 相同=True，FP 相同=True，TN 相同=True，FN 相同=True。
+v2_merchant：MATCH，測量 AP 0.9584845166158367，舊 AP 0.9584845166158367，AP 絕對差 0.0，TP 相同=True，FP 相同=True，TN 相同=True，FN 相同=True。
+prod_rules 是 0/1 分數，test 的 unique score 數量是 2。
+沒有把 0/1 做成機率。平手時分數高的在前，其次金額高的在前，再來是列索引小的在前。
+
+v2_enriched_sqrt 沒有 merchant_rate。它和 v2_merchant 的詐欺重疊：
+A 是 v2_merchant，B 是 v2_enriched_sqrt。
+兩邊都抓到 757，只有 A 135，只有 B 80，兩邊都沒抓到 228。
+
+金額切片是 [0,20)、[20,250)、>=250。250 是現行規則的金額門檻。
+每個模型的金額切片與 native category 分解都在 audit.json，也在該模型的 json。
+
+時間與記憶體
+特徵建立 23.385 秒。
+peak RSS 1045102592 bytes。
+prod_rules：特徵 0.000 秒，fit 0.000 秒，predict 0.010 秒。
+pr14_mapped_hgb：特徵 0.014 秒，fit 1.682 秒，predict 0.084 秒。
+v2_enriched_sqrt：特徵 0.114 秒，fit 2.061 秒，predict 0.120 秒。
+v2_merchant：特徵 0.085 秒，fit 1.775 秒，predict 0.107 秒。
+v2_merchant_step_causal：特徵 0.397 秒，fit 1.943 秒，predict 0.134 秒。
+v2_merchant_expanding：特徵 0.589 秒，fit 2.081 秒，predict 0.117 秒。
+
+若 step_causal 與 original_frozen 的 test 點估計不同，merchant 特徵的對外數字以 step_causal 為準。
+original_frozen 只保留為 PR #15 的重現。這不是部署建議。
+這次沒有建議把任何模型放到生產環境。
