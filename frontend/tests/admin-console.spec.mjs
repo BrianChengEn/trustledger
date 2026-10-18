@@ -24,7 +24,8 @@ async function ready(url, logs) {
   }
   throw new Error(`Service did not start: ${logs()}`);
 }
-let browser;
+let browser, page;
+const errors = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js',
     'frontend', '--host', '127.0.0.1', '--port', '5174'],
@@ -38,7 +39,7 @@ try {
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
     existsSync('/Applications/Google Chrome.app') ? {channel: 'chrome'} : {})});
-  const page = await browser.newPage({viewport: {width: 1440, height: 1000}, reducedMotion: 'reduce'});
+  page = await browser.newPage({viewport: {width: 1440, height: 1000}, reducedMotion: 'reduce'});
   page.setDefaultTimeout(5000);
   async function assertResponsiveBaseline() {
     const layout = await page.evaluate(() => {
@@ -46,7 +47,17 @@ try {
     });
     assert(layout.scroll <= layout.width + 1, JSON.stringify(layout));
   }
-  const errors = [];
+  async function assertStableScale() {
+    const sample = await page.evaluate(async()=>{
+      const values = [];
+      for (let frame=0;frame<20;frame++) {
+        await new Promise(requestAnimationFrame);
+        values.push(Number(document.documentElement.style.getPropertyValue('--stage-scale')));
+      }
+      return {scales:[...new Set(values)],expected:Math.min(innerHeight/920,innerWidth/1360,1.25)};
+    });
+    assert.deepEqual(sample.scales,[sample.expected],'data and button actions must not shrink the page');
+  }
   let queryCalls = 0;
   let deletes = 0;
   let analysisCalls = 0;
@@ -61,6 +72,13 @@ try {
   await page.goto('http://127.0.0.1:5174');
   await page.getByRole('link', {name: /^Today/}).waitFor();
   await page.locator('.startcard').waitFor();
+  await page.locator('#NAV-ADMIN').hover();
+  await page.getByRole('region',{name:'Data sources features',exact:true}).waitFor();
+  assert.equal(await page.locator('.scrim').count(),0,'hover menus must not blur or cover the workspace');
+  await assertStableScale();
+  mkdirSync(join(root,'artifacts'),{recursive:true});
+  await page.screenshot({path:join(root,'artifacts/v031-menu-after.png')});
+  await page.mouse.move(0,0);
   assert.equal(await page.locator('.workspacebar').count(), 0,
     'backend integration must preserve the approved UI without an added workspace toolbar');
   await page.locator('#NAV-ADMIN').click();
@@ -132,6 +150,7 @@ try {
     const ledger = page.locator('.workspace').first();
     const pages = ledger.getByRole('group',{name:'Pages',exact:true});
     await pages.waitFor();
+    await assertStableScale();
     const next = pages.getByRole('button',{name:'Next page',exact:true});
     for (let i=0;i<20 && !await next.isDisabled();i++) {
       const before = await pages.innerText();
@@ -275,7 +294,13 @@ try {
   await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
   await sourceMemoryEntry;
   await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
-  await page.waitForFunction(()=>!document.querySelector('button[aria-label="Refresh memories"]').disabled);
+  await page.waitForFunction(async()=>{
+    const refresh = document.querySelector('button[aria-label="Refresh memories"]');
+    if (refresh.disabled) return false;
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+    return !refresh.disabled;
+  });
   let releaseRefresh, captureRefresh;
   const refreshHeld = new Promise(resolve=>{releaseRefresh=resolve;});
   const refreshCaptured = new Promise(resolve=>{captureRefresh=resolve;});
@@ -322,6 +347,11 @@ try {
   assert.equal(await workspace.locator('tbody tr').count(),overview.transactions.length);
   await workspace.getByText('Unusual amount',{exact:true}).first().waitFor();
   await workspace.locator('tbody tr').filter({has:page.getByText('Unusual amount',{exact:true})}).getByRole('button').first().click();
+  await workspace.getByRole('radio',{name:/looks normal/}).click();
+  const customerConsent = workspace.getByRole('checkbox');
+  assert(!(await customerConsent.isChecked()));
+  assert.equal(await customerConsent.evaluate(element=>getComputedStyle(element).width),'18px',
+    'customer review must retain the shared consent checkbox size');
   await workspace.getByRole('radio',{name:'Needs further review',exact:false}).click();
   await workspace.getByRole('button',{name:'Confirm needs review',exact:true}).click();
   await workspace.getByText('You marked this for review',{exact:true}).waitFor();
@@ -335,6 +365,10 @@ try {
   await workspace.getByRole('link',{name:'Inspect exactly what is shared'}).click();
   await workspace.getByRole('heading',{name:'The complete payload'}).waitFor();
   assert.equal(await workspace.locator('.payload > div').count(),8);
+  assert.equal(await page.locator('#V-CUSTOMERS').evaluate(element=>element.scrollTop),0,
+    'customer navigation must return to the top without changing scale');
+  await assertStableScale();
+  await page.screenshot({path:join(root,'artifacts/v031-customer-privacy-after.png')});
   await page.locator('#C-SELECT').selectOption(customerCodes[1]);
   await customerNav.getByRole('link',{name:'Activity',exact:true}).click();
   await workspace.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
@@ -419,10 +453,12 @@ try {
   await widgets.getByRole('button',{name:'Remove Privacy',exact:true}).click();
   await widgets.getByRole('button',{name:'Move Spending later',exact:true}).click();
   await widgets.getByRole('button',{name:'Done',exact:true}).click();
+  await assertStableScale();
   await page.reload();
   await page.locator('.queuerow').first().waitFor();
   assert.equal(await widgets.getByRole('button',{name:/^Privacy/}).count(),0);
   assert.equal(await widgets.locator('.wlabel').first().innerText(),'Memory');
+  await assertStableScale();
   await widgets.getByRole('button',{name:'Edit',exact:true}).click();
   await widgets.getByRole('button',{name:'Reset',exact:true}).click();
   await widgets.getByRole('button',{name:'Done',exact:true}).click();
@@ -485,6 +521,12 @@ try {
   await phone.close();
   assert.deepEqual(errors,[]);
   console.log('PASS: updated UI, eight safe queries/history, scoped customer widgets, menu filters, persisted widget layout, themes, consent/memory, cached failures, recorded-decision recovery, synthetic 18 rows/3 alerts and responsive checks.');
+} catch (error) {
+  if (page) {
+    console.error('Browser failure:', {url:page.url(),errors});
+    console.error('Workspace state:', (await page.locator('main').innerText().catch(()=>'<unavailable>')).slice(0,1000));
+  }
+  throw error;
 } finally {
   await browser?.close();
   for (const child of children) child.kill('SIGTERM');

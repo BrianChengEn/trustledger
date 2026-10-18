@@ -12,67 +12,24 @@ import {WorkspaceProvider, useWorkspace} from './workspace';
 import WorkspaceView from './WorkspaceView';
 import './styles.css';
 
-/*
- * Fit-to-window: on desktop widths the whole UI is laid out in a "virtual" window and scaled to the real one, so no page
- * can overflow at any window size or browser zoom. Nothing on screen is scrollable. As a guard, after every layout change
- * the page measures itself and, if anything is ever too big (a different font, more data), enlarges the virtual window a
- * little so the whole UI shrinks to fit. Only touch phones use normal flowing layout instead.
- */
-const STAGE_W = 1360, STAGE_H = 920, STAGE_MAX_SCALE = 1.25, STAGE_MAX_EXTRA = 900;
-/** Only real phones (narrow and touch) use the flowing, scrolling layout; every desktop window is fitted. */
-const isPhone = () => window.matchMedia('(max-width: 699px) and (pointer: coarse)').matches;
-let extraH = 0, extraW = 0;
-function applyStage(): boolean {
+// Keep one scale for each viewport; content changes stay inside their own panels.
+const STAGE_W = 1360, STAGE_H = 920, STAGE_MAX_SCALE = 1.25;
+function applyStage() {
   const root = document.documentElement;
   const w = window.innerWidth, h = window.innerHeight;
-  if (isPhone()) {
+  if (window.matchMedia('(max-width: 699px) and (pointer: coarse)').matches) {
     root.removeAttribute('data-stage');
     for (const name of ['--stage-scale', '--stage-w', '--stage-h']) root.style.removeProperty(name);
-    return false;
+    return;
   }
-  const scale = Math.min(h / (STAGE_H + extraH), w / (STAGE_W + extraW), STAGE_MAX_SCALE);
+  const scale = Math.min(h / STAGE_H, w / STAGE_W, STAGE_MAX_SCALE);
   root.dataset.stage = 'on';
   root.style.setProperty('--stage-scale', String(scale));
   root.style.setProperty('--stage-w', `${w / scale}px`);
   root.style.setProperty('--stage-h', `${h / scale}px`);
-  return true;
-}
-// Raw data in the Nessie console may scroll inside its own panels; everything else must fit.
-const GUARDED = 'main, .page, .adminview, .steps, .step, .privgrid, .privside, .flowpanel, .payloadpanel, .tablewrap, .memlist, .queue, .gallerylist, .widgets, .widgetgrid, .widget, .startcard, .panel, .facts';
-function overflow() {
-  let h = 0, w = 0;
-  for (const el of document.querySelectorAll<HTMLElement>(GUARDED)) {
-    if (!el.offsetParent || el.closest('.admin-query, #V-HISTORY')) continue;
-    h = Math.max(h, el.scrollHeight - el.clientHeight);
-    w = Math.max(w, el.scrollWidth - el.clientWidth);
-  }
-  return {h, w};
-}
-function fit() {
-  extraH = 0; extraW = 0;
-  if (!applyStage()) return;
-  for (let round = 0; round < 12; round++) {
-    const {h, w} = overflow();
-    if (h <= 1 && w <= 1) break;
-    // Growing the window only gives each flexible area a share of the extra, so ask for a little more than the overflow.
-    extraH = Math.min(STAGE_MAX_EXTRA, extraH + Math.max(0, Math.ceil(h * 1.6)));
-    extraW = Math.min(STAGE_MAX_EXTRA, extraW + Math.max(0, Math.ceil(w * 1.6)));
-    applyStage();
-  }
-}
-let settle = 0;
-/** Re-fit once entrance animations have finished (moving elements would otherwise look like overflow). */
-function scheduleFit() {
-  window.clearTimeout(settle);
-  settle = window.setTimeout(async () => {
-    const running = document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished);
-    await Promise.race([Promise.allSettled(running), new Promise(resolve => window.setTimeout(resolve, 1500))]);
-    fit();
-  }, 60);
 }
 applyStage();
-window.addEventListener('resize', () => { fit(); scheduleFit(); });
-window.addEventListener('hashchange', scheduleFit);
+window.addEventListener('resize', applyStage);
 
 const nav: {view: Route['view']; label: string; icon: IconName; id?: string}[] = [
   {view: 'today', label: 'Today', icon: 'bell'},
@@ -207,7 +164,6 @@ function Shell() {
   };
 
   return <div className="app">
-    {menu && <div className="scrim" aria-hidden="true"/>}
     <div className="frame">
     <header className="topbar" onMouseLeave={() => { setMenu(null); setQuiet(null); }} onKeyDown={e => { if (e.key === 'Escape') setMenu(null); }}>
       <a className="logo" href="#/today" aria-label="TrustLedger home"><span className="logomark"><Icon name="shieldCheck" size={20} weight={1.4}/></span>
@@ -255,6 +211,3 @@ function Shell() {
 }
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><WorkspaceProvider><Shell/></WorkspaceProvider></React.StrictMode>);
-// Any change to what is on screen (data loads, a list grows, a widget is added) triggers a fit check.
-new MutationObserver(scheduleFit).observe(document.getElementById('root')!, {childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden']});
-scheduleFit();
