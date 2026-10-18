@@ -16,6 +16,7 @@ export default function Pager() {
     const measure = () => {
       const el = region();
       if (!el) return;
+      el.setAttribute('data-paged', ''); // the scroll lock leaves this region to the page buttons
       const step = Math.max(1, el.clientHeight);
       const pages = Math.max(1, Math.ceil((el.scrollHeight - 2) / step));
       const page = el.scrollTop >= el.scrollHeight - step - 1 ? pages - 1 : Math.round(el.scrollTop / step);

@@ -1,3 +1,5 @@
+from app.schemas.relevant_memory import RelevantMemories, DeletionVerification
+from app.services.ai.relevant_memory import retrieve, deletion_status
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
@@ -6,6 +8,7 @@ from contextlib import asynccontextmanager
 import httpx
 
 from app.api.dependencies import Analyses, Explanations, Transactions
+from app.core.auth import require_admin_when_enforced, require_session
 from app.core.store import ConflictingConfirmation
 from app.schemas.api import (
     Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Explanation, Health,
@@ -17,9 +20,9 @@ from app.services.ai.backboard_client import MemoryCallError
 from app.services.ai.memory_sync import consented_summaries, remove_remote_memory, write_consented_memory
 from app.services.workspace import owner as workspace_owner, require_nessie, select_customer
 
-router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_nessie)])
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_session), Depends(require_nessie)])
 customer_router = APIRouter(prefix='/api/v1/admin/nessie/customers/{customer_code}',
-                            dependencies=[Depends(select_customer), Depends(require_nessie)])
+                            dependencies=[Depends(require_admin_when_enforced), Depends(select_customer), Depends(require_nessie)])
 
 
 def private_markers(tx: Transaction) -> tuple[str, ...]:
@@ -198,3 +201,24 @@ async def delete(memory_id: Annotated[str, Path(min_length=1, max_length=100)], 
     if removed == "deleted":
         state.memory_outcome = "backboard-live"
     return Response(status_code=204)
+
+
+@router.get('/transactions/{transaction_id}/relevant-memories', response_model=RelevantMemories)
+@customer_router.get('/transactions/{transaction_id}/relevant-memories', response_model=RelevantMemories)
+async def relevant_memories(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
+                            request: Request, transactions: Transactions):
+    tx = transactions.get_transaction(transaction_id)
+    async with vendor_http(request) as http:
+        return await retrieve(request.app.state.store, workspace_owner(request),
+                              tx.merchant_category, api_key(request), http)
+
+
+@router.get('/memories/{memory_id}/deletion-verification', response_model=DeletionVerification)
+@customer_router.get('/memories/{memory_id}/deletion-verification', response_model=DeletionVerification)
+async def verify_deletion(memory_id: Annotated[str, Path(min_length=1, max_length=100)], request: Request):
+    async with vendor_http(request) as http:
+        result = await deletion_status(request.app.state.store, workspace_owner(request),
+                                       memory_id, api_key(request), http)
+    if result is None:
+        raise HTTPException(404, 'not_found')
+    return result

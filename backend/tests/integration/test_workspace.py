@@ -15,6 +15,46 @@ CUSTOMERS = ['c' * 24, 'd' * 24]
 ACCOUNTS = ['a' * 24, 'b' * 24]
 
 
+def test_source_refresh_is_explicit_normalized_scoped_and_retains_failed_cache(workspace):
+    client, customers, behavior = workspace
+    state = client.app.state
+    # Explicit source selection also works while the product retains its synthetic default.
+    state.settings.transaction_provider = 'synthetic'
+    with state.store.connect() as db:
+        run = db.execute('INSERT INTO seed_runs(owner,dataset_sha256,api_base_url,credential_fingerprint,'
+                         "state,created_at,updated_at) VALUES(?,?,?,?,'complete','now','now')",
+                         ('demo-user-001', BASELINE_SHA256, API_BASE,
+                          hashlib.sha256(b'workspace-key').hexdigest())).lastrowid
+        db.execute("INSERT INTO seed_records(run_id,kind,local_id,remote_id,request_fingerprint,state,updated_at) "
+                   "VALUES(?,'customer',?,?,'test','confirmed','now')", (run, identifier('c', 1), CUSTOMERS[0]))
+    calls = len(behavior['calls'])
+    assert client.get('/api/v1/data-sources/nessie/transactions').json()['total'] == 0
+    assert len(behavior['calls']) == calls
+    result = client.post('/api/v1/data-sources/nessie/refresh', json={})
+    assert result.status_code == 200
+    page = result.json()
+    assert page['total'] == 2 and page['data_mode'] == 'cached'
+    assert page['last_synced_at'] and page['customer_code'] == customers[0]
+    assert {row['kind'] for row in page['items']} == {'deposit', 'withdrawal'}
+    assert all(row['occurred_at'] is None and row['occurred_date'] == '2026-10-17'
+               and row['merchant_display'] is None and row['merchant_category'] is None
+               and row['is_subscription'] is None for row in page['items'])
+    assert all(raw not in result.text for raw in [*CUSTOMERS, *ACCOUNTS, 'PRIVATE', 'workspace-key'])
+    client.post(PREFIX + '/customers/' + customers[1] + '/workspace/refresh', json={}).raise_for_status()
+    assert client.get('/api/v1/data-sources/nessie/transactions').json()['total'] == 2
+    behavior['fail'].add('/withdrawals')
+    failed = client.post('/api/v1/data-sources/nessie/refresh', json={}).json()
+    assert failed['total'] == 2 and failed['data_mode'] == 'degraded'
+    behavior['fail'].clear()
+    behavior['overrides']['/withdrawals'] = []
+    removed = client.post('/api/v1/data-sources/nessie/refresh', json={}).json()
+    assert removed['total'] == 1 and removed['items'][0]['kind'] == 'deposit'
+    assert state.settings.transaction_provider == 'synthetic'
+    assert len(client.get('/api/v1/transactions?limit=100').json()) == 18
+    assert client.get('/api/v1/data-sources/banksim/transactions').json()['total'] == 0
+    assert all(method == 'GET' for method, _ in behavior['calls'])
+
+
 @pytest.fixture
 def workspace(tmp_path):
     app = create_app(Settings(_env_file=None, database_path=tmp_path / 'workspace.db',
