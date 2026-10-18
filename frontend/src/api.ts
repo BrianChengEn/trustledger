@@ -18,6 +18,10 @@ export interface Memory {memory_id: string; summary: string; source: string; cre
 export interface Health {status: string; data_mode: string; analysis_mode: string; memory_mode: string}
 export interface Confirmation {decision: string; memory_status: string; memory_id: string|null}
 const base = import.meta.env.VITE_API_BASE_URL || '';
+/** Error carrying only the backend's safe error code (never an upstream body). */
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number, readonly code: string|null) {super(message);}
+}
 export async function request<T>(path: string, options?: RequestInit, timeoutMs = 8000): Promise<T> {
   const response = await fetch(base + '/api/v1' + path, {
     ...options, headers: {'Content-Type': 'application/json', ...options?.headers},
@@ -25,7 +29,8 @@ export async function request<T>(path: string, options?: RequestInit, timeoutMs 
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error?.code ? `Request failed: ${body.error.code}` : `API returned ${response.status}`);
+    const code: string|null = typeof body?.error?.code === 'string' ? body.error.code : null;
+    throw new ApiError(code ? `Request failed: ${code}` : `API returned ${response.status}`, response.status, code);
   }
   return response.status === 204 ? undefined as T : response.json();
 }
