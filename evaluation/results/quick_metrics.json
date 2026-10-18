@@ -1,0 +1,117 @@
+{
+  "prevalence_kind": "natural",
+  "dataset": "BankSim (Lopez-Rojas & Axelsson, EMSS 2014)",
+  "eval_row_count": 11210,
+  "eval_fraud_count": 120,
+  "eval_normal_count": 11090,
+  "eval_prevalence": 0.010704727921498661,
+  "eval_customer_count": 3858,
+  "step_min_eval": 177,
+  "step_max_eval": 179,
+  "confusion_matrix": {
+    "TP": 72,
+    "FP": 20,
+    "TN": 11070,
+    "FN": 48
+  },
+  "metrics": {
+    "accuracy": {
+      "value": 0.9939339875111508,
+      "undefined": false,
+      "numerator": 11142,
+      "denominator": 11210
+    },
+    "precision": {
+      "value": 0.782608695652174,
+      "undefined": false,
+      "numerator": 72,
+      "denominator": 92
+    },
+    "recall": {
+      "value": 0.6,
+      "undefined": false,
+      "numerator": 72,
+      "denominator": 120
+    },
+    "f1": {
+      "value": 0.6792452830188679,
+      "undefined": false,
+      "precision_numerator": 72,
+      "precision_denominator": 92,
+      "recall_numerator": 72,
+      "recall_denominator": 120
+    },
+    "false_positive_rate": {
+      "value": 0.0018034265103697023,
+      "undefined": false,
+      "numerator": 20,
+      "denominator": 11090
+    },
+    "true_negative_rate": {
+      "value": 0.9981965734896303,
+      "undefined": false,
+      "numerator": 11070,
+      "denominator": 11090
+    },
+    "balanced_accuracy": {
+      "value": 0.7990982867448151,
+      "undefined": false,
+      "recall": {
+        "value": 0.6,
+        "undefined": false,
+        "numerator": 72,
+        "denominator": 120
+      },
+      "tnr": {
+        "value": 0.9981965734896303,
+        "undefined": false,
+        "numerator": 11070,
+        "denominator": 11090
+      }
+    }
+  },
+  "alert_type_by_fraud": {
+    "amount_anomaly|fraud=0": 19,
+    "amount_anomaly|fraud=1": 72,
+    "duplicate|fraud=0": 1,
+    "none|fraud=0": 11070,
+    "none|fraud=1": 48
+  },
+  "rule_specific_accuracy": {
+    "duplicate": "NOT EVALUABLE",
+    "amount_anomaly": "NOT EVALUABLE",
+    "subscription_change": "NOT EVALUABLE"
+  },
+  "fixture_self_test_pass": true,
+  "scenario_count": 30,
+  "scenario_pass_count": 21,
+  "scenario_fail_count": 9,
+  "independent_check_match": true,
+  "assumptions": [
+    "currency USD is a schema requirement; BankSim publishes no currency code.",
+    "direction debit is assumed; BankSim publishes no credit/debit field.",
+    "is_subscription is false for every row; subscription flags were not invented.",
+    "source synthetic is the schema tag for this offline sample, not the product fixture.",
+    "One step is treated as one day starting 2014-01-01 UTC. The hour is not in the data.",
+    "Customer ids are hashed into account_token and are absent from this summary."
+  ],
+  "disclaimer": "These metrics measure how often a rules alert coincides with a BankSim fraud label. They are not production-grade fraud-detection accuracy.",
+  "jev_classification_accuracy": "NOT MEASURED IN THIS RUN",
+  "false_positive_by_source_category": {
+    "es_health": 16,
+    "es_home": 3,
+    "es_transportation": 1
+  },
+  "false_negative_by_source_category": {
+    "es_health": 8,
+    "es_sportsandtoys": 9,
+    "es_wellnessandbeauty": 10,
+    "es_otherservices": 3,
+    "es_hyper": 1,
+    "es_hotelservices": 6,
+    "es_leisure": 6,
+    "es_barsandrestaurants": 2,
+    "es_fashion": 2,
+    "es_travel": 1
+  }
+}

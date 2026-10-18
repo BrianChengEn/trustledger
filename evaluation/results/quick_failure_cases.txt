@@ -1,0 +1,49 @@
+# Quick evaluation failure notes
+
+These metrics measure how often a rules alert coincides with a BankSim fraud label. They are not production-grade fraud-detection accuracy.
+
+Jev classification accuracy: NOT MEASURED IN THIS RUN.
+
+Rule-specific accuracy for duplicate, amount anomaly, and subscription change is NOT EVALUABLE. BankSim has no labels for those anomaly types.
+
+## False positives
+
+- step 177, amount 253.79, other (es_health), alert amount_anomaly, merchant 4c9d74f6: Non-fraud debit at or above the production 250 threshold.
+- step 177, amount 272.83, other (es_health), alert amount_anomaly, merchant 137e124c: Non-fraud debit at or above the production 250 threshold.
+- step 177, amount 250.86, other (es_health), alert amount_anomaly, merchant 137e124c: Non-fraud debit at or above the production 250 threshold.
+- step 179, amount 373.36, other (es_home), alert amount_anomaly, merchant 19fdab2c: Non-fraud debit at or above the production 250 threshold.
+- step 179, amount 258.61, other (es_health), alert amount_anomaly, merchant 137e124c: Non-fraud debit at or above the production 250 threshold.
+- step 177, amount 308.88, other (es_health), alert amount_anomaly, merchant 137e124c: Non-fraud debit at or above the production 250 threshold.
+- step 177, amount 266.3, other (es_health), alert amount_anomaly, merchant 4c9d74f6: Non-fraud debit at or above the production 250 threshold.
+- step 178, amount 265.72, other (es_health), alert amount_anomaly, merchant 137e124c: Non-fraud debit at or above the production 250 threshold.
+- step 177, amount 0.22, transportation (es_transportation), alert duplicate, merchant 6335cdb7: Non-fraud same-merchant same-amount hit inside the imputed 24 hour window.
+- step 177, amount 292.08, other (es_health), alert amount_anomaly, merchant 4c9d74f6: Non-fraud debit at or above the production 250 threshold.
+- step 179, amount 318.86, other (es_health), alert amount_anomaly, merchant 4c9d74f6: Non-fraud debit at or above the production 250 threshold.
+- step 177, amount 284.97, other (es_health), alert amount_anomaly, merchant 4c9d74f6: Non-fraud debit at or above the production 250 threshold.
+
+## False negatives
+
+- step 179, amount 200.13, other (es_health), alert none, merchant 7c9550e2: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 179, amount 203.18, other (es_sportsandtoys), alert none, merchant 8fe1de42: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 177, amount 145.5, other (es_wellnessandbeauty), alert none, merchant 4b94e51e: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 177, amount 57.05, other (es_health), alert none, merchant 7c9550e2: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 178, amount 189.99, other (es_otherservices), alert none, merchant 044a2497: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 177, amount 55.11, other (es_health), alert none, merchant 7c9550e2: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 178, amount 175.86, groceries (es_hyper), alert none, merchant 95a07f00: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 177, amount 199.17, other (es_hotelservices), alert none, merchant a64b89ba: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 178, amount 181.51, other (es_health), alert none, merchant 7c9550e2: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 177, amount 247.15, other (es_leisure), alert none, merchant c7e31932: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 179, amount 42.37, other (es_wellnessandbeauty), alert none, merchant db843121: Labeled fraud below 250 with no same-merchant same-amount hit.
+- step 178, amount 247.45, other (es_hotelservices), alert none, merchant e2e9a3d5: Labeled fraud below 250 with no same-merchant same-amount hit.
+
+## Scenario mismatches
+
+- dup_same_category_other_merchant: Expected duplicate (needs_human=True); production returned none (needs_human=False). The written rule keys on category, not merchant name.
+- dup_different_category_same_merchant: Expected none (needs_human=False); production returned duplicate (needs_human=True). The written duplicate rule requires the same category.
+- amt_250_no_history: Expected none (needs_human=False); production returned amount_anomaly (needs_human=True). No median, so the written high-amount rule does not fire.
+- amt_251_no_history: Expected none (needs_human=False); production returned amount_anomaly (needs_human=True). No median, so the written high-amount rule does not fire.
+- amt_849_no_history: Expected none (needs_human=False); production returned amount_anomaly (needs_human=True). A large first purchase still has no 30 day median.
+- amt_high_but_consistent: Expected none (needs_human=False); production returned amount_anomaly (needs_human=True). 288 is not more than three times the category median.
+- amt_above_median_below_250: Expected amount_anomaly (needs_human=True); production returned none (needs_human=False). 180 is above USD 100 and above three times the median, but below 250.
+- sub_up_25_other_merchant: Expected subscription_change (needs_human=True); production returned none (needs_human=False). The written rule says the same subscription category, not the same merchant.
+- confirmed_other_merchant_repeat: Expected duplicate (needs_human=True); production returned none (needs_human=False). Written duplicate rule still matches on category and amount.

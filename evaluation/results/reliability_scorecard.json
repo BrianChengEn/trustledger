@@ -1,0 +1,68 @@
+{
+  "command": "/Users/brian/Projects/trustledger/backend/.venv/bin/python -m pytest -q --tb=line backend/tests/unit/ai/test_privacy_rules.py backend/tests/unit/ai/test_backboard_memory.py backend/tests/unit/ai/test_jev_backboard.py backend/tests/unit/core/test_fraud.py backend/tests/unit/core/test_store_reliability.py backend/tests/unit/core/test_explanation.py backend/tests/integration/test_fraud_boundary.py backend/tests/integration/test_analysis_pipeline.py backend/tests/integration/test_approved_integration.py backend/tests/integration/test_security.py",
+  "pytest_summary_line": "293 passed, 1 warning in 4.36s",
+  "passed": 293,
+  "failed": 0,
+  "skipped": 0,
+  "errors": 0,
+  "elapsed_seconds": 4.36,
+  "failed_nodeids": [],
+  "files_run": [
+    "backend/tests/unit/ai/test_privacy_rules.py",
+    "backend/tests/unit/ai/test_backboard_memory.py",
+    "backend/tests/unit/ai/test_jev_backboard.py",
+    "backend/tests/unit/core/test_fraud.py",
+    "backend/tests/unit/core/test_store_reliability.py",
+    "backend/tests/unit/core/test_explanation.py",
+    "backend/tests/integration/test_fraud_boundary.py",
+    "backend/tests/integration/test_analysis_pipeline.py",
+    "backend/tests/integration/test_approved_integration.py",
+    "backend/tests/integration/test_security.py"
+  ],
+  "excluded": "backend/tests/integration/test_backboard_live.py",
+  "note_privacy_rules_file": "backend/tests/unit/ai/test_privacy_rules.py exercises backend/app/services/ai/rules.py and services/ai/privacy.py. HTTP analysis uses backend/app/core/rules.py. Do not treat this file as proof of HTTP rule behavior.",
+  "jev_classification_accuracy": "NOT MEASURED IN THIS RUN",
+  "not_a_security_audit": true,
+  "eight_features": {
+    "synthetic_demo_user": {
+      "status": "pass",
+      "evidence": "test_explicit_activation_and_only_post_can_infer lists rows via settings.demo_user_id and GET /api/v1/transactions is 200; pipeline uses txn_syn_004. Demo fixture path, not a separate login test.",
+      "test_count_note": "No login test in this run."
+    },
+    "transactions_and_alert_details": {
+      "status": "pass",
+      "evidence": "test_alert_confirmation_and_memory_consistency: alerts are alert_txn_syn_004/005/008; transaction_id, alert_type, severity, needs_human, confidence, evidence, model_version match the analysis. Activation asserts those risk fields match the rules baseline.",
+      "test_count_note": "Field equality on the synthetic alerts only."
+    },
+    "deterministic_rules": {
+      "status": "pass",
+      "evidence": "test_rules_only_default_and_success_do_not_replace_rules keeps alert_type duplicate and status rules-only. test_no_prior_transactions_still_uses_rules: amount_anomaly, severity high, needs_human true, provider_mode degraded. Mock success cannot override rule severity. test_privacy_rules.py is the services/ai path, not HTTP core/rules.py.",
+      "test_count_note": "HTTP rule evidence is test_fraud.py and test_analysis_pipeline.py."
+    },
+    "jev_integration_and_fallback": {
+      "status": "pass",
+      "evidence": "Mock only. test_http_failure_stays_on_rules_and_success_is_labeled_live: provider_mode rules+jev-live, alert_type duplicate, needs_human. Missing key stays rules-only. Malformed success and test_mock_failures_fall_back_without_changing_rules set provider_mode degraded without replacing rules. Accuracy NOT MEASURED.",
+      "test_count_note": "Mock transport and MockJevProvider only; live Jev excluded."
+    },
+    "backboard_sqlite_memory": {
+      "status": "pass",
+      "evidence": "test_users_get_isolated_assistants_and_sqlite_fallback: local.source local-fallback and owner-a/owner-b isolation. test_old_sqlite_memory_remains_local_fallback: source local-fallback. test_provider_failure_keeps_one_local_sentence: memory_status failed, source local-fallback, mode degraded. Store tests: consent gates, one confirmation row, delete stays inside the owner.",
+      "test_count_note": "Consent, sqlite fallback, delete, duplicate confirmation, provider failure, owner isolation."
+    },
+    "privacy_inspector": {
+      "status": "pass",
+      "evidence": "SafePayload is 8 fields. test_provider_receives_only_allowlisted_features: dumped fields equal SafePayload.model_fields; transaction_id and request_id excluded. Preview test: provider input equals safe_payload and raw sentinels are absent. Activation: len(calls[0])==8 and txn id not in the call JSON. test_exact_raw_values asserts len==8 on services/ai/privacy.py only. test_secrets_remain_masked: SecretStr, sentinel absent from repr and model_dump_json. test_security.py does not assert the allowlist.",
+      "test_count_note": "Allowlist claims are the equality and length assertions that passed."
+    },
+    "human_confirmation": {
+      "status": "pass",
+      "evidence": "test_alert_confirmation_and_memory_consistency: memory_status written, repeat memory_id unchanged, alert status normal, DELETE 204, memories empty. Activation repeats written then delete 204. test_conflicts_preserve_original keeps the original memory_id. Concurrent confirmations leave one confirmation row.",
+      "test_count_note": "Confirmation, alert preservation, delete, and repeat only."
+    },
+    "provider_mode_reporting": {
+      "status": "pass",
+      "evidence": "Passed labels: rules-only on health analysis_mode and GET alerts; rules+jev-live on mocked success in test_jev_backboard.py and configured activation; degraded on timeout, malformed, and unsafe input; local-fallback in test_backboard_memory.py sqlite and provider-failure tests.",
+      "test_count_note": "Quoted only from assertions in this green run."
+    }
+  }
+}
