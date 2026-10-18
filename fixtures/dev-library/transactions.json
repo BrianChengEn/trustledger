@@ -1,0 +1,162 @@
+{
+  "synthetic": true,
+  "library_id": "dev-library-v1",
+  "ground_truth_fraud_labels": false,
+  "note": "Deterministic synthetic rows for development. They are not Nessie sandbox records and they are not fraud ground truth. The default demo owner demo-user-001 is not in this file.",
+  "owners": {
+    "dev-library-user-a": [
+      {
+        "id": "txn_dev_a_dining",
+        "occurred_at": "2026-10-10T11:05:00-04:00",
+        "amount": 8.5,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "Campus Cafe",
+        "merchant_category": "dining",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": false,
+        "expected_alert_type": "none"
+      },
+      {
+        "id": "txn_dev_a_groceries",
+        "occurred_at": "2026-10-11T12:00:00-04:00",
+        "amount": 15.0,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "Metro Market",
+        "merchant_category": "groceries",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": false,
+        "expected_alert_type": "none"
+      },
+      {
+        "id": "txn_dev_a_duplicate",
+        "occurred_at": "2026-10-11T18:00:00-04:00",
+        "amount": 15.0,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "Metro Market",
+        "merchant_category": "groceries",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": false,
+        "expected_alert_type": "duplicate"
+      },
+      {
+        "id": "txn_dev_a_large",
+        "occurred_at": "2026-10-12T15:00:00-04:00",
+        "amount": 420.0,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "Tech Harbor",
+        "merchant_category": "electronics",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": false,
+        "expected_alert_type": "amount_anomaly"
+      },
+      {
+        "id": "txn_dev_a_sub_previous",
+        "occurred_at": "2026-09-12T08:00:00-04:00",
+        "amount": 20.0,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "FitFlow",
+        "merchant_category": "fitness_subscription",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": true,
+        "expected_alert_type": "none"
+      },
+      {
+        "id": "txn_dev_a_sub_increase",
+        "occurred_at": "2026-10-12T08:00:00-04:00",
+        "amount": 29.0,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "FitFlow",
+        "merchant_category": "fitness_subscription",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": true,
+        "expected_alert_type": "subscription_change"
+      },
+      {
+        "id": "txn_dev_a_recurring_previous",
+        "occurred_at": "2026-08-01T08:00:00-04:00",
+        "amount": 9.99,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "StreamWave",
+        "merchant_category": "streaming",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": true,
+        "expected_alert_type": "none"
+      },
+      {
+        "id": "txn_dev_a_recurring",
+        "occurred_at": "2026-09-01T08:00:00-04:00",
+        "amount": 9.99,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "StreamWave",
+        "merchant_category": "streaming",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": true,
+        "expected_alert_type": "none"
+      },
+      {
+        "id": "txn_dev_a_credit",
+        "occurred_at": "2026-10-13T09:30:00-04:00",
+        "amount": 12.0,
+        "currency": "USD",
+        "direction": "credit",
+        "merchant_display": "Campus Cafe",
+        "merchant_category": "dining",
+        "source": "synthetic",
+        "account_token": "acct_dev_a1",
+        "is_subscription": false,
+        "expected_alert_type": "none"
+      }
+    ],
+    "dev-library-user-b": [
+      {
+        "id": "txn_dev_b_dining",
+        "occurred_at": "2026-10-13T19:10:00-04:00",
+        "amount": 22.4,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "Fresh Basket",
+        "merchant_category": "groceries",
+        "source": "synthetic",
+        "account_token": "acct_dev_b1",
+        "is_subscription": false,
+        "expected_alert_type": "none"
+      },
+      {
+        "id": "txn_dev_b_large",
+        "occurred_at": "2026-10-14T07:30:00-04:00",
+        "amount": 300.0,
+        "currency": "USD",
+        "direction": "debit",
+        "merchant_display": "Metro Ride",
+        "merchant_category": "transportation",
+        "source": "synthetic",
+        "account_token": "acct_dev_b1",
+        "is_subscription": false,
+        "expected_alert_type": "amount_anomaly"
+      }
+    ]
+  },
+  "confirmation_example": {
+    "owner": "dev-library-user-a",
+    "alert_id": "alert_txn_dev_a_duplicate",
+    "decision": "normal",
+    "consent_to_memory": false,
+    "request_id": "req_dev_library_confirm"
+  }
+}

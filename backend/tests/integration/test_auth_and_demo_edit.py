@@ -373,3 +373,13 @@ def test_a_fresh_database_needs_no_backup(tmp_path):
     Store(path)
     assert not list(tmp_path.glob("*.bak"))
     assert {"origin", "edited_at"} <= columns(path)
+
+
+def test_source_browser_is_admin_only(tmp_path):
+    url = "/api/v1/data-sources/banksim/transactions"
+    with make_client(tmp_path) as client:
+        assert code(client.get(url), 401) == "auth_required"
+        assert sign_in(client, "user", USER_PASS).status_code == 200
+        assert code(client.get(url), 403) == "admin_only"
+        assert sign_in(client, "admin", ADMIN_PASS).status_code == 200
+        assert client.get(url).status_code == 200

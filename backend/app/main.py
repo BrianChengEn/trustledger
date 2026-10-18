@@ -8,12 +8,14 @@ from app.adapters.synthetic import load_transactions
 from app.api.admin_demo import router as demo_router
 from app.api.admin_nessie import router as admin_router
 from app.api.auth import router as auth_router
+from app.api.data_sources import router as source_router
 from app.api.routes import customer_router, router
 from app.api.workspace import router as workspace_router
 from app.core.config import Settings
 from app.core.demo_edit import DemoEditError
 from app.core.http import RequestGuardMiddleware, ResponseSecurityMiddleware, error_response
 from app.core.store import Store
+from app.core.dataset_store import DatasetStore
 from app.services.ai.gemini_explanation import ExplanationCache
 from app.core.transactions import ProviderError, TransactionNotFound
 
@@ -22,6 +24,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="TrustLedger synthetic development API", version="0.3.1")
     app.state.settings = settings or Settings()
     app.state.store = Store(app.state.settings.database_path)
+    source_dir = app.state.settings.source_database_dir or app.state.settings.database_path.parent / 'sources'
+    app.state.source_stores = {name: DatasetStore(source_dir / f'{name}.db', name)
+                               for name in ('nessie', 'banksim')}
     load_transactions(app.state.store, app.state.settings.demo_user_id)
     app.state.nessie = NessieClient(app.state.settings.nessie_api_key.get_secret_value())
     app.state.explanation_cache = ExplanationCache()
@@ -76,6 +81,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(admin_router)
     app.include_router(auth_router)
     app.include_router(demo_router)
+    app.include_router(source_router)
     return app
 
 

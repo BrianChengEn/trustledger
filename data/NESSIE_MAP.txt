@@ -1,0 +1,64 @@
+Nessie 與 TrustLedger 的對應
+這次沒有對 prod-api.nessieisreal.com 發出成功呼叫。
+backend/app/adapters/nessie.py 的 load_transactions() 仍會丟出
+NessieNotConfigured：Live Nessie adapter is not implemented。
+不要把這份說明讀成 Nessie live 已經接通。
+
+金鑰只放在後端環境。前端不持有 Nessie key，也不直接呼叫 Nessie。
+前端只打 TrustLedger 的 /api/v1。
+
+文件上的形狀，來自 Capital One Nessie 的 customers、accounts、
+deposits、withdrawals，以及本倉庫 datasets/nessie 的合成產生器
+backend/app/adapters/synthetic_dataset.py。
+
+PR #18 合併後，workspace 投影在 backend/app/services/workspace.py 的 movements()。
+它把 Nessie 的 purchases、transfers、deposits、withdrawals 收成 WorkspaceMovement。
+這不是 load_transactions()。那個函式仍然是未實作。
+
+Nessie 物件
+    _id
+    amount
+    status                  pending、completed 或 cancelled
+    purchase_date           只用於 purchases
+    transaction_date        deposits、withdrawals、transfers
+    payer_id / payee_id     只用於 transfers
+    description             自由文字。movements() 不採用它。
+        |
+        |  movements()
+        v
+WorkspaceMovement
+    id                  由 customer、kind、account、遠端 id 做成 token
+    account_token       acct_ token，不是遠端帳號
+    occurred_at         只有日期時，用 UTC 當天 00:00
+    amount              轉成美元
+    currency            USD
+    direction           deposit 是 credit，withdrawal 與 purchase 是 debit
+                        transfer 看 payer / payee
+    merchant_display    種類名稱，例如 Deposit。不是商家原文。
+    merchant_category   固定 other
+    source              nessie
+    is_subscription     false
+    kind                purchase、transfer、deposit 或 withdrawal
+    settlement_status   來自 status
+    date_only           日期欄沒有時間時為 true
+        |
+        v
+FastAPI workspace snapshot
+        |
+        v
+React frontend/src/api.ts 的 Movement
+
+規則檔在 PR #18 已把 source 為 nessie、date_only，或未完成的紀錄排除在
+原本的 duplicate / 高額 / 訂閱判斷之外。這次沒有再改 rules.py。
+
+這次沒有對 prod-api.nessieisreal.com 發出成功呼叫。
+snapshot 在同步紀錄沒有 error 時可以把 data_mode 標成 nessie-live。
+那個標籤表示儲存的同步沒有錯誤，不是這次審計打過 live API。
+
+合成範例：data/examples/nessie-withdrawal.json
+可重現的整包沙盒：datasets/nessie/baseline.json
+重新產生：backend/.venv/bin/python scripts/generate_synthetic_data.py
+那個指令寫的是 Nessie 形狀的 JSON，不是 BankSim。
+
+Kenny 若要做轉接，轉接必須留在後端 adapter，輸出必須通過 Transaction。
+在欄位補齊之前，示範畫面繼續用 synthetic source。

@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "live_nessie_call": false,
+  "note": "Shape copied from the documented Nessie deposit and withdrawal objects already generated in datasets/nessie. This is not a response captured from prod-api.nessieisreal.com.",
+  "withdrawal": {
+    "_id": "e00000000000000000000001",
+    "medium": "balance",
+    "transaction_date": "2026-10-02",
+    "status": "completed",
+    "amount": 40,
+    "description": "Synthetic e transaction 1"
+  },
+  "not_a_canonical_transaction_because": [
+    "no merchant_display",
+    "no merchant_category",
+    "no timezone-aware occurred_at",
+    "no account_token in the acct_* form",
+    "status may be pending or cancelled"
+  ]
+}

@@ -103,7 +103,7 @@ try {
   async function toToday() {
     const preview = page.getByRole('button',{name:'Preview as user',exact:true});
     if (await preview.count()) await preview.click();
-    await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+    await toUser(/^Today/);
   }
   // Pages that start on the user's screens open in the admin's "Preview as user" mode.
   async function userGoto(target, url) {
@@ -581,8 +581,63 @@ try {
   await phone.locator('.payload > div').nth(7).waitFor();
   await phone.screenshot({path:join(root,'artifacts/v031-phone.png'),fullPage:true});
   await phone.close();
+  // Real source API/SQLite integration; source selection never changes product or inference state.
+  const previousAnalysis = analysisCalls, previousExplanation = explanationCalls;
+  await toConsole();
+  await page.locator('#NAV-DATA').click();
+  const sourceLedger = page.locator('#V-SOURCES');
+  await sourceLedger.getByText('No imported transactions for this source.',{exact:true}).waitFor();
+  const firstSourceRefresh = page.waitForResponse(response=>response.url().endsWith('/data-sources/nessie/refresh'));
+  await sourceLedger.locator('#S-REFRESH').click();
+  assert.equal((await firstSourceRefresh).status(),200);
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  assert((await sourceLedger.innerText()).includes('Unknown merchant'));
+  assert.equal(await sourceLedger.locator('#S-NESSIE').getAttribute('aria-pressed'),'true');
+  await sourceLedger.locator('#S-BANKSIM').click();
+  await sourceLedger.getByText('30 transactions',{exact:true}).waitFor();
+  assert((await sourceLedger.locator('tbody').innerText()).includes('€180.01'));
+  assert((await sourceLedger.locator('tbody').innerText()).includes('Simulation day 120'));
+  assert.equal(await sourceLedger.getByRole('link',{name:'Review transaction'}).count(),0);
+  assert.equal(await sourceLedger.locator('tbody tr').count(),25);
+  await assertStableScale();
+  await page.screenshot({path:join(root,'artifacts/v050-source-banksim.png'),fullPage:true});
+  await sourceLedger.locator('#S-NEXT').click();
+  await sourceLedger.getByText('26–30 of 30',{exact:true}).waitFor();
+  assert.equal(await sourceLedger.locator('tbody tr').count(),5);
+  await sourceLedger.locator('#S-NESSIE').click();
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  const sourceRefresh = page.waitForResponse(response=>response.url().endsWith('/data-sources/nessie/refresh'));
+  await sourceLedger.locator('#S-REFRESH').click();
+  const sourceResult = await (await sourceRefresh).json();
+  assert.equal(sourceResult.source,'nessie');
+  assert(sourceResult.items.every(row=>row.source==='nessie' && row.currency==='USD' && !('owner' in row) && !('fraud' in row)));
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  let releaseBankSim, captureBankSim;
+  const heldBankSim = new Promise(resolve=>{releaseBankSim=resolve;});
+  const capturedBankSim = new Promise(resolve=>{captureBankSim=resolve;});
+  await page.route('**/data-sources/banksim/transactions?*',async route=>{
+    const response = await route.fetch();
+    captureBankSim(); await heldBankSim; await route.fulfill({response});
+  },{times:1});
+  await sourceLedger.locator('#S-BANKSIM').click();
+  await capturedBankSim;
+  assert.equal(await sourceLedger.locator('tbody tr').count(),0,'switch clears the previous source immediately');
+  await sourceLedger.locator('#S-NESSIE').click();
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  const lateBankSim = page.waitForResponse(response=>response.url().includes('/data-sources/banksim/transactions'));
+  releaseBankSim(); await lateBankSim;
+  assert.equal(await sourceLedger.locator('#S-NESSIE').getAttribute('aria-pressed'),'true');
+  assert(!(await sourceLedger.locator('tbody').innerText()).includes('Simulation day'));
+  assert.equal(analysisCalls,previousAnalysis,'source browsing does not invoke Jev');
+  assert.equal(explanationCalls,previousExplanation,'source browsing does not invoke Gemini');
+  await assertStableScale();
+  await page.screenshot({path:join(root,'artifacts/v050-source-nessie.png'),fullPage:true});
+  await sourceLedger.getByRole('link',{name:'Review current Nessie transactions',exact:true}).click();
+  await page.locator('#V-CUSTOMERS .today').waitFor();
+  assert.equal(analysisCalls,previousAnalysis);
+  assert.equal(explanationCalls,previousExplanation);
   assert.deepEqual(errors,[]);
-  console.log('PASS: updated UI, eight safe queries/history, scoped customer widgets, menu filters, persisted widget layout, themes, consent/memory, cached failures, recorded-decision recovery, synthetic 18 rows/3 alerts and responsive checks.');
+  console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, responsive checks and isolated Nessie/BankSim SQLite/API source switching, EUR/day display, pagination and stale-response isolation.');
 } catch (error) {
   if (page) {
     console.error('Browser failure:', {url:page.url(),errors});
