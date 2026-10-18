@@ -70,3 +70,27 @@ def test_predictions_reviews_and_failed_calls_remain_distinct(tmp_path):
         review = db.execute('SELECT decision,consent FROM human_reviews').fetchone()
         assert tuple(review) == ('normal', 0)
         assert not any('fraud' in r['name'] for r in db.execute('PRAGMA table_info(transactions)'))
+
+
+def test_nessie_snapshot_reconciles_membership_preserves_review_and_orders_real_instants(tmp_path):
+    store = DatasetStore(tmp_path / 'nessie.db', 'nessie')
+    row = transaction()
+    status = dict(account_token='', kind='accounts', requested_at='2026-10-18T08:00:00Z',
+                  synced_at='2026-10-18T08:00:00Z', http_status=200, error=None)
+    store.sync_nessie_snapshot('owner-a', [row], [status], '2026-10-18T08:00:00Z')
+    store.save_review('owner-a', row.id, 'normal', False, '2026-10-18T08:10:00Z')
+    assert store.source_page('owner-a')[1:3] == (1, 'cached')
+    # 04:30 at UTC-4 is newer than 08:00 UTC, despite the smaller clock string.
+    store.sync_nessie_snapshot('owner-a', [], [status], '2026-10-18T04:30:00-04:00')
+    assert store.source_page('owner-a')[1] == 0
+    store.sync_nessie_snapshot('owner-a', [row], [status], '2026-10-18T08:15:00Z')
+    assert store.source_page('owner-a')[1] == 0
+    assert store.list_transactions('owner-a') == [row]
+    with store.connect() as db:
+        assert db.execute('SELECT count(*) FROM human_reviews').fetchone()[0] == 1
+    with pytest.raises(ValueError):
+        store.sync_nessie_snapshot('owner-b', [row], [status], '2026-10-18T09:00:00Z')
+    with pytest.raises(ValueError):
+        store.source_page()
+    with pytest.raises(ValueError):
+        store.sync_nessie_snapshot('owner-a', [row], [status], '2026-10-18T10:00:00')

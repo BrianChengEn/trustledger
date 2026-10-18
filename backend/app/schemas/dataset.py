@@ -87,3 +87,41 @@ class HumanReview(BaseModel):
     decision: Literal['normal', 'review']
     consent: bool = Field(strict=True)
     reviewed_at: AwareDatetime
+
+
+class SourceTransaction(BaseModel):
+    """Public canonical projection: no owners, labels or prediction fields."""
+    model_config = ConfigDict(extra='forbid')
+    id: str
+    source: Literal['nessie', 'banksim']
+    amount_minor: int
+    currency: str | None
+    kind: str
+    direction: str
+    account_token: str | None
+    merchant_display: str | None
+    merchant_category: str | None
+    source_category: str | None
+    merchant_code: str | None
+    occurred_at: AwareDatetime | None
+    occurred_date: date | None
+    simulation_step: int | None
+    is_subscription: bool | None
+    settlement_status: str | None
+
+    @classmethod
+    def from_record(cls, row: TransactionRecord):
+        values = row.model_dump(include=set(cls.model_fields) - {'merchant_code'})
+        values['merchant_code'] = row.banksim_features.merchant_code if row.banksim_features else None
+        return cls(**values)
+
+
+class SourcePage(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    source: Literal['nessie', 'banksim']
+    items: list[SourceTransaction]
+    total: int
+    next_offset: int | None
+    data_mode: Literal['research', 'cached', 'degraded', 'not-imported']
+    last_synced_at: AwareDatetime | None = None
+    customer_code: str | None = None

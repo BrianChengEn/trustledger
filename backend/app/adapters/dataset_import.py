@@ -73,18 +73,23 @@ def import_nessie_cache(filename: Path, store: DatasetStore):
 
         def records():
             for row in db.execute('SELECT * FROM workspace_movements ORDER BY owner,id'):
-                day_only = bool(row['date_only'])
-                yield TransactionRecord(
-                    id=row['id'], owner=row['owner'], source='nessie',
-                    dataset_id='nessie-cache-v1', source_record_key=row['id'],
-                    account_token=row['account_token'], amount_minor=row['amount_cents'],
-                    currency='USD', kind=row['kind'], direction=row['direction'],
-                    occurred_date=date.fromisoformat(row['occurred_at'][:10]) if day_only else None,
-                    occurred_at=None if day_only else datetime.fromisoformat(row['occurred_at']),
-                    settlement_status=row['settlement_status'])
+                yield nessie_record(row)
 
         count = store.upsert_transactions(records())
         return {'dataset_id': 'nessie-cache-v1', 'transactions': count, 'source_mode': 'cached',
                 'last_source_sync': sync[0], 'cached_sync_errors': sync[1] or 0}
     finally:
         db.close()
+
+
+def nessie_record(row):
+    """Normalize the typed cache projection without inheriting product display defaults."""
+    day_only = bool(row['date_only'])
+    return TransactionRecord(
+        id=row['id'], owner=row['owner'], source='nessie',
+        dataset_id='nessie-cache-v1', source_record_key=row['id'],
+        account_token=row['account_token'], amount_minor=row['amount_cents'],
+        currency='USD', kind=row['kind'], direction=row['direction'],
+        occurred_date=date.fromisoformat(row['occurred_at'][:10]) if day_only else None,
+        occurred_at=None if day_only else datetime.fromisoformat(row['occurred_at']),
+        settlement_status=row['settlement_status'])
