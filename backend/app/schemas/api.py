@@ -45,7 +45,7 @@ class SafePayload(StrictModel):
     merchant_category: str
     amount_bucket: Literal["0-10", "10-25", "25-50", "50-100", "100-250", "250+"]
     currency: Literal["USD"]
-    local_day_part: Literal["morning", "afternoon", "evening", "overnight"]
+    local_day_part: Literal["morning", "afternoon", "evening", "overnight", "unknown"]
     same_category_same_amount_24h_count: int = Field(ge=0, le=20)
     is_subscription: bool
     subscription_delta_bucket: Literal["none", "up-to-20-percent", "over-20-percent", "unknown"]

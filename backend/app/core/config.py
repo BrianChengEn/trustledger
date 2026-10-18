@@ -12,7 +12,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
     app_env: str = "development"
-    transaction_provider: Literal["synthetic"] = "synthetic"
+    transaction_provider: Literal["synthetic", "nessie"] = "synthetic"
     fraud_provider: Literal["rules-only", "mock-jev", "backboard-jev"] = "rules-only"
     # A single local demo identity; this is not an authentication mechanism.
     demo_user_id: str = "demo-user-001"

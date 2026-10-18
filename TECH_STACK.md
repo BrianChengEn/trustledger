@@ -45,7 +45,7 @@ Official docs: [React](https://react.dev/), [Vite](https://vite.dev/).
 | `@types/react` | 19.3.0 | React types | devDependency | Ian | Installed | No | Local typecheck | IMPLEMENTED | lockfile |
 | `@types/react-dom` | 19.3.0 | React DOM types | devDependency | Ian | Installed | No | Local typecheck | IMPLEMENTED | lockfile |
 
-There is no router, component library, state library, or ESLint dependency. The UI is one component in `frontend/src/main.tsx` plus `frontend/src/styles.css`. API access is `fetch` in `frontend/src/api.ts`.
+There is no router, component library, state library, or ESLint dependency. The v0.3.0 integration reuses `main`'s Today/Activity/Case/Privacy/Memory views, a React workspace context and the existing hash router with a scoped Data sources customer namespace. Main and Admin customer review reuse these components. API access remains `fetch` in `frontend/src/api.ts`; no dependency was added.
 
 ## D. Backend frameworks
 
@@ -97,10 +97,10 @@ The rules engine sets `confidence=1.0` when a deterministic rule matches. That n
 
 | Service | Integration | Credential | Where | Owner | Status |
 |---|---|---|---|---|---|
-| Capital One Nessie sandbox | Six allowlisted Admin reads and explicit baseline CLI; dashboard mapper remains an extension point | `NESSIE_API_KEY`, backend only | `backend/app/adapters/nessie.py`, `seed_nessie.py` | Kenny | IMPLEMENTED separately from synthetic dashboard; isolated CI |
-| Synthetic baseline | 8 authored transactions in normalized SQLite, initialized once per owner | None | `backend/app/adapters/synthetic.py`, `backend/app/core/store.py` | Kenny | IMPLEMENTED; JSON files are offline compatibility goldens |
+| Capital One Nessie sandbox | Shared Overview/Admin customer workspace, structured SQLite cache, eight Admin queries with typed SQLite projections and explicit baseline CLI | `NESSIE_API_KEY`, backend only | `backend/app/adapters/nessie.py`, `seed_nessie.py` | Kenny | IMPLEMENTED with explicit TRANSACTION_PROVIDER=nessie; synthetic remains default; isolated CI |
+| Synthetic baseline | 8 original purchase scenarios plus 10 transfers in normalized SQLite; additive v1 upgrade preserves existing data | None | `backend/app/adapters/synthetic.py`, `backend/app/core/store.py` | Kenny | IMPLEMENTED; JSON files are offline compatibility goldens |
 
-Public product page: [api.nessieisreal.com](http://api.nessieisreal.com/). The client pins the sandbox origin and backend-only key handling. Admin exposes safe projections/local resource codes and persists status/time metadata only. This update did not repeat historical live sandbox verification; dashboard data remains synthetic.
+Public product page: [api.nessieisreal.com](http://api.nessieisreal.com/). The client pins the sandbox origin and backend-only key handling. Admin exposes safe projections/local resource codes and persists status/time metadata only. Connected data actions first read synthetic sandbox accounts and four movement kinds; failed prerequisites stop the action and preserve cached data. Missing transfer direction remains unknown. Merchant grouping is unestablished, and only the latest100 movements are shown/analyzed. No automatic financial writes.
 
 There is no Nessie SDK in Python or JavaScript dependencies. A third-party JavaScript SDK exists upstream and is not used here.
 
@@ -108,7 +108,7 @@ There is no Nessie SDK in Python or JavaScript dependencies. A third-party JavaS
 
 | Store | Purpose | Where | Owner | Key | Status |
 |---|---|---|---|---|---|
-| SQLite file `backend/data/trustledger-demo.db` | Canonical synthetic rows, normalized import fixtures, confirmations, memory index/jobs, assistant/resource maps, metadata history and seed progress | `backend/app/core/store.py`, `backend/app/adapters/nessie_fixture.py` | Benson / Kenny | No | Runtime data store. Remote memory rows are labelled `backboard` only after parsed success; legacy raw history is securely cleaned on startup |
+| SQLite file `backend/data/trustledger-demo.db` | Canonical synthetic rows, normalized import fixtures, confirmations, memory index/jobs, assistant/resource maps, metadata history, seed progress and structured workspace accounts/movements/sync status | `backend/app/core/store.py`, `backend/app/adapters/nessie_fixture.py` | Benson / Kenny | No | Runtime data store. Remote memory rows are labelled `backboard` only after parsed success; legacy raw history is securely cleaned on startup |
 | JSON fixtures | Offline compatibility/generator checks only | `fixtures/`, `python3 scripts/generate_synthetic_data.py --check` | Kenny | No | Retained golden files; runtime does not load them |
 
 `backend/data/` and `*.db` are gitignored. Tests use a temporary database. `DATABASE_URL` in `docs/.env.example` is not read. The setting that exists is `database_path`.
@@ -141,7 +141,7 @@ No dedicated secret scanner, auth library, or rate limiter is installed. GitHub 
 | PyYAML | 6.0.3 | Read the contract in that test | same test | Benson | Installed | IMPLEMENTED |
 | Playwright | 1.64.1 | Browser smoke in `scripts/browser-smoke.mjs` and the bootstrap workflow | `frontend/package.json` | Ian for UI behavior; Benson for the workflow | Package installed. Chromium browser install was not rechecked for this doc update | IMPLEMENTED as a script. Browser binary UNVERIFIED on this run |
 
-`bash scripts/check.sh` does not run Playwright. The bootstrap workflow runs it only after backend and frontend checks pass.
+`bash scripts/check.sh` runs the integrated Admin/shared-workspace Playwright suite after backend and frontend checks pass. The separate `scripts/browser-smoke.mjs` remains an optional smoke path.
 
 ## L. Deployment and hosting
 

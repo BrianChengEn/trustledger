@@ -2,9 +2,24 @@ import sqlite3
 from datetime import datetime, timezone
 from time import monotonic
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from app.adapters.nessie import REMOTE_ID
+from app.services.workspace import account_codes, collection
+
+
+def require_console_nessie(request: Request):
+    state = request.app.state
+    key = state.settings.nessie_api_key
+    if not key or not key.get_secret_value():
+        raise HTTPException(503, 'nessie_not_configured')
+    capture = state.nessie.query('customers.list', None)
+    try:
+        if capture['http_status'] != 200:
+            raise ValueError('Nessie read failed')
+        collection(capture)
+    except (ValueError, TypeError):
+        raise HTTPException(502, 'nessie_unavailable') from None
 
 
 def public_body(spec, capture, store, owner, scope):
@@ -16,13 +31,15 @@ def public_body(spec, capture, store, owner, scope):
     if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
         return None
     kind = "customer" if spec.query == "customers.list" else "account"
-    if spec.query in {"deposits.by_account", "withdrawals.by_account"}:
+    if spec.query.endswith('.by_account'):
         kind = None
+        rows = collection(capture)
     if kind:
         if not all(isinstance(row.get("_id"), str) and REMOTE_ID.fullmatch(row["_id"])
                    for row in rows):
             return None
-        aliases = store.alias_resources(owner, scope, kind, [row["_id"] for row in rows])
+        aliases = (account_codes(store, owner, scope, rows) if kind == 'account' else
+                   store.alias_resources(owner, scope, kind, [row["_id"] for row in rows]))
     result = []
     for row in rows:
         projected = {"resource_id": aliases[row["_id"]]} if kind else {}
@@ -54,6 +71,8 @@ def execute_query(spec, client, store, owner, scope):
               "response_body": None, "body_format": "none"}
     try:
         body = public_body(spec, capture, store, owner, scope)
+        if body is not None:
+            body = store.cache_query_rows(owner, scope, spec.query, spec.resource_id, body)
         result.update(response_body=body, body_format="json" if body is not None else "none")
         history_id = store.append_history(owner, result)
     except (sqlite3.Error, OSError, ValueError):

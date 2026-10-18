@@ -1,28 +1,33 @@
 import {useEffect, useRef, useState} from 'react';
+import Pager from './Pager';
 import {request, type Execution, type HistoryItem, type HistoryPage,
   type NessieQuery, type ResourceOption} from './api';
+import {go, useRoute} from './route';
+import {WorkspaceProvider} from './workspace';
+import {CustomerReview} from './WorkspaceView';
 
 const prefix = '/admin/nessie';
 const queries: [NessieQuery, string][] = [
   ['customers.list', '列出客戶'], ['accounts.list', '列出帳戶'], ['accounts.get', '查詢單一帳戶'],
   ['accounts.by_customer', '客戶的帳戶'], ['deposits.by_account', '帳戶的存款'],
   ['withdrawals.by_account', '帳戶的提款'],
+  ['purchases.by_account', '帳戶的消費'], ['transfers.by_account', '帳戶的轉帳'],
 ];
 const text = (value: unknown) => typeof value === 'string' ? value : JSON.stringify(value);
 
 function Body({value, format, json}: {value: unknown; format: string; json: boolean}) {
   if (format === 'none') return <p>沒有可顯示的去識別化資料。</p>;
-  if (json) return <pre>{JSON.stringify(value, null, 2)}</pre>;
+  if (json) return <div className="paged"><pre>{JSON.stringify(value, null, 2)}</pre><Pager/></div>;
   if (Array.isArray(value) && !value.length) return <p className="empty">查詢成功，沒有資料。</p>;
   const rows = Array.isArray(value) ? value : [value];
   if (!rows.every(row => row && typeof row === 'object' && !Array.isArray(row))) {
-    return <pre>{JSON.stringify(value, null, 2)}</pre>;
+    return <div className="paged"><pre>{JSON.stringify(value, null, 2)}</pre><Pager/></div>;
   }
   const objects = rows as Record<string, unknown>[];
   const columns = [...new Set(objects.flatMap(row => Object.keys(row)))];
-  return <div className="tablewrap"><table><thead><tr>{columns.map(key => <th key={key}>{key}</th>)}</tr></thead>
+  return <div className="paged"><div className="tablewrap"><table><thead><tr>{columns.map(key => <th key={key}>{key}</th>)}</tr></thead>
     <tbody>{objects.map((row, i) => <tr key={i}>{columns.map(key => <td key={key}>
-      {Object.hasOwn(row, key) ? text(row[key]) : '（不存在）'}</td>)}</tr>)}</tbody></table></div>;
+      {Object.hasOwn(row, key) ? text(row[key]) : '（不存在）'}</td>)}</tr>)}</tbody></table></div><Pager/></div>;
 }
 
 function Metadata({result}: {result: Omit<HistoryItem, 'history_id'>}) {
@@ -35,8 +40,41 @@ function Metadata({result}: {result: Omit<HistoryItem, 'history_id'>}) {
   </div>;
 }
 
-export default function Admin() {
-  const [view, setView] = useState<'query'|'history'>('query');
+function Customers({active}: {active: boolean}) {
+  const [options, setOptions] = useState<ResourceOption[]>([]);
+  const route = useRoute();
+  const customer = route.customer ?? '';
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function load() {
+    setBusy(true); setError('');
+    try {
+      const rows = await request<ResourceOption[]>(prefix+'/customers', undefined, 25000);
+      setOptions(rows);
+    } catch {setError('無法取得客戶，請重試。');}
+    finally {setBusy(false);}
+  }
+  useEffect(()=>{void load();}, []);
+  return <section id="V-CUSTOMERS">
+    <div className="panel"><label htmlFor="C-SELECT">選擇合成客戶</label>
+      <select id="C-SELECT" value={customer} disabled={busy} onChange={event=>{
+        go(event.target.value ? {view: 'today', customer: event.target.value} : {view: 'sources'});
+      }}><option value="">請選擇</option>{options.map(row=><option key={row.resource_id} value={row.resource_id}>
+        {row.resource_id}</option>)}</select>
+      <button disabled={busy} onClick={()=>void load()}>重新載入客戶</button>
+      {busy&&<p role="status">讀取客戶中…</p>}{error&&<p role="alert" className="error">{error}</p>}
+      {!busy&&!error&&!options.length&&<p className="empty">沒有可查詢的合成客戶。</p>}
+    </div>
+    {customer&&<WorkspaceProvider key={customer} customerId={customer} active={active}>
+      <CustomerReview route={route}/>
+    </WorkspaceProvider>}
+  </section>;
+}
+
+export default function Admin({active = true}: {active?: boolean}) {
+  const [view, setView] = useState<'query'|'history'|'customers'>('query');
+  const route = useRoute();
+  useEffect(() => {if (route.customer) setView('customers');}, [route.customer]);
   const [query, setQuery] = useState<NessieQuery>('customers.list');
   const [resourceId, setResourceId] = useState('');
   const [resources, setResources] = useState<ResourceOption[]>([]);
@@ -99,7 +137,9 @@ export default function Admin() {
     <nav className="actions admin-tabs" aria-label="控制台分頁">
       <button id="NAV-Q" aria-current={view==='query'?'page':undefined} onClick={() => setView('query')}>查詢</button>
       <button id="NAV-H" aria-current={view==='history'?'page':undefined} onClick={() => {setView('history'); void loadHistory();}}>歷史</button>
+      <button id="NAV-CUSTOMERS" aria-current={view==='customers'?'page':undefined} onClick={()=>setView('customers')}>使用者交易</button>
     </nav>
+    {view==='customers'&&<Customers active={active}/>}
     {error && <p className="error" role="alert">{error}</p>}
     <div id="V-QUERY" hidden={view!=='query'} className="admin-query">
       <form className="panel" onSubmit={event => {event.preventDefault(); void run();}}>
@@ -130,13 +170,13 @@ export default function Admin() {
         onClick={() => setDeleting('all')}>清除全部歷史</button></div>
       {historyBusy && <p role="status">讀取歷史中…</p>}
       {!historyBusy && !items.length && <p className="empty">尚無已儲存歷史。</p>}
-      {!!items.length && <div className="tablewrap"><table><thead><tr><th>查詢</th>
+      {!!items.length && <div className="paged"><div className="tablewrap"><table><thead><tr><th>查詢</th>
         <th>UTC / 來源</th><th>Nessie HTTP / 耗時</th><th>操作</th></tr></thead>
         <tbody>{items.map(row => <tr key={row.history_id}>
           <td>#{row.history_id} {row.query}</td><td>{row.requested_at}<small>{row.source}</small></td>
           <td>{row.http_status ?? row.transport_error?.type ?? '未收到回應'}<small>{row.duration_ms} ms</small></td>
           <td><button id={'H-DELETE-'+row.history_id} disabled={actionBusy} onClick={() => setDeleting(row.history_id)}>刪除</button></td>
-        </tr>)}</tbody></table></div>}
+        </tr>)}</tbody></table></div><Pager/></div>}
       {cursor && <button id="H-MORE" disabled={historyBusy} onClick={() => void loadHistory(true)}>載入更多</button>}
     </section>
     <dialog id="D-CONFIRMATION" ref={dialog} aria-labelledby="D-TITLE" onCancel={event => {

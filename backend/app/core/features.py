@@ -11,6 +11,7 @@ CATEGORIES = frozenset({
 
 def prior_transactions(tx: Transaction, history: list[Transaction]) -> list[Transaction]:
     return [h for h in history if h.id != tx.id and h.occurred_at <= tx.occurred_at
+            and h._settlement_status == 'completed'
             and h.account_token == tx.account_token and h.currency == tx.currency
             and h.direction == tx.direction]
 
@@ -25,9 +26,11 @@ def subscription_delta(tx: Transaction, history: list[Transaction]) -> float | N
 
 
 def same_charge_count(tx: Transaction, history: list[Transaction]) -> int:
+    if tx._date_only:
+        return 0
     prior = prior_transactions(tx, history)
     return min(20, 1 + sum(
-        h.amount == tx.amount and h.merchant_category == tx.merchant_category
+        not h._date_only and h.amount == tx.amount and h.merchant_category == tx.merchant_category
         and 0 <= (tx.occurred_at - h.occurred_at).total_seconds() <= 86400 for h in prior
     ))
 
@@ -45,6 +48,8 @@ def safe_payload(
         "evening" if 18 <= hour < 24 else "overnight"
     )
     delta = subscription_delta(tx, history)
+    if tx._date_only:
+        day_part = 'unknown'
     delta_bucket = "unknown" if delta is None else (
         "over-20-percent" if delta > .2 else "up-to-20-percent" if delta > 0 else "none"
     )

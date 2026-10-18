@@ -38,7 +38,7 @@ export const memoryStore = (source: Memory['source']): {label: string; detail: s
 export function memoryModeCopy(mode: Health['memory_mode'] | undefined): {label: string; detail: string; tone: Tone} {
   switch (mode) {
     case 'backboard-live': return {label: 'Backboard live', tone: 'good', detail: 'A Backboard memory call has succeeded in this server session. Each saved memory still shows where it is stored.'};
-    case 'degraded': return {label: 'Memory degraded', tone: 'warn', detail: 'The last Backboard memory call did not complete. Anything saved falls back to local storage and is labelled that way.'};
+    case 'degraded': return {label: 'Memory degraded', tone: 'warn', detail: 'The last Backboard memory call did not complete. Each row keeps its own source label; an unconfirmed write is not reported as saved.'};
     case 'off': return {label: 'Memory off', tone: 'neutral', detail: 'Memory writes are disabled on this server. Decisions still work; nothing is remembered.'};
     case 'local-fallback': return {label: 'Local memory', tone: 'neutral', detail: 'No Backboard call has been confirmed this session. Memories are saved in local SQLite and labelled local fallback.'};
     default: return {label: 'Connecting…', tone: 'neutral', detail: 'Waiting for the server.'};

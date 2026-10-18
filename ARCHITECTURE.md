@@ -35,33 +35,33 @@ flowchart LR
   db -->|category label only| rules
 ```
 
-The dashboard uses SQLite synthetic data. Separate Admin operations expose six allowlisted Nessie reads with backend-only IDs and status/time-only history; the explicit baseline CLI reads normalized SQLite fixtures. Jev uses Backboard with inference memory explicitly off. Consented memory uses SQLite alone without a key, or explicit Backboard CRUD with a durable local recovery index.
+The dashboard defaults to SQLite synthetic data. Explicit TRANSACTION_PROVIDER=nessie resolves the first confirmed baseline customer; Admin selects scoped local customer codes. Both use one shared Workspace and owner-scoped structured SQLite account/movement cache. Every connected data operation first refreshes Nessie; a failed prerequisite stops the original operation, preserving matching cached rows and failure metadata. Unknown transfer directions remain explicit and are excluded from debit spending/rules. Eight-query Admin operations read typed SQLite projections and keep backend-only IDs and status/time-only history; the explicit baseline CLI reads normalized SQLite fixtures. Jev uses Backboard with inference memory explicitly off. Consented memory uses SQLite alone without a key, or explicit Backboard CRUD with a durable local recovery index.
 
 ## Modules
 
 | Module | Path | Runtime behavior | Owner |
 |---|---|---|---|
-| React UI | `frontend/src/main.tsx`, `frontend/src/api.ts` | Loads health, transactions, alerts, and memories. Posts a confirmation. Renders the preview JSON it received | Ian |
+| React UI | `frontend/src/workspace.tsx`, `frontend/src/WorkspaceView.tsx`, `frontend/src/Admin.tsx`, `frontend/src/api.ts` | Shared context loads structured workspace, health, alerts and memories. Today/Activity/Case/Privacy/Memory components are reused in main and isolated Admin customer scopes. Only explicit analysis/confirmation/consent actions invoke their existing endpoints | Ian |
 | FastAPI app | `backend/app/main.py` | Opens SQLite, initializes synthetic rows once, adds CORS and safe error handlers | Benson |
-| Routes | `backend/app/api/routes.py` | Lists data, runs analysis, saves confirmations, reads memories back into analysis | Benson wires; Brian defines the analysis |
+| Routes | `backend/app/api/routes.py` | Reuses request-scoped core transaction/analysis services and customer context; saves confirmations and consented memory | Benson wires; Brian defines the analysis |
 | Synthetic adapter | `backend/app/adapters/synthetic.py` | Initializes and reads canonical SQLite transactions; JSON files are offline goldens | Kenny |
-| Nessie adapter | `backend/app/adapters/nessie.py` | Allowlisted sandbox reads and explicit baseline setup; dashboard adapter remains unimplemented | Kenny |
+| Nessie adapter | `backend/app/adapters/nessie.py` | Allowlisted sandbox reads; services/workspace.py projects validated collections into structured SQLite | Kenny |
 | Transaction model | `backend/app/schemas/transaction.py` | Canonical fields, `extra=forbid` | Kenny |
 | API models | `backend/app/schemas/api.py` | Health, analysis, safe payload, memory | Benson, with Brian on payload fields |
-| Privacy guard | `backend/app/services/ai/privacy.py` | Builds the eight-field allowlist and the inspector rows | Brian |
-| Rules | `backend/app/services/ai/rules.py` | Scoped duplicate/subscription rules and preceding30-day category median; sparse baseline fallback250 | Brian |
+| Privacy guard | `backend/app/core/features.py` | Builds the eight-field allowlist and the inspector rows | Brian |
+| Rules | `backend/app/core/rules.py` | Scoped synthetic duplicate/subscription rules; debit threshold250; no merchant assertions from generic Nessie labels | Brian |
 | Memory policy | `backend/app/services/ai/memory_policy.py` | Writes a category sentence and parses it back to `normal` or `unknown` | Brian |
-| Jev client | `backend/app/services/ai/jev_client.py` | Backboard `POST /threads/messages` when `BACKBOARD_API_KEY` is set | Brian |
-| Decision merge | `backend/app/services/ai/decision.py` | Keeps the rule result. Labels Jev only after a valid response | Brian |
+| Jev client | `backend/app/core/jev.py` | Explicit provider, bounded System One call only from POST analyses | Brian |
+| Decision merge | `backend/app/core/fraud.py` | Validates safe features and assessment; preserves rule-authoritative results | Brian |
 | Backboard memory client | `backend/app/services/ai/backboard_client.py` | Explicit allowlisted memory CRUD; no inference memory | Brian |
-| SQLite store | `backend/app/core/store.py` | Scoped to `demo-user-001`. Idempotent confirmation. Delete by memory id | Benson |
+| SQLite store | `backend/app/core/store.py` | Synthetic owner and isolated customer owners; structured cache, idempotent confirmation and durable memory recovery | Benson |
 | Settings | `backend/app/core/config.py` | Loads `backend/.env`. Empty vendor keys | Benson |
 
 ## Data flow that exists today
 
-1. `create_app` initializes eight canonical synthetic transactions in SQLite only for an uninitialized owner. Restart preserves stored edits and an intentionally empty initialized set.
+1. `create_app` initializes eight original synthetic purchase scenarios plus ten transfers in SQLite for a new owner. A one-time v1 upgrade adds missing transfers while preserving edited rows, confirmations, memory and an intentionally empty initialized set. Subsequent restarts preserve stored data.
 2. Each request reads one validated owner-scoped transaction snapshot from SQLite. The React table shows merchant, category, date, and amount locally; it is not an AI request.
-3. `GET /api/v1/alerts` runs `analyze` for each transaction. A non-`none` result becomes an alert. The fixture produces three: StreamWave duplicate, Tech Harbor amount, FitFlow subscription increase.
+3. `GET /api/v1/alerts` runs `analyze` for each transaction. A non-`none` result or an existing stored human decision remains inspectable as an alert. The fixture produces three: StreamWave duplicate, Tech Harbor amount, FitFlow subscription increase.
 4. `GET /api/v1/privacy/preview/{id}` builds `SafePayload` from the same functions. The inspector prints `inspection` and `safe_payload`. The UI does not construct a second payload.
 5. Allowed payload fields are `merchant_category`, `amount_bucket`, `currency`, `local_day_part`, `same_category_same_amount_24h_count`, `is_subscription`, `subscription_delta_bucket`, and `prior_user_confirmation`.
 6. Dropped before that object: transaction id, account token, merchant display, exact amount, exact timestamp, and any unknown field.
@@ -69,7 +69,7 @@ The dashboard uses SQLite synthetic data. Separate Admin operations expose six a
 8. The stored sentence is `The demo user explicitly confirmed a {category} alert as normal. Recheck future evidence.` The category is one of the allowlisted labels, or `other`.
 9. The next alerts call, analysis call, and preview call read those sentences for the demo user. A matching category sets `prior_user_confirmation` to `normal` and adds an evidence line. `needs_human` stays true. Another category stays `unknown`.
 10. A confirmed memory delete removes a remote fact first when applicable, then its local index. Failure returns502 and retains the row. A deleted preference is never reimported from orphan remote rows.
-11. Health always reports synthetic dashboard data; analysis/memory modes reflect parsed provider results, configured memory-off or labelled local fallback. Either degraded provider outcome degrades status.
+11. Health reports the active transaction snapshot: synthetic, nessie-live or degraded. GET/confirmation analysis is rules-only. Only explicitly configured POST analyses can attempt inference; its degradation is request-specific. Memory health reflects parsed CRUD outcomes or labelled local fallback/off.
 
 `review` and consent turned off do not write a sentence. The parser therefore never returns `review` from stored memory. The schema still allows that label for a future client.
 
@@ -82,8 +82,8 @@ The dashboard uses SQLite synthetic data. Separate Admin operations expose six a
 | Missing key | No outbound call | `provider_mode=rules-only` |
 | Backboard timeout, non-200, or invalid answers | Rules kept | `provider_mode=degraded`. Not described as live Jev |
 | Backboard memory | Explicit CRUD, mocked in CI | SQLite fallback without key; pending/degraded on uncertain writes |
-| Nessie | Separate Admin/CLI, mocked in CI | Dashboard remains synthetic; no automatic sandbox import |
-| Authentication | Fixed `demo-user-001` | The browser cannot select another user |
+| Nessie | Shared SQLite workspace plus Admin/CLI, mocked in CI | Explicit provider/mapping; fresh reads before connected data actions; no automatic banking creates or financial actions |
+| Authentication | Local demo only, server-resolved customer owners | Admin selects scoped customer aliases; this is not production authentication |
 | Hosting | None | Localhost ports 5173 and 8000 |
 
 ## Selected Jev route
@@ -108,7 +108,7 @@ The client sends:
 
 The resolved `system_one.model` must match the configured acceptance version `jev-1.13.0`; invalid model/schema/content falls back to degraded rules. This is an acceptance guard, not live validation. Rule severity and confidence remain authoritative, and uncertain model review still requires a person.
 
-`GET /api/v1/alerts` calls Jev only for rows the rules already flag. `POST /api/v1/analyses` calls Jev for the requested transaction when the key is set. Health reports `rules+jev-live` or `degraded` only after one of those calls records that outcome. A key by itself does not make health say live.
+`GET /api/v1/alerts`, privacy previews and confirmations never invoke fraud inference. Only POST /api/v1/analyses with FRAUD_PROVIDER=backboard-jev attempts the bounded provider; a key alone never enables it. Public results remain rule-authoritative and report the request-specific provider mode without changing later GET behavior.
 
 ### Optional direct TypeSafe route
 
@@ -135,14 +135,14 @@ Health reports `backboard-live` only after a memory call in this process returns
 
 Live check on 17 October 2026, against `https://app.backboard.io/api` with `X-API-Key`: assistant create (HTTP 200), memory add (HTTP 201), get, list, same-owner reuse, two-owner isolation, a second process, restart of this API, and assistant delete (HTTP 200) all succeeded. The stored text was the approved category sentence. Search is implemented and was not used to decide `prior_confirmation`. An invalid key returns the code `rejected`. Missing key, HTTP 429, HTTP 5xx, and timeout are mocked and do not say the write succeeded. Default pytest does not make these calls. Set `BACKBOARD_LIVE_TEST=1` to run `backend/tests/integration/test_backboard_live.py`.
 
-The same account returned HTTP 402 `Insufficient credits for System One` for Jev. `review` keeps the rule analysis and sets `provider_mode=degraded`. Memory CRUD does not use that inference call. Do not buy credits or enable auto-reload. `GET /api/v1/alerts` and a confirmation both call Jev for rows the rules already flag, so a successful memory write can sit next to `analysis_mode=degraded`. After a restart, health stays `rules-only` and `local-fallback` until this process actually calls Jev or reads memory.
+The same account returned HTTP 402 `Insufficient credits for System One` for Jev. `review` keeps the rule analysis and sets `provider_mode=degraded`. Memory CRUD does not use that inference call. Do not buy credits or enable auto-reload. This historical HTTP 402 observation predates PR #11. GETs and confirmations now stay rules-only; only explicitly configured POST analyses attempt inference. Memory health remains local-fallback until this process performs successful explicit CRUD.
 
 ## Nessie scope
 
 - Public product entry: [api.nessieisreal.com](http://api.nessieisreal.com/).
-- The dashboard purchase-to-Transaction adapter remains an extension point; existing synthetic behavior is preserved.
-- Admin resolves owner/key-scoped local customer/account codes to raw IDs in the backend and returns safe projected fields only. No raw response is persisted. The user approved removing content comparison.
-- The baseline-only CLI preserves deterministic dataset identity, opening balances, parent mappings and pending-before-POST recovery. This update uses isolated verification and does not repeat historical live calls.
+- Connected workspaces validate purchases and transfers alongside deposits/withdrawals. Provider transfers may use id without party fields; their direction remains unknown. The original offline synthetic behavior is preserved.
+- Admin exposes the same `acct_` account codes as Overview and resolves either these or legacy `account_` aliases inside owner/credential scope. Existing alias mappings and customer owners are retained. Results are safe typed projections read back from SQLite; history stores status/time metadata only.
+- The explicit CLI preserves baseline identity, opening balances, parent mappings and pending-before-POST recovery. Its `--transfers` operation tops up confirmed existing accounts to 10 transfers using whole-dollar synthetic amounts, durable claims and exact readback. Current verified data has 18 accounts and 180 transfers; repeating setup creates zero records. Runtime actions never create banking records. Existing purchase/merchant setup remains intact.
 
 ## Security boundary
 
@@ -156,7 +156,7 @@ The browser holds no vendor key. Vendor keys, if later set, stay in `backend/.en
 | SQLite memory affects the next analysis | DONE | Brian content, Benson store | — | Merged in PR #3 | Preview shows `normal` only for that category, then `unknown` after delete |
 | Jev through Backboard | IMPLEMENTED behind `BACKBOARD_API_KEY` | Brian | P1 | This account returns HTTP 402 for System One. Do not buy credits | Mocked tests cover success and failure. A missing key stays `rules-only`. HTTP 402 stays `degraded` |
 | Backboard persistent memory | VERIFIED live on 17 October 2026 | Brian, with Benson on the route and store | — | Keep CI mocked. Re-run only with `BACKBOARD_LIVE_TEST=1` | Create, store, retrieve, reuse, isolation, restart, and delete succeeded. No key stays `local-fallback` |
-| Nessie Admin reads / baseline CLI | IMPLEMENTED separately from dashboard | Kenny | P1 | Owner review; dashboard mapper remains an extension point | CI passes with no key and makes no network call |
+| Nessie workspace / Admin / setup CLI | IMPLEMENTED with structured SQLite cache | Kenny | P1 | Latest100 movements; no validated merchant grouping; genuine required-read failures stop connected actions | Isolated CI; 180 transfers, canonical account codes and matching Overview/Admin reads in local v0.2.1 docs |
 | Health mode after a provider attempt | DONE | Benson's route records Brian's result | — | `rules+jev-live`, `backboard-live`, or `degraded` only after a call | A key alone changes neither mode |
 | Frontend polish and small-screen pass | NOT STARTED | Ian | P1 | Use the current API | Demo path is usable without spoken help |
 | Deployment | NOT STARTED | Benson | P2 | No config exists | A URL and SHA are written down, with no secrets in the repo |

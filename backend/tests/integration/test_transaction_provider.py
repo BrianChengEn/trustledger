@@ -70,16 +70,16 @@ def test_mock_switches_all_transaction_paths(client, provider):
     assert all(row["id"].startswith("txn_mock_") for row in rows)
     assert provider.calls[0][2] == 2
     assert client.get("/api/v1/health").json()["data_mode"] == "degraded"
-    response = client.post("/api/v1/analyses", json={"transaction_id": "txn_mock_004"})
-    assert response.status_code == 200 and response.json()["alert_type"] == "duplicate"
+    response = client.post("/api/v1/analyses", json={"transaction_id": "txn_mock_005"})
+    assert response.status_code == 200 and response.json()["alert_type"] == "amount_anomaly"
     preview = client.get("/api/v1/privacy/preview/txn_mock_004").json()
     assert preview["safe_payload"]["same_category_same_amount_24h_count"] == 2
     assert "txn_mock" not in str(preview["safe_payload"])
     alerts = client.get("/api/v1/alerts").json()
     assert {a["alert_id"] for a in alerts} == {
-        "alert_txn_mock_004", "alert_txn_mock_005", "alert_txn_mock_008"}
+        "alert_txn_mock_005", "alert_txn_mock_008"}
     provider.calls.clear()
-    confirmation = client.post("/api/v1/alerts/alert_txn_mock_004/confirmations",
+    confirmation = client.post("/api/v1/alerts/alert_txn_mock_005/confirmations",
                                json={"decision": "normal", "consent_to_memory": True})
     assert confirmation.status_code == 200
     assert confirmation.json()["memory_status"] == "written"
@@ -163,7 +163,7 @@ def test_duplicate_ids_and_limit_violation(client, provider, monkeypatch):
 
 @pytest.mark.parametrize("change", ["different_id", "different_amount", "absent_from_list"])
 def test_list_get_consistency_before_confirmation(client, provider, monkeypatch, change):
-    original = provider.rows[3]
+    original = provider.rows[4]
     replacement = original.model_copy(update={
         "id": "txn_wrong" if change == "different_id" else original.id,
         "amount": 999 if change == "different_amount" else original.amount,
@@ -174,7 +174,7 @@ def test_list_get_consistency_before_confirmation(client, provider, monkeypatch,
     response = client.post("/api/v1/analyses", json={"transaction_id": original.id})
     assert_safe_error(response)
     if change != "absent_from_list":
-        response = client.post("/api/v1/alerts/alert_txn_mock_004/confirmations",
+        response = client.post("/api/v1/alerts/alert_txn_mock_005/confirmations",
                                json={"decision": "normal", "consent_to_memory": True})
         assert_safe_error(response)
     assert client.get("/api/v1/memories").json() == []
@@ -199,10 +199,15 @@ def test_invalid_health_is_degraded(client, provider, monkeypatch, value):
     assert client.get("/api/v1/health").json()["data_mode"] == "degraded"
 
 
-@pytest.mark.parametrize("mode", ["live", "nessie", "mock", "unknown"])
+@pytest.mark.parametrize("mode", ["live", "mock", "unknown"])
 def test_invalid_factory_modes_fail_closed(mode):
     with pytest.raises(ValidationError):
         Settings(_env_file=None, transaction_provider=mode)
+
+
+def test_nessie_requires_explicit_provider_selection():
+    assert Settings(_env_file=None, nessie_api_key='configured').transaction_provider == 'synthetic'
+    assert Settings(_env_file=None, transaction_provider='nessie').transaction_provider == 'nessie'
 
 
 def test_synthetic_provider_owner_scope():
@@ -252,7 +257,7 @@ def test_provider_dependency_resolved_once_per_request(client):
         return MockNessieProvider()
 
     client.app.dependency_overrides[get_transaction_provider] = resolve
-    response = client.post("/api/v1/alerts/alert_txn_mock_004/confirmations",
+    response = client.post("/api/v1/alerts/alert_txn_mock_005/confirmations",
                            json={"decision": "normal", "consent_to_memory": False})
     assert response.status_code == 200 and response.json()["memory_status"] == "not-requested"
     assert len(calls) == 1

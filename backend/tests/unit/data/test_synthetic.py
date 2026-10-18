@@ -11,8 +11,8 @@ from app.core.store import Store
 
 def test_fixture_has_unique_synthetic_transactions():
     rows = load_transactions()
-    assert len(rows) == 8
-    assert len({row.id for row in rows}) == 8
+    assert len(rows) == 18
+    assert len({row.id for row in rows}) == 18
     assert all(row.source == "synthetic" for row in rows)
 
 
@@ -48,7 +48,7 @@ def test_runtime_data_sources_do_not_read_json(monkeypatch, tmp_path):
 
     monkeypatch.setattr(Path, "open", reject_json)
     store = Store(tmp_path / "sqlite.db")
-    assert len(load_transactions(store)) == 8
+    assert len(load_transactions(store)) == 18
     assert len(load_baseline(store)["accounts"]) == 18
 
 
@@ -60,3 +60,23 @@ def test_invalid_demo_write_rolls_back_before_initialization(tmp_path, change):
         store.initialize_transactions("owner", [row])
     with store.connect() as db:
         assert db.execute("SELECT count(*) FROM demo_transaction_sets").fetchone()[0] == 0
+
+
+def test_v1_upgrade_adds_only_missing_transfers_and_preserves_edits_memory_and_empty_sets(tmp_path):
+    store = Store(tmp_path / 'legacy.db')
+    load_transactions(store)
+    load_transactions(store, 'intentionally-empty')
+    store.confirm('demo-user-001', 'existing-alert', 'normal', True, 'Sanitized category fact', 'test')
+    with store.connect() as db:
+        db.execute("DELETE FROM demo_transactions WHERE kind='transfer' OR owner='intentionally-empty'")
+        db.execute("UPDATE demo_transactions SET amount_cents=1234 WHERE id='txn_syn_005'")
+        db.execute("UPDATE demo_transaction_sets SET version='synthetic-v1'")
+        db.execute('ALTER TABLE demo_transactions DROP COLUMN kind')
+    restarted = Store(store.filename)
+    rows = load_transactions(restarted)
+    assert len(rows) == 18 and sum(row.kind == 'transfer' for row in rows) == 10
+    assert next(row for row in rows if row.id == 'txn_syn_005').amount == 12.34
+    assert load_transactions(Store(store.filename)) == rows
+    assert load_transactions(restarted, 'intentionally-empty') == []
+    assert restarted.status('demo-user-001', 'existing-alert') == 'normal'
+    assert len(restarted.list_memories('demo-user-001')) == 1

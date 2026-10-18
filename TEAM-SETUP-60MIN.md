@@ -71,7 +71,7 @@ With the backend up:
 backend/.venv/bin/python scripts/smoke.py
 ```
 
-Expect 8 synthetic transactions and 3 alerts. Health shows `synthetic`, `rules-only`, and `local-fallback`. Open **Possible duplicate**, read the evidence and Privacy Inspector, confirm normal with the memory box checked, open **Confirmed memory**, then delete that row.
+Expect 18 synthetic transactions (8 original scenarios and 10 transfers) and 3 alerts. Health shows `synthetic`, `rules-only`, and `local-fallback`. In **Today**, open **Possible duplicate**, inspect the case evidence and privacy link, confirm normal with separate memory consent, open **Memory**, then confirm deletion. **Data sources > Admin > 使用者交易** retains isolated Nessie customer review using the same updated pages.
 
 ### 4. Test
 
@@ -100,10 +100,10 @@ Do this after the shared steps. None of it is required to run the synthetic demo
 
 | Person | Extra local step | Not required for the demo |
 |---|---|---|
-| Brian | Put a Backboard key in `BACKBOARD_API_KEY` and set `ALLOW_MEMORY_WRITE=true` to store consented memory. Jev uses that same key. Do not add a TypeSafe bearer token | An empty key keeps memory in SQLite as `local-fallback` and analysis at `rules-only`. Do not buy System One credits |
+| Brian | Put a Backboard key in `BACKBOARD_API_KEY` and set `ALLOW_MEMORY_WRITE=true` to store consented memory. Explicit `FRAUD_PROVIDER=backboard-jev` enables inference for POST analyses only, using the same key | An empty key keeps memory in SQLite as `local-fallback`. GET/confirmation stays rules-only. Do not buy System One credits |
 | Benson | Confirm `bash scripts/check.sh` and the Actions tab on your PR | No deploy target is configured |
 | Ian | Open http://127.0.0.1:5173 after both servers start | Playwright's browser is only needed for `node scripts/browser-smoke.mjs` |
-| Kenny | Create a Nessie sandbox key at [api.nessieisreal.com](http://api.nessieisreal.com/) and keep it in `backend/.env` | `nessie.py` still raises `NessieNotConfigured` after the key is present |
+| Kenny | Keep the provided synthetic Nessie key in `backend/.env`; set `TRANSACTION_PROVIDER=nessie` to use the existing confirmed baseline mapping | Key alone keeps the default synthetic workspace. Connected data actions first read Nessie; failure stops the action. Admin places the same fixed customer first; missing mapping shows `workspace_not_linked` |
 
 Selected Jev call: Backboard `POST https://app.backboard.io/api/threads/messages` with header `X-API-Key`. See [ARCHITECTURE.md](ARCHITECTURE.md). The direct TypeSafe URL and `jev-ai.org` are not the selected route.
 

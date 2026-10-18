@@ -1,4 +1,4 @@
-"""Allowlisted sandbox transport; the transaction dashboard remains synthetic."""
+"""Allowlisted sandbox transport with backend-only credentials and identifiers."""
 
 import logging
 import re
@@ -14,6 +14,8 @@ QUERIES = {
     "accounts.by_customer": "/customers/{id}/accounts",
     "deposits.by_account": "/accounts/{id}/deposits",
     "withdrawals.by_account": "/accounts/{id}/withdrawals",
+    "purchases.by_account": "/accounts/{id}/purchases",
+    "transfers.by_account": "/accounts/{id}/transfers",
 }
 REMOTE_ID = re.compile(r"(?:[0-9a-f]{24}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-"
                        r"[0-9a-f]{4}-[0-9a-f]{12})")
@@ -43,9 +45,10 @@ class NessieClient:
     def request(self, method, path, payload=None):
         allowed = (r"/(customers|accounts)" if method == "GET" else r"/customers")
         allowed += rf"|/customers/{REMOTE_ID.pattern}/accounts"
-        allowed += rf"|/accounts/{REMOTE_ID.pattern}/(?:deposits|withdrawals)"
+        allowed += rf"|/accounts/{REMOTE_ID.pattern}/(?:deposits|withdrawals|transfers)"
         if method == "GET":
             allowed += rf"|/accounts/{REMOTE_ID.pattern}"
+            allowed += rf"|/accounts/{REMOTE_ID.pattern}/(?:purchases|transfers)"
         if method not in {"GET", "POST"} or not re.fullmatch(allowed, path):
             raise ValueError("Unsupported Nessie operation")
         if not self.key:

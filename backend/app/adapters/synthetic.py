@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import date, timedelta
 from tempfile import TemporaryDirectory
 
 from app.core.store import Store
@@ -25,5 +26,12 @@ def load_transactions(store: Store | None = None, owner="demo-user-001") -> list
                         merchant_category=category, source="synthetic", account_token="acct_demo_a1",
                         is_subscription=subscription)
             for number, occurred_at, amount, merchant, category, subscription in BASELINE]
+    rows.extend(Transaction(
+        id=f'txn_syn_transfer_{number:02d}',
+        occurred_at=f'{date(2026, 10, 18) - timedelta(days=number)}T12:00:00-04:00',
+        amount=10 + number * 7, currency='USD', direction='credit' if number % 2 else 'debit',
+        merchant_display='Transfer', merchant_category='other', source='synthetic',
+        account_token='acct_demo_a1', is_subscription=False, kind='transfer')
+        for number in range(1, 11))
     store.initialize_transactions(owner, rows)
     return store.list_transactions(owner)
