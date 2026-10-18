@@ -122,6 +122,20 @@ class SourcePage(BaseModel):
     items: list[SourceTransaction]
     total: int
     next_offset: int | None
-    data_mode: Literal['research', 'cached', 'degraded', 'not-imported']
+    data_mode: Literal['research', 'cached', 'degraded', 'not-imported', 'synthetic-derived']
     last_synced_at: AwareDatetime | None = None
     customer_code: str | None = None
+
+
+class SourceAccount(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    account_token: str
+    label: str
+    transaction_count: int
+
+
+class SourceAccountPage(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    items: list[SourceAccount]
+    total: int
+    next_offset: int | None

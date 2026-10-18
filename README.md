@@ -118,6 +118,21 @@ Set `REQUIRE_LOGIN=true`, `ALLOW_DEMO_EDIT=true` and a random `SESSION_SECRET`, 
 localhost demo gate, not production authentication. Admin edits only change synthetic data; the first edit makes a
 `.pre-demo-edit.bak` copy of the database, and **Reset demo** restores the original 18 charges.
 
+## Local account datasets
+
+The Admin **Data sources → 交易資料來源** table can browse local generated accounts from either source. Existing source views, Nessie refresh and the 18-record product demo remain unchanged. Search or page through the account options, choose one, then use the existing record pages to read its 100 transactions. Generated histories are labelled `synthetic-derived`; no banking records are created remotely.
+
+Prepare an existing normalized Nessie snapshot, then explicitly generate the separate local batch:
+
+```bash
+backend/.venv/bin/python scripts/import_source_databases.py --nessie-cache backend/data/trustledger-demo.db
+backend/.venv/bin/python scripts/generate_account_demo.py --banksim-csv /path/to/banksim.csv --nessie-db backend/data/sources/nessie.db
+```
+
+The BankSim CSV stays outside Git. With the checked 4,112-customer CSV and 18-account Nessie snapshot, this produces 411,200 BankSim-derived and 1,800 Nessie-derived rows under `backend/data/sources/account-demo`. Exact source fingerprints, seed and generator version make the batch repeatable; changed inputs require a new output directory. No original source or product database is modified. A running backend discovers a complete default batch on its next account request; `SOURCE_DATABASE_DIR` selects a different source directory.
+
+Offline labels are stored separately under ignored `evaluation/datasets/account-demo-labels`: 4,979 original BankSim positive cases and 22 explicitly simulated Nessie positives, about 1.2109% combined. Each account has one or two positive slots; exact 1.2108% is impossible in 100 integer rows. Labels never enter runtime SQLite, the browser, rules, Gemini, Jev or Backboard. BankSim preserves EUR and simulation days; Nessie uses only its own account's templates and preserves USD, date precision and unknown direction. Generated histories are constructed examples, not original customer histories or measured detector accuracy. Databases and offline labels are not distributed in the PR; collaborators supply their local synthetic source files.
+
 ## Tests
 
 ```bash

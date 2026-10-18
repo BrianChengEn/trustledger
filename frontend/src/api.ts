@@ -67,9 +67,11 @@ export interface SourceTransaction {
   merchant_code: string|null; occurred_at: string|null; occurred_date: string|null;
   simulation_step: number|null; is_subscription: boolean|null; settlement_status: string|null;
 }
+export interface SourceAccount {account_token: string; label: string; transaction_count: number}
+export interface SourceAccountPage {items: SourceAccount[]; total: number; next_offset: number|null}
 export interface SourcePage {
   source: DataSource; items: SourceTransaction[]; total: number; next_offset: number|null;
-  data_mode: 'research'|'cached'|'degraded'|'not-imported'; last_synced_at: string|null;
+  data_mode: 'research'|'cached'|'degraded'|'not-imported'|'synthetic-derived'; last_synced_at: string|null;
   customer_code: string|null;
 }
 const base = import.meta.env.VITE_API_BASE_URL || '';
