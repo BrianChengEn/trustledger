@@ -1,10 +1,23 @@
+import json
 import sqlite3
 import threading
+from decimal import Decimal
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
 from app.schemas.api import Confirmation, MemorySummary
+from app.schemas.transaction import Transaction
+
+HISTORY_SCHEMA = """CREATE TABLE IF NOT EXISTS query_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
+    source TEXT NOT NULL CHECK(source IN ('nessie','synthetic')),
+    query_name TEXT NOT NULL CHECK(query_name IN ('customers.list','accounts.list',
+        'accounts.get','accounts.by_customer','deposits.by_account','withdrawals.by_account')),
+    requested_at TEXT NOT NULL, http_status INTEGER CHECK(http_status BETWEEN 100 AND 599),
+    duration_ms INTEGER NOT NULL CHECK(duration_ms>=0),
+    transport_error TEXT CHECK(transport_error IN ('timeout','connection'))
+)"""
 
 
 class ConflictingConfirmation(Exception):
@@ -15,11 +28,27 @@ class Store:
     """Local SQLite persistence; all operations are scoped to the server-selected demo owner."""
 
     def __init__(self, filename: Path):
-        filename.parent.mkdir(parents=True, exist_ok=True)
+        filename.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.filename = filename
         self.lock = threading.Lock()
         with self.connect() as db:
             db.executescript("""
+                CREATE TABLE IF NOT EXISTS privacy_cleanup (name TEXT PRIMARY KEY);
+                CREATE TABLE IF NOT EXISTS demo_transaction_sets (
+                    owner TEXT PRIMARY KEY, version TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS demo_transactions (
+                    owner TEXT NOT NULL REFERENCES demo_transaction_sets(owner),
+                    id TEXT NOT NULL, occurred_at TEXT NOT NULL,
+                    amount_cents INTEGER NOT NULL
+                        CHECK(typeof(amount_cents)='integer' AND amount_cents>=0),
+                    currency TEXT NOT NULL CHECK(currency='USD'),
+                    direction TEXT NOT NULL CHECK(direction IN ('debit','credit')),
+                    merchant_display TEXT NOT NULL CHECK(length(merchant_display)<=80),
+                    merchant_category TEXT NOT NULL CHECK(length(merchant_category)<=40),
+                    source TEXT NOT NULL CHECK(source='synthetic'),
+                    account_token TEXT NOT NULL,
+                    is_subscription INTEGER NOT NULL CHECK(is_subscription IN (0,1)),
+                    PRIMARY KEY(owner,id));
                 CREATE TABLE IF NOT EXISTS confirmations (
                     owner TEXT, alert_id TEXT, decision TEXT, consent INTEGER, result TEXT,
                     PRIMARY KEY(owner, alert_id));
@@ -28,18 +57,124 @@ class Store:
                     source TEXT NOT NULL DEFAULT 'local-fallback', assistant_id TEXT);
                 CREATE TABLE IF NOT EXISTS assistants (
                     owner TEXT PRIMARY KEY, assistant_id TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS memory_jobs (
+                    owner TEXT, alert_id TEXT, assistant_id TEXT NOT NULL, sentence TEXT NOT NULL,
+                    local_id TEXT NOT NULL, state TEXT NOT NULL
+                        CHECK(state IN ('preparing','pending','confirmed','failed','deleted')), remote_id TEXT,
+                    PRIMARY KEY(owner,alert_id),
+                    FOREIGN KEY(owner,alert_id) REFERENCES confirmations(owner,alert_id));
+                CREATE TABLE IF NOT EXISTS memory_job_baseline (
+                    owner TEXT, alert_id TEXT, remote_id TEXT,
+                    PRIMARY KEY(owner,alert_id,remote_id),
+                    FOREIGN KEY(owner,alert_id) REFERENCES memory_jobs(owner,alert_id));
+                CREATE UNIQUE INDEX IF NOT EXISTS active_memory_sentence
+                    ON memory_jobs(owner,assistant_id,sentence) WHERE state IN ('preparing','pending');
+                CREATE UNIQUE INDEX IF NOT EXISTS remote_memory_identity
+                    ON memory_jobs(assistant_id,remote_id) WHERE remote_id IS NOT NULL;
+                CREATE TABLE IF NOT EXISTS resource_aliases (
+                    owner TEXT NOT NULL, credential_scope TEXT NOT NULL,
+                    kind TEXT NOT NULL CHECK(kind IN ('customer','account')),
+                    remote_id TEXT NOT NULL, local_id TEXT NOT NULL,
+                    PRIMARY KEY(owner,credential_scope,kind,remote_id),
+                    UNIQUE(owner,credential_scope,local_id));
+                CREATE TABLE IF NOT EXISTS seed_runs (
+                    id INTEGER PRIMARY KEY, owner TEXT NOT NULL, dataset_sha256 TEXT NOT NULL,
+                    api_base_url TEXT NOT NULL, credential_fingerprint TEXT NOT NULL,
+                    state TEXT NOT NULL CHECK(state IN ('active','complete','blocked')),
+                    created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+                    UNIQUE(owner,dataset_sha256,api_base_url,credential_fingerprint));
+                CREATE TABLE IF NOT EXISTS seed_records (
+                    run_id INTEGER NOT NULL REFERENCES seed_runs(id),
+                    kind TEXT NOT NULL CHECK(kind IN ('customer','account','deposit','withdrawal')),
+                    local_id TEXT NOT NULL CHECK(length(local_id)=24),
+                    parent_kind TEXT, parent_local_id TEXT, remote_id TEXT,
+                    request_fingerprint TEXT NOT NULL,
+                    state TEXT NOT NULL CHECK(state IN ('pending','confirmed','failed','uncertain')),
+                    safe_error TEXT, updated_at TEXT NOT NULL,
+                    PRIMARY KEY(run_id,kind,local_id), UNIQUE(run_id,kind,remote_id),
+                    FOREIGN KEY(run_id,parent_kind,parent_local_id)
+                        REFERENCES seed_records(run_id,kind,local_id),
+                    CHECK(state!='confirmed' OR remote_id IS NOT NULL),
+                    CHECK((kind='customer' AND parent_kind IS NULL AND parent_local_id IS NULL) OR
+                          (kind='account' AND parent_kind='customer' AND parent_local_id IS NOT NULL)
+                          OR (kind IN ('deposit','withdrawal') AND parent_kind='account'
+                              AND parent_local_id IS NOT NULL)));
             """)
             columns = {row[1] for row in db.execute("PRAGMA table_info(memories)")}
             if "source" not in columns:
-                db.execute(
-                    "ALTER TABLE memories ADD COLUMN source TEXT NOT NULL DEFAULT 'local-fallback'")
+                db.execute("ALTER TABLE memories ADD COLUMN source TEXT NOT NULL DEFAULT 'local-fallback'")
             if "assistant_id" not in columns:
                 db.execute("ALTER TABLE memories ADD COLUMN assistant_id TEXT")
+            db.execute(HISTORY_SCHEMA)
+            schema = db.execute("SELECT sql FROM sqlite_master WHERE name='query_history'").fetchone()[0]
+            if "response_body" in schema:
+                sequence = db.execute("SELECT seq FROM sqlite_sequence WHERE name='query_history'").fetchone()
+                db.execute("BEGIN IMMEDIATE")
+                db.execute("ALTER TABLE query_history RENAME TO query_history_legacy")
+                db.execute(HISTORY_SCHEMA)
+                rows = db.execute("SELECT id,owner,source,query_name,requested_at,http_status,"
+                                  "duration_ms,transport_error FROM query_history_legacy").fetchall()
+                for row in rows:
+                    failure = json.loads(row["transport_error"]) if row["transport_error"] else None
+                    error_type = failure.get("type") if isinstance(failure, dict) else None
+                    if error_type not in {None, "timeout", "connection"}:
+                        error_type = "connection"
+                    db.execute("INSERT INTO query_history VALUES(?,?,?,?,?,?,?,?)",
+                               (*tuple(row)[:-1], error_type))
+                db.execute("DROP TABLE query_history_legacy")
+                if sequence:
+                    updated = db.execute("UPDATE sqlite_sequence SET seq=MAX(seq,?) "
+                                         "WHERE name='query_history'", (sequence[0],)).rowcount
+                    if not updated:
+                        db.execute("INSERT INTO sqlite_sequence VALUES('query_history',?)", (sequence[0],))
+                db.execute("INSERT OR IGNORE INTO privacy_cleanup VALUES('history-metadata-v1')")
+                db.commit()
+            pending = db.execute("SELECT 1 FROM privacy_cleanup "
+                                 "WHERE name='history-metadata-v1'").fetchone()
+            if pending:
+                db.execute("VACUUM")
+                checkpoint = db.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                if checkpoint[0]:
+                    raise sqlite3.OperationalError("History privacy migration is still locked.")
+                db.execute("DELETE FROM privacy_cleanup WHERE name='history-metadata-v1'")
+            db.execute("CREATE INDEX IF NOT EXISTS history_owner ON query_history(owner,id)")
+        filename.chmod(0o600)
 
     def connect(self):
         connection = sqlite3.connect(self.filename, timeout=5)
         connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys=ON")
+        connection.execute("PRAGMA secure_delete=ON")
         return connection
+
+    def initialize_transactions(self, owner, transactions):
+        values = []
+        for transaction in transactions:
+            row = Transaction.model_validate(transaction.model_dump())
+            cents = Decimal(str(row.amount)) * 100
+            if row.source != "synthetic" or not cents.is_finite() or cents != cents.to_integral_value():
+                raise ValueError("Demo transactions require synthetic data and exact cents.")
+            values.append((owner, row.id, row.occurred_at.isoformat(), int(cents), row.currency,
+                           row.direction, row.merchant_display, row.merchant_category, row.source,
+                           row.account_token, int(row.is_subscription)))
+        with self.connect() as db:
+            initialized = db.execute("INSERT OR IGNORE INTO demo_transaction_sets VALUES(?,?)",
+                                     (owner, "synthetic-v1")).rowcount
+            if initialized:
+                db.executemany("INSERT INTO demo_transactions VALUES(?,?,?,?,?,?,?,?,?,?,?)", values)
+
+    def list_transactions(self, owner):
+        with self.connect() as db:
+            rows = db.execute("SELECT * FROM demo_transactions WHERE owner=? ORDER BY id",
+                              (owner,)).fetchall()
+        result = []
+        for stored in rows:
+            row = dict(stored)
+            row.pop("owner")
+            row["amount"] = row.pop("amount_cents") / 100
+            row["is_subscription"] = bool(row["is_subscription"])
+            result.append(Transaction.model_validate(row))
+        return result
 
     def status(self, owner: str, alert_id: str) -> str:
         with self.connect() as db:
@@ -47,46 +182,129 @@ class Store:
                              (owner, alert_id)).fetchone()
             return row["decision"] if row else "open"
 
-    def replay_confirmation(self, owner, alert_id, decision, consent, request_id) -> Confirmation | None:
-        with self.connect() as db:
-            existing = db.execute("SELECT * FROM confirmations WHERE owner=? AND alert_id=?",
-                                  (owner, alert_id)).fetchone()
-        if existing is None:
-            return None
-        if existing["decision"] != decision or bool(existing["consent"]) != consent:
-            raise ConflictingConfirmation()
-        return Confirmation.model_validate_json(existing["result"]).model_copy(
-            update={"request_id": request_id})
-
-    def confirm(self, owner, alert_id, decision, consent, sentence, request_id, *,
-                memory_id=None, source="local-fallback", assistant_id=None,
-                memory_status=None) -> Confirmation:
-        if source not in {"backboard", "local-fallback"}:
-            source = "local-fallback"
+    def claim_confirmation(self, owner, alert_id, decision, consent, wants_memory, request_id):
+        result = Confirmation(alert_id=alert_id, decision=decision, memory_id=None,
+                              memory_status="pending" if wants_memory else (
+                                  "skipped" if consent else "not-requested"), request_id=request_id)
         with self.lock, self.connect() as db:
+            created = db.execute("INSERT OR IGNORE INTO confirmations VALUES(?,?,?,?,?)",
+                                 (owner, alert_id, decision, int(consent), result.model_dump_json())).rowcount
             existing = db.execute("SELECT * FROM confirmations WHERE owner=? AND alert_id=?",
                                   (owner, alert_id)).fetchone()
-            if existing:
-                if existing["decision"] != decision or bool(existing["consent"]) != consent:
-                    raise ConflictingConfirmation()
-                return Confirmation.model_validate_json(existing["result"]).model_copy(
-                    update={"request_id": request_id})
-            saved_id = None
-            if sentence:
-                saved_id = memory_id or "mem_" + uuid4().hex
-                db.execute(
-                    """INSERT INTO memories
-                       (memory_id, owner, summary, created_at, source, assistant_id)
-                       VALUES (?,?,?,?,?,?)""",
-                    (saved_id, owner, sentence, datetime.now(timezone.utc).isoformat(),
-                     source, assistant_id))
-            if memory_status is None:
-                memory_status = "written" if sentence else ("skipped" if consent else "not-requested")
-            result = Confirmation(alert_id=alert_id, decision=decision, memory_id=saved_id,
-                                  memory_status=memory_status, request_id=request_id)
-            db.execute("INSERT INTO confirmations VALUES (?,?,?,?,?)", (
-                owner, alert_id, decision, int(consent), result.model_dump_json()))
-            return result
+            if existing["decision"] != decision or bool(existing["consent"]) != consent:
+                raise ConflictingConfirmation()
+            result = Confirmation.model_validate_json(existing["result"]).model_copy(
+                update={"request_id": request_id})
+        return result, bool(created)
+
+    def replay_confirmation(self, owner, alert_id, decision, consent, request_id):
+        with self.connect() as db:
+            row = db.execute("SELECT * FROM confirmations WHERE owner=? AND alert_id=?",
+                             (owner, alert_id)).fetchone()
+        if row is None:
+            return None
+        if row["decision"] != decision or bool(row["consent"]) != consent:
+            raise ConflictingConfirmation()
+        return Confirmation.model_validate_json(row["result"]).model_copy(update={"request_id": request_id})
+
+    def finish_memory(self, owner, result, sentence, *, memory_id=None, source="local-fallback",
+                      assistant_id=None, memory_status=None):
+        if source not in {"backboard", "local-fallback"}:
+            raise ValueError("Invalid memory source.")
+        with self.lock, self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            job = db.execute("SELECT * FROM memory_jobs WHERE owner=? AND alert_id=?",
+                             (owner, result.alert_id)).fetchone()
+            if job and job["state"] == "deleted":
+                result = result.model_copy(update={"memory_id": None, "memory_status": "skipped"})
+                db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
+                           (result.model_dump_json(), owner, result.alert_id))
+                return result
+            saved_id = memory_id or (job["local_id"] if job else "mem_" + uuid4().hex)
+            status = memory_status or ("written" if sentence else result.memory_status)
+            try:
+                if sentence:
+                    if job and job["local_id"] != saved_id:
+                        db.execute("DELETE FROM memories WHERE owner=? AND memory_id=?",
+                                   (owner, job["local_id"]))
+                    db.execute("INSERT OR IGNORE INTO memories "
+                               "(memory_id,owner,summary,created_at,source,assistant_id) VALUES(?,?,?,?,?,?)",
+                               (saved_id, owner, sentence, datetime.now(timezone.utc).isoformat(), source, assistant_id))
+                    row = db.execute("SELECT owner,summary FROM memories WHERE memory_id=?", (saved_id,)).fetchone()
+                    if row["owner"] != owner or row["summary"] != sentence:
+                        raise sqlite3.IntegrityError("Memory identity differs.")
+                    db.execute("UPDATE memories SET source=?,assistant_id=? WHERE owner=? AND memory_id=?",
+                               (source, assistant_id, owner, saved_id))
+                    if job:
+                        db.execute("UPDATE memory_jobs SET remote_id=?,state=? "
+                                   "WHERE owner=? AND alert_id=?", (
+                                   memory_id if source == "backboard" else job["remote_id"],
+                                   "confirmed" if source == "backboard" else job["state"], owner, result.alert_id))
+                result = result.model_copy(update={"memory_id": saved_id if sentence else None,
+                                                   "memory_status": status})
+                db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
+                           (result.model_dump_json(), owner, result.alert_id))
+            except sqlite3.Error:
+                db.rollback()
+                result = result.model_copy(update={"memory_id": job["local_id"] if job else None,
+                                                   "memory_status": "pending" if job else "failed"})
+                db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
+                           (result.model_dump_json(), owner, result.alert_id))
+        return result
+
+    def confirm(self, owner, alert_id, decision, consent, sentence, request_id, **placement):
+        result, created = self.claim_confirmation(owner, alert_id, decision, consent,
+                                                  bool(sentence), request_id)
+        return self.finish_memory(owner, result, sentence, **placement) if created else result
+
+    def prepare_memory_job(self, owner, alert_id, assistant_id, sentence):
+        local_id = "mem_" + uuid4().hex
+        with self.lock, self.connect() as db:
+            confirmation = db.execute("SELECT * FROM confirmations WHERE owner=? AND alert_id=?",
+                                      (owner, alert_id)).fetchone()
+            if not confirmation or confirmation["decision"] != "normal" or not confirmation["consent"]:
+                raise ValueError("A committed consented confirmation is required.")
+            db.execute("INSERT INTO memories (memory_id,owner,summary,created_at,source,assistant_id) "
+                       "VALUES(?,?,?,?,'local-fallback',?)",
+                       (local_id, owner, sentence, datetime.now(timezone.utc).isoformat(), assistant_id))
+            db.execute("INSERT INTO memory_jobs VALUES(?,?,?,?,?,'preparing',NULL)",
+                       (owner, alert_id, assistant_id, sentence, local_id))
+            receipt = Confirmation.model_validate_json(confirmation["result"]).model_copy(
+                update={"memory_id": local_id, "memory_status": "pending"})
+            db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
+                       (receipt.model_dump_json(), owner, alert_id))
+        return local_id
+
+    def record_memory_baseline(self, owner, alert_id, before_ids):
+        with self.connect() as db:
+            changed = db.execute("UPDATE memory_jobs SET state='pending' "
+                                 "WHERE owner=? AND alert_id=? AND state='preparing'",
+                                 (owner, alert_id)).rowcount
+            if changed:
+                db.executemany("INSERT INTO memory_job_baseline VALUES(?,?,?)",
+                               [(owner, alert_id, value) for value in before_ids])
+        return bool(changed)
+
+    def memory_job(self, owner, *, alert_id=None, memory_id=None):
+        clause, values = (("alert_id=?", (alert_id,)) if alert_id is not None else
+                          ("(local_id=? OR remote_id=?)", (memory_id, memory_id)))
+        with self.connect() as db:
+            row = db.execute("SELECT * FROM memory_jobs WHERE owner=? AND " + clause,
+                             (owner, *values)).fetchone()
+            if row is None:
+                return None
+            result = dict(row)
+            result["before_ids"] = {entry[0] for entry in db.execute(
+                "SELECT remote_id FROM memory_job_baseline WHERE owner=? AND alert_id=?",
+                (owner, row["alert_id"]))}
+        return result
+
+    def update_memory_job(self, owner, alert_id, state, remote_id=None):
+        with self.connect() as db:
+            changed = db.execute("UPDATE memory_jobs SET state=?,remote_id=? "
+                                 "WHERE owner=? AND alert_id=? AND state!='deleted'",
+                                 (state, remote_id, owner, alert_id)).rowcount
+        return bool(changed)
 
     def assistant_id(self, owner: str) -> str | None:
         with self.connect() as db:
@@ -108,7 +326,7 @@ class Store:
     def memory_row(self, owner: str, memory_id: str):
         with self.connect() as db:
             return db.execute(
-                """SELECT memory_id, source, assistant_id FROM memories
+                """SELECT memory_id, source, assistant_id, summary FROM memories
                    WHERE owner=? AND memory_id=?""",
                 (owner, memory_id)).fetchone()
 
@@ -125,5 +343,75 @@ class Store:
 
     def delete_memory(self, owner, memory_id) -> bool:
         with self.lock, self.connect() as db:
-            return db.execute("DELETE FROM memories WHERE owner=? AND memory_id=?",
-                              (owner, memory_id)).rowcount > 0
+            db.execute("BEGIN IMMEDIATE")
+            job = db.execute("SELECT local_id,remote_id FROM memory_jobs WHERE owner=? "
+                             "AND (local_id=? OR remote_id=?)", (owner, memory_id, memory_id)).fetchone()
+            ids = (job["local_id"], job["remote_id"]) if job else (memory_id, memory_id)
+            return db.execute("DELETE FROM memories WHERE owner=? AND memory_id IN (?,?)",
+                              (owner, *ids)).rowcount > 0
+
+    def append_history(self, owner, result):
+        transport = result["transport_error"]
+        with self.lock, self.connect() as db:
+            cursor = db.execute("INSERT INTO query_history(owner,source,query_name,requested_at,"
+                                "http_status,duration_ms,transport_error) VALUES(?,?,?,?,?,?,?)", (
+                owner, result["source"], result["query"], result["requested_at"],
+                result["http_status"], result["duration_ms"], transport["type"] if transport else None))
+            return cursor.lastrowid
+
+    @staticmethod
+    def history_row(row):
+        result = dict(row)
+        result.pop("owner")
+        result["history_id"] = result.pop("id")
+        result["query"] = result.pop("query_name")
+        failure = result["transport_error"]
+        result["transport_error"] = ({"type": failure, "message": "Nessie request did not complete."}
+                                     if failure else None)
+        return result
+
+    def list_history(self, owner, before_id=None):
+        cursor_clause = " AND id < ?" if before_id is not None else ""
+        args = (owner, before_id) if before_id is not None else (owner,)
+        with self.connect() as db:
+            rows = db.execute("SELECT * FROM query_history WHERE owner=?" + cursor_clause +
+                              " ORDER BY id DESC LIMIT 51", args).fetchall()
+        return {"items": [self.history_row(row) for row in rows[:50]],
+                "next_cursor": rows[49]["id"] if len(rows) > 50 else None}
+
+    def alias_resources(self, owner, scope, kind, remote_ids):
+        with self.connect() as db:
+            db.executemany("INSERT OR IGNORE INTO resource_aliases VALUES(?,?,?,?,?)",
+                           [(owner, scope, kind, remote_id, kind + "_" + uuid4().hex)
+                            for remote_id in remote_ids])
+            rows = db.execute("SELECT remote_id,local_id FROM resource_aliases WHERE owner=? "
+                              "AND credential_scope=? AND kind=?", (owner, scope, kind)).fetchall()
+        return {row["remote_id"]: row["local_id"] for row in rows}
+
+    def list_resources(self, owner, scope):
+        with self.connect() as db:
+            rows = db.execute("SELECT local_id AS resource_id,kind FROM resource_aliases "
+                              "WHERE owner=? AND credential_scope=? ORDER BY local_id",
+                              (owner, scope)).fetchall()
+        return [dict(row) for row in rows]
+
+    def resolve_resource(self, owner, scope, local_id):
+        with self.connect() as db:
+            row = db.execute("SELECT remote_id FROM resource_aliases WHERE owner=? "
+                             "AND credential_scope=? AND local_id=?", (owner, scope, local_id)).fetchone()
+        return row["remote_id"] if row else None
+
+    def get_history(self, owner, history_id):
+        with self.connect() as db:
+            row = db.execute("SELECT * FROM query_history WHERE owner=? AND id=?",
+                             (owner, history_id)).fetchone()
+        return self.history_row(row) if row else None
+
+    def delete_history(self, owner, history_id=None):
+        with self.lock, self.connect() as db:
+            if history_id is None:
+                count = db.execute("DELETE FROM query_history WHERE owner=?", (owner,)).rowcount
+            else:
+                count = db.execute("DELETE FROM query_history WHERE owner=? AND id=?",
+                                   (owner, history_id)).rowcount
+        return count

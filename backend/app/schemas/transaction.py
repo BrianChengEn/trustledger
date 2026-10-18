@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Transaction(BaseModel):
@@ -16,3 +16,10 @@ class Transaction(BaseModel):
     source: Literal["synthetic", "nessie"]
     account_token: str = Field(pattern=r"^acct_[A-Za-z0-9_-]+$")
     is_subscription: bool
+
+    @field_validator("occurred_at")
+    @classmethod
+    def require_timezone(cls, value):
+        if value.utcoffset() is None:
+            raise ValueError("Transaction timestamps require a timezone.")
+        return value

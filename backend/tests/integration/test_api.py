@@ -3,8 +3,61 @@ from pathlib import Path
 
 import httpx
 import yaml
+import pytest
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
+
+
+@pytest.mark.parametrize("consent", [1, "true", "false"])
+def test_memory_requires_literal_boolean_consent(client, consent):
+    response = client.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                           json={"decision": "normal", "consent_to_memory": consent})
+    assert response.status_code == 422
+    assert client.get("/api/v1/memories").json() == []
+
+
+def test_memory_writes_are_disabled_by_default(monkeypatch):
+    from app.core.config import Settings
+
+    monkeypatch.delenv("ALLOW_MEMORY_WRITE", raising=False)
+    assert Settings(_env_file=None).allow_memory_write is False
+
+
+def test_failed_memory_does_not_undo_confirmation_or_retry_it(client):
+    with client.app.state.store.connect() as db:
+        db.execute("CREATE TRIGGER fail_memory BEFORE INSERT ON memories "
+                   "BEGIN SELECT RAISE(FAIL, 'synthetic storage failure'); END")
+    path = "/api/v1/alerts/alert_txn_syn_004/confirmations"
+    body = {"decision": "normal", "consent_to_memory": True}
+    response = client.post(path, json=body)
+    assert response.status_code == 200
+    assert response.json()["decision"] == "normal"
+    assert response.json()["memory_status"] == "failed"
+    assert response.json()["memory_id"] is None
+    assert client.app.state.store.status("demo-user-001", "alert_txn_syn_004") == "normal"
+    assert client.get("/api/v1/memories").json() == []
+    assert client.post(path, json=body).json()["memory_status"] == "failed"
+
+
+def test_transactions_use_persistent_sqlite_instead_of_json(client):
+    store = client.app.state.store
+    owner = client.app.state.settings.demo_user_id
+    with store.connect() as db:
+        db.execute("UPDATE demo_transactions SET amount_cents=1234 WHERE owner=? AND id=?",
+                   (owner, "txn_syn_005"))
+    rows = client.get("/api/v1/transactions").json()
+    assert next(row for row in rows if row["id"] == "txn_syn_005")["amount"] == 12.34
+    analysis = client.post("/api/v1/analyses", json={"transaction_id": "txn_syn_005"}).json()
+    assert analysis["alert_type"] == "none"
+    preview = client.get("/api/v1/privacy/preview/txn_syn_005").json()
+    assert preview["safe_payload"]["amount_bucket"] == "10-25"
+
+    from app.main import create_app
+
+    with TestClient(create_app(client.app.state.settings)) as restarted:
+        rows = restarted.get("/api/v1/transactions").json()
+        assert len(rows) == 8
+        assert next(row for row in rows if row["id"] == "txn_syn_005")["amount"] == 12.34
 
 
 def test_contract_smoke(client):
@@ -115,6 +168,7 @@ def test_backboard_failure_and_success_keep_the_rule_contract(monkeypatch, tmp_p
         assert body["provider_mode"] == "degraded"
         assert body["model_version"] is None
         assert live.get("/api/v1/health").json()["analysis_mode"] == "degraded"
+        assert live.get("/api/v1/health").json()["status"] == "degraded"
         assert "StreamWave" not in json.dumps(body["safe_payload"] if "safe_payload" in body else body)
 
     async def succeeded(payload, api_key, client=None):
@@ -298,3 +352,97 @@ def test_analysis_matches_preview_and_get_limit(client):
     assert analysis["alert_type"] == "duplicate" and analysis["provider_mode"] == "rules-only"
     payload = client.get("/api/v1/privacy/preview/txn_syn_004").json()["safe_payload"]
     assert payload["same_category_same_amount_24h_count"] == 2
+
+
+def test_uncertain_memory_survives_restart_and_delete_reconciles_remote(tmp_path, monkeypatch):
+    remote = []
+    state = {"unavailable": False, "posts": 0, "deletes": 0}
+
+    def handler(request):
+        if request.url.path == "/api/assistants":
+            return httpx.Response(200, json={"name": "Synthetic memory", "assistant_id":
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "created_at": "2026-10-17"})
+        if request.method == "POST":
+            store = live.app.state.store
+            assert store.status("demo-user-001", "alert_txn_syn_004") == "normal"
+            assert store.memory_job("demo-user-001", alert_id="alert_txn_syn_004")["state"] == "pending"
+            state["posts"] += 1
+            remote.append({"id": "mem_lost_ack", "content": json.loads(request.content)["content"]})
+            state["unavailable"] = True
+            raise httpx.ReadTimeout("Synthetic lost acknowledgement")
+        if request.method == "DELETE":
+            assert request.url.path.endswith('/mem_lost_ack')
+            state["deletes"] += 1
+            remote.clear()
+            return httpx.Response(200, json={"success": True, "message": "deleted"})
+        if state["unavailable"]:
+            return httpx.Response(503, json={"detail": "Synthetic unavailable"})
+        return httpx.Response(200, json={"memories": remote, "total_count": len(remote)})
+
+    with _memory_client(tmp_path, monkeypatch, handler) as live:
+        path = "/api/v1/alerts/alert_txn_syn_004/confirmations"
+        body = {"decision": "normal", "consent_to_memory": True}
+        saved = live.post(path, json=body)
+        assert saved.status_code == 200 and saved.json()["memory_status"] == "pending"
+        memory_id = saved.json()["memory_id"]
+        assert memory_id and len(remote) == 1
+        assert live.delete("/api/v1/memories/" + memory_id).status_code == 502
+        assert len(live.get("/api/v1/memories").json()) == 1
+        settings = live.app.state.settings
+    from app.main import create_app
+
+    app = create_app(settings)
+    app.state.backboard_transport = httpx.MockTransport(handler)
+    with TestClient(app) as live:
+        assert live.post(path, json=body).json()["memory_status"] == "pending"
+        assert state["posts"] == 1
+        state["unavailable"] = False
+        assert live.delete("/api/v1/memories/" + memory_id).status_code == 204
+        assert state["deletes"] == 1 and remote == []
+        assert live.get("/api/v1/memories").json() == []
+        preview = live.get("/api/v1/privacy/preview/txn_syn_004").json()
+        assert preview["safe_payload"]["prior_user_confirmation"] == "unknown"
+        assert state["posts"] == 1
+
+
+def test_uncertain_memory_never_deletes_a_preexisting_remote_fact(tmp_path, monkeypatch):
+    content = "The demo user explicitly confirmed a streaming alert as normal. Recheck future evidence."
+    remote = [{"id": "mem_preexisting", "content": content}]
+    calls = {"posts": 0, "deletes": 0}
+
+    def handler(request):
+        if request.url.path == "/api/assistants":
+            return httpx.Response(200, json={"name": "Synthetic memory", "assistant_id":
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "created_at": "2026-10-17"})
+        if request.method == "POST":
+            calls["posts"] += 1
+            raise httpx.ReadTimeout("Synthetic uncertain dispatch")
+        if request.method == "DELETE":
+            calls["deletes"] += 1
+            raise AssertionError("Preexisting memory must never be deleted")
+        return httpx.Response(200, json={"memories": remote, "total_count": len(remote)})
+
+    with _memory_client(tmp_path, monkeypatch, handler) as live:
+        saved = live.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                          json={"decision": "normal", "consent_to_memory": True}).json()
+        assert saved["memory_status"] == "pending"
+        assert live.delete("/api/v1/memories/" + saved["memory_id"]).status_code == 502
+        assert calls == {"posts": 1, "deletes": 0} and len(remote) == 1
+
+
+def test_confirmation_failure_prevents_every_remote_memory_write(tmp_path, monkeypatch):
+    calls = []
+
+    def handler(request):
+        calls.append(request.method)
+        raise AssertionError("Uncommitted confirmation must not call memory provider")
+
+    with _memory_client(tmp_path, monkeypatch, handler) as live:
+        with live.app.state.store.connect() as db:
+            db.execute("CREATE TRIGGER fail_confirmation BEFORE INSERT ON confirmations "
+                       "BEGIN SELECT RAISE(FAIL, 'Synthetic confirmation failure'); END")
+        import sqlite3
+        with pytest.raises(sqlite3.IntegrityError):
+            live.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                      json={"decision": "normal", "consent_to_memory": True})
+    assert calls == []

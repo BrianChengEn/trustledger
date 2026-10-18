@@ -10,7 +10,7 @@ from app.schemas.api import (
     MemorySummary, PrivacyPreview,
 )
 from app.schemas.transaction import Transaction
-from app.services.ai.backboard_client import MemoryCallError, delete_memory
+from app.services.ai.backboard_client import MemoryCallError
 from app.services.ai.decision import review
 from app.services.ai.memory_policy import memory_sentence, prior_confirmation
 from app.services.ai.memory_sync import consented_summaries, remove_remote_memory, write_consented_memory
@@ -19,8 +19,15 @@ from app.services.ai.privacy import privacy_preview
 router = APIRouter(prefix="/api/v1")
 
 
+def demo_transactions(request: Request) -> list[Transaction]:
+    if not hasattr(request.state, "transactions"):
+        state = request.app.state
+        request.state.transactions = state.store.list_transactions(state.settings.demo_user_id)
+    return request.state.transactions
+
+
 def transaction(request: Request, transaction_id: str) -> Transaction:
-    result = next((t for t in request.app.state.transactions if t.id == transaction_id), None)
+    result = next((t for t in demo_transactions(request) if t.id == transaction_id), None)
     if result is None:
         raise HTTPException(404, "not_found")
     return result
@@ -65,14 +72,15 @@ def record_mode(request: Request, analyses: list[Analysis]) -> None:
 
 async def alerts(request: Request) -> list[Alert]:
     state = request.app.state
+    rows = demo_transactions(request)
     summaries = await remembered(request)
     key = api_key(request)
 
     async def one(tx: Transaction) -> Analysis:
         prior = prior_confirmation(tx.merchant_category, summaries)
-        return await review(tx, state.transactions, request.state.request_id, prior, key)
+        return await review(tx, rows, request.state.request_id, prior, key)
 
-    reviewed = list(await asyncio.gather(*(one(tx) for tx in state.transactions)))
+    reviewed = list(await asyncio.gather(*(one(tx) for tx in rows)))
     record_mode(request, reviewed)
     result = []
     for analysis in reviewed:
@@ -93,20 +101,21 @@ def health(request: Request):
         remembered_mode = getattr(request.app.state, "memory_outcome", None)
         memory_mode = (
             remembered_mode if remembered_mode in {"backboard-live", "degraded"} else "local-fallback")
-    return Health(status="ok", data_mode="synthetic", analysis_mode=analysis_mode,
+    status = "degraded" if "degraded" in {analysis_mode, memory_mode} else "ok"
+    return Health(status=status, data_mode="synthetic", analysis_mode=analysis_mode,
                   memory_mode=memory_mode, request_id=request.state.request_id)
 
 
 @router.get("/transactions", response_model=list[Transaction])
 def list_transactions(request: Request, limit: int = Query(25, ge=1, le=100)):
-    return sorted(request.app.state.transactions, key=lambda t: t.occurred_at, reverse=True)[:limit]
+    return sorted(demo_transactions(request), key=lambda t: t.occurred_at, reverse=True)[:limit]
 
 
 @router.post("/analyses", response_model=Analysis)
 async def analyze_transaction(body: AnalyzeRequest, request: Request):
     tx = transaction(request, body.transaction_id)
     prior = prior_confirmation(tx.merchant_category, await remembered(request))
-    result = await review(tx, request.app.state.transactions, request.state.request_id, prior,
+    result = await review(tx, demo_transactions(request), request.state.request_id, prior,
                           api_key(request), force_live=True)
     record_mode(request, [result])
     return result
@@ -121,42 +130,37 @@ async def list_alerts(request: Request):
 async def preview(transaction_id: str, request: Request):
     tx = transaction(request, transaction_id)
     prior = prior_confirmation(tx.merchant_category, await remembered(request))
-    return privacy_preview(tx, request.app.state.transactions, prior)
+    return privacy_preview(tx, demo_transactions(request), prior)
 
 
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)
 async def confirm(alert_id: str, body: ConfirmationRequest, request: Request):
-    alert = next((a for a in await alerts(request) if a.alert_id == alert_id), None)
-    if alert is None:
-        raise HTTPException(404, "not_found")
     state = request.app.state
     owner = state.settings.demo_user_id
     try:
         replay = state.store.replay_confirmation(
             owner, alert_id, body.decision, body.consent_to_memory, request.state.request_id)
+        if replay is not None:
+            return replay
+        alert = next((a for a in await alerts(request) if a.alert_id == alert_id), None)
+        if alert is None:
+            raise HTTPException(404, "not_found")
+        sentence = memory_sentence(transaction(request, alert.transaction_id), body.decision,
+                                   body.consent_to_memory, state.settings.allow_memory_write)
+        result, claimed = state.store.claim_confirmation(
+            owner, alert_id, body.decision, body.consent_to_memory, bool(sentence), request.state.request_id)
     except ConflictingConfirmation:
         raise HTTPException(409, "confirmation_conflict") from None
-    if replay is not None:
-        return replay
-    sentence = memory_sentence(transaction(request, alert.transaction_id), body.decision,
-                               body.consent_to_memory, state.settings.allow_memory_write)
+    if not claimed or not sentence:
+        return result
     async with vendor_http(request) as http:
-        placed = await write_consented_memory(state.store, owner, sentence, api_key(request), http)
-        try:
-            result = state.store.confirm(
-                owner, alert_id, body.decision, body.consent_to_memory, placed.sentence,
-                request.state.request_id, memory_id=placed.memory_id, source=placed.source,
-                assistant_id=placed.assistant_id, memory_status=placed.status)
-        except ConflictingConfirmation:
-            if placed.source == "backboard" and placed.memory_id and placed.assistant_id:
-                try:
-                    await delete_memory(placed.assistant_id, placed.memory_id, api_key(request),
-                                        client=http)
-                except MemoryCallError:
-                    state.memory_outcome = "degraded"
-            raise HTTPException(409, "confirmation_conflict") from None
+        placed = await write_consented_memory(state.store, owner, sentence, api_key(request), http,
+                                             alert_id=alert_id)
+    result = state.store.finish_memory(
+        owner, result, placed.sentence, memory_id=placed.memory_id, source=placed.source,
+        assistant_id=placed.assistant_id, memory_status=placed.status)
     if placed.outcome:
-        state.memory_outcome = placed.outcome
+        state.memory_outcome = "degraded" if result.memory_status == "pending" else placed.outcome
     return result
 
 

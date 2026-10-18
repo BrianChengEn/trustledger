@@ -130,10 +130,354 @@ paths:
         '204': { description: Deleted }
         '404': { $ref: '#/components/responses/NotFound' }
         '502':
-          description: The remote memory was not deleted. The local row is unchanged.
+          description: Remote memory deletion failed; local memory is preserved.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  /api/v1/admin/nessie/query:
+    post:
+      operationId: queryNessie
+      tags:
+      - local-admin
+      description: Query by server-issued local codes. Display only allowlisted de-identified
+        fields. Persist status/time metadata only; never persist raw responses.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExecution'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminQueryRequest'
+  /api/v1/admin/nessie/history:
+    get:
+      operationId: listNessieHistory
+      tags:
+      - local-admin
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHistoryPage'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: before_id
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+    delete:
+      operationId: clearNessieHistory
+      tags:
+      - local-admin
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDeleteOutcome'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDeleteRequest'
+  /api/v1/admin/nessie/history/{history_id}:
+    get:
+      operationId: getNessieHistory
+      tags:
+      - local-admin
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHistoryItem'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: history_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    delete:
+      operationId: deleteNessieHistory
+      tags:
+      - local-admin
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDeleteOutcome'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDeleteRequest'
+      parameters:
+      - name: history_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+  /api/v1/admin/nessie/resources:
+    get:
+      operationId: listNessieLocalResources
+      tags:
+      - local-admin
+      description: List server-issued owner/credential-scoped local resource codes.
+        No upstream request or raw IDs.
+      responses:
+        '200':
+          description: Completed local operation; query envelopes retain the actual
+            upstream status.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminResourceOption'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 components:
   parameters:
     TransactionId:
@@ -280,3 +624,216 @@ components:
             message: { type: string }
             request_id: { type: string }
 
+    AdminQueryRequest:
+      additionalProperties: false
+      properties:
+        query:
+          enum:
+          - customers.list
+          - accounts.list
+          - accounts.get
+          - accounts.by_customer
+          - deposits.by_account
+          - withdrawals.by_account
+          title: Query
+          type: string
+        resource_id:
+          anyOf:
+          - maxLength: 41
+            type: string
+            pattern: ^(customer|account)_[0-9a-f]{32}$
+          - type: 'null'
+          default: null
+          description: Server-issued local customer/account code only.
+          title: Resource Id
+      required:
+      - query
+      title: QueryRequest
+      type: object
+    AdminDeleteRequest:
+      additionalProperties: false
+      properties:
+        confirm:
+          title: Confirm
+          type: boolean
+      required:
+      - confirm
+      title: DeleteRequest
+      type: object
+    AdminTransportError:
+      additionalProperties: false
+      properties:
+        type:
+          enum:
+          - timeout
+          - connection
+          title: Type
+          type: string
+        message:
+          title: Message
+          type: string
+      required:
+      - type
+      - message
+      title: TransportError
+      type: object
+    AdminHistoryItem:
+      additionalProperties: false
+      properties:
+        history_id:
+          exclusiveMinimum: 0
+          title: History Id
+          type: integer
+        source:
+          enum:
+          - nessie
+          - synthetic
+          title: Source
+          type: string
+        query:
+          title: Query
+          type: string
+        requested_at:
+          title: Requested At
+          type: string
+        duration_ms:
+          minimum: 0
+          title: Duration Ms
+          type: integer
+        http_status:
+          anyOf:
+          - maximum: 599
+            minimum: 100
+            type: integer
+          - type: 'null'
+          title: Http Status
+        transport_error:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportError'
+          - type: 'null'
+      required:
+      - history_id
+      - source
+      - query
+      - requested_at
+      - duration_ms
+      - http_status
+      - transport_error
+      title: HistoryItem
+      type: object
+    AdminExecution:
+      additionalProperties: false
+      properties:
+        history_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          title: History Id
+        source:
+          enum:
+          - nessie
+          - synthetic
+          title: Source
+          type: string
+        query:
+          title: Query
+          type: string
+        requested_at:
+          title: Requested At
+          type: string
+        duration_ms:
+          minimum: 0
+          title: Duration Ms
+          type: integer
+        http_status:
+          anyOf:
+          - maximum: 599
+            minimum: 100
+            type: integer
+          - type: 'null'
+          title: Http Status
+        transport_error:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportError'
+          - type: 'null'
+        response_body:
+          title: Response Body
+        body_format:
+          enum:
+          - json
+          - none
+          title: Body Format
+          type: string
+        write_status:
+          enum:
+          - saved
+          - failed
+          title: Write Status
+          type: string
+        write_label:
+          anyOf:
+          - const: failed to write
+            type: string
+          - type: 'null'
+          title: Write Label
+      required:
+      - history_id
+      - source
+      - query
+      - requested_at
+      - duration_ms
+      - http_status
+      - transport_error
+      - response_body
+      - body_format
+      - write_status
+      - write_label
+      title: Execution
+      type: object
+    AdminHistoryPage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminHistoryItem'
+          title: Items
+          type: array
+        next_cursor:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Cursor
+      required:
+      - items
+      - next_cursor
+      title: HistoryPage
+      type: object
+    AdminResourceOption:
+      additionalProperties: false
+      properties:
+        resource_id:
+          title: Resource Id
+          type: string
+        kind:
+          enum:
+          - customer
+          - account
+          title: Kind
+          type: string
+      required:
+      - resource_id
+      - kind
+      title: ResourceOption
+      type: object
+    AdminDeleteOutcome:
+      additionalProperties: false
+      properties:
+        deleted:
+          minimum: 0
+          title: Deleted
+          type: integer
+      required:
+      - deleted
+      title: DeleteOutcome
+      type: object

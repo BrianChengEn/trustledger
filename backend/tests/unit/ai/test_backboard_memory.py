@@ -11,7 +11,15 @@ from app.services.ai.backboard_client import (
     parse_search, search_memories,
 )
 from app.services.ai.memory_policy import approved_memory, memory_sentence
-from app.services.ai.memory_sync import consented_summaries, write_consented_memory
+from app.services.ai.memory_sync import consented_summaries, write_consented_memory as write_placed_memory
+
+async def write_consented_memory(store, owner, sentence, key, client):
+    from uuid import uuid4
+
+    alert_id = "alert_test_" + uuid4().hex
+    store.claim_confirmation(owner, alert_id, "normal", True, bool(sentence), "test")
+    return await write_placed_memory(store, owner, sentence, key, client, alert_id=alert_id)
+
 
 ASSISTANT_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 ASSISTANT_B = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
@@ -279,3 +287,86 @@ def test_provider_failure_keeps_one_local_sentence(tmp_path):
     assert {row.summary for row in rows} == {FITNESS, STREAMING}
     assert {row.source for row in rows} == {"local-fallback"}
     assert all(row.source != "backboard" for row in rows)
+
+
+def test_malformed_memory_pages_fail_closed():
+    from app.services.ai.backboard_client import parse_list
+
+    malformed = [{}, {"memories": []}, {"memories": [], "total_count": -1},
+                 {"memories": [{"id": "mem_safe", "content": STREAMING, "score": 10 ** 400}],
+                  "total_count": 1}]
+    for value in malformed:
+        try:
+            parse_list(value)
+        except MemoryCallError:
+            continue
+        raise AssertionError("Malformed memory page was accepted")
+
+
+def test_delete_during_delayed_create_ack_never_restores_memory(tmp_path):
+    from app.services.ai.memory_sync import remove_remote_memory
+
+    store = Store(tmp_path / "delete-race.db")
+    store.save_assistant("owner", ASSISTANT_A)
+    receipt, _ = store.claim_confirmation("owner", "alert", "normal", True, True, "request")
+    remote = []
+
+    async def handler(request):
+        if request.method == "GET":
+            return httpx.Response(200, json={"memories": list(remote), "total_count": len(remote)})
+        if request.method == "DELETE":
+            remote.clear()
+            return httpx.Response(200, json={"success": True, "message": "deleted"})
+        remote.append({"id": "delayed_ack", "content": STREAMING})
+        local_id = store.memory_job("owner", alert_id="alert")["local_id"]
+        await remove_remote_memory(store, "owner", local_id, KEY, client)
+        assert store.delete_memory("owner", local_id)
+        return httpx.Response(201, json={"memory_id": "delayed_ack", "content": STREAMING})
+
+    async def run():
+        nonlocal client
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            placed = await write_placed_memory(store, "owner", STREAMING, KEY, client, alert_id="alert")
+            store.finish_memory("owner", receipt, placed.sentence, memory_id=placed.memory_id,
+                                source=placed.source, assistant_id=placed.assistant_id,
+                                memory_status=placed.status)
+
+    client = None
+    asyncio.run(run())
+    assert not remote and store.list_memories("owner") == []
+    assert store.memory_job("owner", alert_id="alert")["state"] == "deleted"
+
+
+def test_same_sentence_claim_precedes_baseline_read_across_stores(tmp_path):
+    filename = tmp_path / "overlap.db"
+    store, second = Store(filename), Store(filename)
+    store.save_assistant("owner", ASSISTANT_A)
+    for alert in ("first", "second"):
+        store.claim_confirmation("owner", alert, "normal", True, True, "request")
+    remote, posts = [], []
+    nested = False
+
+    async def handler(request):
+        nonlocal nested
+        if request.method == "GET":
+            snapshot = list(remote)
+            if not nested:
+                nested = True
+                await write_placed_memory(second, "owner", STREAMING, KEY, client, alert_id="second")
+            return httpx.Response(200, json={"memories": snapshot, "total_count": len(snapshot)})
+        posts.append(request)
+        if len(posts) == 1:
+            remote.append({"id": "other_job", "content": STREAMING})
+            return httpx.Response(201, json={"memory_id": "other_job", "content": STREAMING})
+        raise httpx.ReadTimeout("Synthetic uncertain write")
+
+    async def run():
+        nonlocal client
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            await write_placed_memory(store, "owner", STREAMING, KEY, client, alert_id="first")
+
+    client = None
+    asyncio.run(run())
+    assert len(posts) == 1
+    job = store.memory_job("owner", alert_id="second")
+    assert job is None or job["remote_id"] is None

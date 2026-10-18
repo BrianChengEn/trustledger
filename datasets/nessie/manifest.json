@@ -1,0 +1,82 @@
+{
+  "synthetic": true,
+  "schema_reference": "https://prod.nessieisreal.com/nessie-openapi-spec.yaml",
+  "schema_version": "1.0.0",
+  "network_requests_made": false,
+  "withdrawal_fields_reference": "https://prod.nessieisreal.com/docs",
+  "query_examples": [
+    {
+      "query": "customers.list",
+      "history_record_id": "H001"
+    },
+    {
+      "query": "accounts.list",
+      "history_record_id": "H002"
+    },
+    {
+      "query": "accounts.get",
+      "history_record_id": "H003"
+    },
+    {
+      "query": "accounts.by_customer",
+      "history_record_id": "H004"
+    },
+    {
+      "query": "deposits.by_account",
+      "history_record_id": "H005"
+    },
+    {
+      "query": "withdrawals.by_account",
+      "history_record_id": "H006"
+    }
+  ],
+  "datasets": {
+    "baseline": {
+      "file": "baseline.json",
+      "counts": {
+        "customers": 10,
+        "accounts": 18,
+        "deposits": 48,
+        "withdrawals": 48
+      }
+    },
+    "changed": {
+      "file": "changed.json",
+      "counts": {
+        "customers": 10,
+        "accounts": 17,
+        "deposits": 51,
+        "withdrawals": 52
+      }
+    },
+    "empty": {
+      "file": "empty.json",
+      "counts": {
+        "customers": 0,
+        "accounts": 0,
+        "deposits": 0,
+        "withdrawals": 0
+      }
+    },
+    "boundary": {
+      "file": "boundary.json",
+      "counts": {
+        "customers": 3,
+        "accounts": 4,
+        "deposits": 2,
+        "withdrawals": 1
+      }
+    },
+    "volume": {
+      "file": "volume.json",
+      "counts": {
+        "customers": 50,
+        "accounts": 100,
+        "deposits": 300,
+        "withdrawals": 300
+      }
+    }
+  },
+  "history_records": 32,
+  "comparison_cases": 7
+}

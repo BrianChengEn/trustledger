@@ -64,13 +64,15 @@ def _number(value: object) -> float | None:
         return None
     if isinstance(value, bool) or not isinstance(value, int | float):
         raise MemoryCallError("invalid_response")
+    if not 0 <= value <= 1:
+        raise MemoryCallError("invalid_response")
     return float(value)
 
 
 def _count(value: object, *, required: bool) -> int:
     if value is None and not required:
         return 0
-    if isinstance(value, bool) or not isinstance(value, int):
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise MemoryCallError("invalid_response")
     return value
 
@@ -114,9 +116,9 @@ def parse_memory(data: object) -> MemoryRecord:
 
 
 def parse_list(data: object) -> MemoryPage:
-    if not isinstance(data, dict):
+    if not isinstance(data, dict) or "memories" not in data or "total_count" not in data:
         raise MemoryCallError("invalid_response")
-    rows = data.get("memories", [])
+    rows = data["memories"]
     if not isinstance(rows, list):
         raise MemoryCallError("invalid_response")
     for field in ("page", "page_size", "total_pages"):
@@ -125,7 +127,7 @@ def parse_list(data: object) -> MemoryPage:
             raise MemoryCallError("invalid_response")
     return MemoryPage(
         memories=[_record(item, search=False) for item in rows],
-        total_count=_count(data.get("total_count", 0), required=False),
+        total_count=_count(data["total_count"], required=True),
     )
 
 
@@ -185,7 +187,10 @@ async def _send(
         if response.status_code == 404 and method == "DELETE":
             raise MemoryCallError("already_absent")
         if response.status_code not in ok:
-            raise MemoryCallError("request_failed")
+            raise MemoryCallError("rejected" if 400 <= response.status_code < 500 else "request_failed")
+        content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+        if content_type != "application/json" and not content_type.endswith("+json"):
+            raise MemoryCallError("invalid_response")
         try:
             return response.json()
         except ValueError:
@@ -220,29 +225,7 @@ async def add_memory(
         "POST", f"{API_ROOT}/assistants/{assistant}/memories", api_key, client,
         json={"content": content}, ok={201},
     )
-    try:
-        return parse_created(data)
-    except MemoryCallError:
-        await _drop_unparsed(assistant, data, api_key, client)
-        raise
-
-
-async def _drop_unparsed(
-    assistant_id: str,
-    data: object,
-    api_key: str,
-    client: httpx.AsyncClient | None,
-) -> None:
-    """Remove a created memory we cannot index, so a local row is not a second copy."""
-    if not isinstance(data, dict):
-        return
-    raw = data["memory_id"] if "memory_id" in data else data.get("id")
-    if not isinstance(raw, str) or _MEMORY_ID.fullmatch(raw) is None:
-        return
-    try:
-        await delete_memory(assistant_id, raw, api_key, client=client)
-    except MemoryCallError:
-        return
+    return parse_created(data)
 
 
 async def list_memories(

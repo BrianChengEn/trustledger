@@ -10,21 +10,21 @@ This repository is a working synthetic demo. It is not a live bank connection an
 
 ## Current status
 
-Verified on `main` at `5be26c1` (merge of PR #3), plus the documentation in this commit.
+This candidate combines the current main, Nessie Admin implementation, SQLite alignment and PR #7 consented Backboard memory. Live provider behavior has not been revalidated for this update.
 
 | Area | Status |
 |---|---|
 | Synthetic transactions, rules, review UI, Privacy Inspector | Implemented |
-| SQLite confirmations and consented category memory | Implemented, local fallback |
+| SQLite synthetic data, confirmations and consented category memory | Implemented; JSON remains an offline fixture only |
 | Consented memory affects the next analysis | Implemented on `main` |
 | Jev through Backboard | Implemented. Live only when `BACKBOARD_API_KEY` is set and the response parses |
 | Direct TypeSafe API | Not selected and not called |
 | Backboard persistent memory | Implemented behind `BACKBOARD_API_KEY`. No key uses SQLite. Live memory is not verified until a real provider response succeeds |
-| Capital One Nessie | Stub. Synthetic fixture is the data source |
-| GitHub Actions CI | Passing on the PR #3 merge to `main` |
+| Capital One Nessie | Six allowlisted Admin reads and explicit synthetic baseline CLI; dashboard transaction adapter remains an extension point |
+| GitHub Actions CI | Backend, frontend and Admin browser checks run for each PR |
 | Production auth, hosting, deployment | Not started |
 
-Health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMORY_WRITE=true` and no live call has succeeded. Filling an API key does not by itself report `rules+jev-live` or `backboard-live`.
+Before a provider attempt, health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMORY_WRITE=true`, or memory `off` otherwise. Failed calls report degraded mode. Filling an API key does not by itself report `rules+jev-live` or `backboard-live`.
 
 ## Documentation
 
@@ -42,7 +42,7 @@ Health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMOR
 
 The offline viewer `docs/index.html` is the original starter snapshot. Prefer the Markdown files above when they disagree with that snapshot.
 
-Older design notes remain in `docs/00` through `docs/07` and `docs/prompts/`. Where they describe Jev, Backboard, or Nessie as already called, treat them as the target design. [ARCHITECTURE.md](ARCHITECTURE.md) is the current implementation.
+The guides in `docs/00` through `docs/07` govern implementation. Versioned design updates remain local under `docs/vx.x.x` and are not published. [ARCHITECTURE.md](ARCHITECTURE.md) describes the current implementation; offline viewer snapshots may lag behind it.
 
 ## Team
 
@@ -62,8 +62,8 @@ Details, directories, and remaining tasks: [TEAM_ROLES.md](TEAM_ROLES.md).
 | Frontend | React 19.3.1, TypeScript 5.9.3, Vite 7.3.7 |
 | Backend | Python 3.12, FastAPI 0.143.3, Uvicorn 0.54.0 |
 | Analysis | Deterministic rules, plus Jev through Backboard when a key is set |
-| Memory | SQLite through the Python standard library |
-| Banking | Synthetic fixture. Nessie is still a stub |
+| Memory | SQLite index/fallback; explicit consented Backboard CRUD when enabled and configured |
+| Banking | Synthetic SQLite dashboard; separate Nessie Admin sandbox reads |
 
 Versions are the lockfiles, not the ranges in `package.json`. Full inventory: [TECH_STACK.md](TECH_STACK.md).
 
@@ -95,7 +95,7 @@ bash scripts/dev-frontend.sh
 - API docs: http://127.0.0.1:8000/docs
 - Smoke check, with the backend already running: `backend/.venv/bin/python scripts/smoke.py`
 
-Expect 8 synthetic transactions and 3 alerts. Open **Possible duplicate**, read the evidence and Privacy Inspector, confirm normal with memory consent, then open **Confirmed memory** and delete the row. The inspector reloads after confirm and delete.
+Expect 8 synthetic transactions and 3 alerts. Memory writes default off; explicitly enable `ALLOW_MEMORY_WRITE` locally to test consented memory. Open **Possible duplicate**, read the evidence and Privacy Inspector, confirm normal with memory consent, then open **Confirmed memory** and confirm deletion. The inspector reloads after confirm and delete.
 
 Shared steps, role-specific keys, and fixes: [TEAM-SETUP-60MIN.md](TEAM-SETUP-60MIN.md).
 
@@ -105,7 +105,7 @@ Shared steps, role-specific keys, and fixes: [TEAM-SETUP-60MIN.md](TEAM-SETUP-60
 bash scripts/check.sh
 ```
 
-That runs backend Ruff and pytest, then frontend typecheck, Vitest, and production build. CI runs the same checks from `backend/requirements.lock.txt` and `frontend/package-lock.json`. CI has no vendor secrets and does not call live APIs.
+That runs backend Ruff and pytest, frontend typecheck, Vitest, production build and Admin browser checks. CI uses `backend/requirements.lock.txt` and `frontend/package-lock.json`, has no vendor secrets and does not call live APIs. Offline golden fixtures are checked with `python3 scripts/generate_synthetic_data.py --check`.
 
 ## External APIs
 
@@ -113,8 +113,8 @@ That runs backend Ruff and pytest, then frontend typecheck, Vitest, and producti
 |---|---|---|---|
 | Jev through Backboard | `POST https://app.backboard.io/api/threads/messages` from `jev_client.py` | `BACKBOARD_API_KEY` | Only when that key is non-empty |
 | Direct TypeSafe API | Not used. Optional vendor route | `JEV_API_KEY` is unused | No |
-| Backboard memory | `backboard_client.py` still raises `NotImplementedError` | Assistant id is not read | No |
-| Nessie sandbox | `backend/app/adapters/nessie.py` raises `NessieNotConfigured` | `NESSIE_API_KEY` is loaded and unused | No |
+| Backboard memory | Explicit CRUD in `backboard_client.py`; committed consent and durable recovery in SQLite | `BACKBOARD_API_KEY`; owner assistant stored in SQLite | Only for enabled, explicitly consented memory or subsequent read/delete |
+| Nessie sandbox | Six Admin GETs and explicit `scripts/seed_nessie.py` baseline CLI | `NESSIE_API_KEY` stays backend-only | Only after explicit Admin execution or CLI invocation |
 
 `docs/.env.example` lists extra URLs and model names. `backend/app/core/config.py` does not read those fields. Do not treat that example as the live configuration.
 
@@ -123,7 +123,8 @@ That runs backend Ruff and pytest, then frontend typecheck, Vitest, and producti
 - Localhost only. One server-selected demo user. No production login.
 - Keys stay in `backend/.env`, which Git ignores. Bootstrap does not overwrite an existing `.env`.
 - The AI payload is built from an allowlist. Raw ids, merchant text, exact amounts, and exact timestamps stay out.
-- Memory is written only for decision `normal` plus explicit consent, and the UI labels it `local-fallback`.
+- Memory writes default off and require decision `normal` plus explicit consent. Sources are labelled `local-fallback` or `backboard`; uncertain writes stay pending and are never automatically posted again.
+- Admin displays local resource codes and safe projections. History stores status/time metadata only; startup removes legacy raw history, preserving confirmations and import progress.
 - Do not commit `.env`, SQLite databases, `.venv`, or `node_modules`.
 - No real customer financial data in the hackathon build.
 
