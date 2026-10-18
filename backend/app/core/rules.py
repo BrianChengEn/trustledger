@@ -29,9 +29,27 @@ def analyze(
         evidence = ["This recurring charge increased by more than 20 percent versus the previous charge."]
     if tx._settlement_status != 'completed':
         kind, severity, evidence = 'none', 'low', ['This record is not completed; completed-charge rules do not apply.']
+    if kind == 'none' and tx._settlement_status == 'completed' and tx.direction == 'unknown':
+        evidence = ['Insufficient evidence: transaction direction is unknown; debit rules cannot be evaluated. This is not a safe verdict.']
     if prior_user_confirmation == "normal" and kind != "none":
         evidence = [*evidence, "A prior consented confirmation marked this category as normal. "
                     "This match still needs a person."]
     return Analysis(transaction_id=tx.id, alert_type=kind, severity=severity,
                     needs_human=kind != "none", confidence=1.0,
                     evidence=evidence, request_id=request_id)
+
+
+def evaluation_outcome(tx: Transaction, analysis: Analysis | None = None) -> str:
+    """Interpret rule coverage without changing approved thresholds or the public DTO.
+
+    Provider/HTTP exceptions remain ANALYSIS_FAILED at the existing typed error boundary.
+    """
+    if analysis is not None and analysis.alert_type != 'none':
+        return 'ALERT_GENERATED'
+    if tx._settlement_status != 'completed':
+        return 'RULE_NOT_APPLICABLE'
+    if tx.direction == 'unknown':
+        return 'INSUFFICIENT_EVIDENCE'
+    if tx.direction != 'debit':
+        return 'RULE_NOT_APPLICABLE'
+    return 'EVALUATED_NO_ALERT'

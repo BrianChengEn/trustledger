@@ -54,8 +54,8 @@ WHY = {
         "The price may have changed, or the charge may be unexpected. This is not a determination of fraud."
     ),
     "none": (
-        "No demo rule flagged this transaction. The duplicate, unusual-amount, and subscription-increase "
-        "checks did not match. That does not prove the charge is legitimate."
+        "No demo rule raised an alert from the available evidence. Some checks may not apply or may lack required "
+        "evidence. An absent alert does not prove the transaction is legitimate."
     ),
 }
 MEANS = {
@@ -167,7 +167,7 @@ def _facts(document: dict) -> str:
     text = (
         f"Category {features['merchant_category']}. Amount band {features['amount_bucket']}. "
         f"Time of day {features['local_day_part']}. Same category and amount band in 24 hours: "
-        f"{features['same_category_same_amount_24h_count']}. Recurring: {recurring}. "
+        f"{features['same_category_same_amount_24h_count']}. Recurring flag: {recurring}. "
         f"Subscription change band: {features['subscription_delta_bucket']}. "
         f"Prior confirmation: {features['prior_user_confirmation']}. "
         "No merchant name, exact amount, account number, or identifier was used."

@@ -2,7 +2,7 @@ import type {ReactNode} from 'react';
 import {money, type Alert} from './api';
 import {cellsUsed, WIDGET_CELLS, WIDGETS, widgetStore, useWidgets} from './homeStore';
 import {Icon, type IconName} from './icons';
-import {dataModeCopy, day, memoryModeCopy} from './lib';
+import {dataModeCopy, day, memoryModeCopy, ruleCoverage} from './lib';
 import Pager from './Pager';
 import {stagger} from './ui';
 import {useWorkspace} from './workspace';
@@ -57,7 +57,7 @@ export default function Widgets() {
         <span className="wlist">{open.slice(0, 2).map(a => { const t = transactions.find(i => i.id === a.transaction_id);
           return <span className="wrow" key={a.alert_id}><span className="icontile alert small"><Icon name={alertIcons[a.alert_type]} size={14}/></span>
             <span className="wtext"><b>{shortName[a.alert_type]}</b><small>{t?.merchant_display}</small></span><span className="wvalue">{t ? money(t.amount) : ''}</span></span>; })}
-          {!open.length && <span className="wnote">All reviewed. Nothing needs you.</span>}</span></>;
+          {!open.length && <span className="wnote">{!ready ? 'Analysis unavailable.' : transactions.some(tx => ruleCoverage(tx) === 'Insufficient evidence') ? 'Some records lack evidence; no safe verdict.' : 'No open alerts. This does not establish safety.'}</span>}</span></>;
       case 'privacy': return <>
         <span className="wbig"><span className="num">8</span><span className="unit">fields can be shared</span></span>
         <span className="wnote">No IDs or merchant names.</span></>;

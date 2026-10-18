@@ -10,6 +10,8 @@ import httpx
 from app.api.dependencies import Analyses, Explanations, Transactions
 from app.core.auth import require_admin_when_enforced, require_session
 from app.core.store import ConflictingConfirmation
+from app.core.rules import evaluation_outcome
+from app.services.ai.gemini_explanation import GeminiExplanationService
 from app.schemas.api import (
     Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Explanation, Health,
     MemorySummary, PrivacyPreview,
@@ -124,7 +126,20 @@ def explain_transaction(transaction_id: Annotated[str, Path(min_length=1, max_le
     analysis, features = analyses.rules_view(transaction_id, request.state.request_id)
     before = analysis.model_dump_json()
     transaction = analyses.transactions.get_transaction(transaction_id)
-    result = explanations.explain(analysis, features, private_markers(transaction))
+    outcome = evaluation_outcome(transaction, analysis)
+    if outcome in {'INSUFFICIENT_EVIDENCE', 'RULE_NOT_APPLICABLE'}:
+        # The privacy projection has no direction/settlement field: do not ask a model
+        # to infer missing applicability from that reduced document.
+        result = GeminiExplanationService().explain(analysis, features).model_copy(update={
+            'why_flagged': ('Insufficient evidence: direction is unknown; debit rules could not be evaluated.'
+                            if outcome == 'INSUFFICIENT_EVIDENCE' else
+                            'Completed-debit rules do not apply to this transaction.'),
+            'supporting_evidence': 'Only available normalized evidence was used. Missing evidence does not establish safety.',
+            'what_it_means': 'No fraud conclusion was made. An absent alert does not prove this transaction is legitimate.',
+            'what_to_check': 'Check the transaction details and available account evidence before drawing a conclusion.',
+        })
+    else:
+        result = explanations.explain(analysis, features, private_markers(transaction))
     if analysis.model_dump_json() != before:
         raise HTTPException(500, "internal_error")
     return result

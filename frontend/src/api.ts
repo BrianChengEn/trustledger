@@ -149,3 +149,5 @@ export type Scenario = 'duplicate' | 'large_purchase' | 'price_hike';
 export interface ScenarioResult {scenario: Scenario; created: DemoRow[]}
 export interface ResetResult {restored: number; cleared_decisions: number; cleared_memories: number}
 export interface DemoLog {id: number; at: string; action: 'create' | 'update' | 'delete' | 'scenario' | 'reset'; tx_id: string | null; summary: string}
+
+export interface DeletionVerification {memory_id: string; status: 'absent'|'present'|'unverified'; checked_at: string|null; failure: string|null}

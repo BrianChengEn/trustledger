@@ -45,7 +45,7 @@ export default function MemoryLab({step, onStep}: {step: string; onStep: (id: st
   const [deleted, setDeleted] = useState(false);
   const later = story?.later ?? null;
   // Read-only GET of the real result for the later transaction (no write, no AI, no paid call).
-  const real = useRelevantMemories(later?.tx.id, !!later);
+  const real = useRelevantMemories(later?.tx.id, !!later, later?.tx.merchant_category);
   if (!story) return <div className="page lab"><div className="empty"><Icon name="search" size={26}/>
     <h2>The walkthrough needs a real duplicate alert.</h2>
     <p>None of the transactions in this dataset triggers the duplicate rule. Nothing is invented to fill the gap. Add two matching charges as an admin, or use the Level 2 demo database.</p></div></div>;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
+import {createServer} from 'node:net';
 import {existsSync, mkdtempSync, readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
@@ -25,17 +26,25 @@ async function ready(url, logs) {
   }
   throw new Error(`Service did not start: ${logs()}`);
 }
-const BASE = 'http://127.0.0.1:5177';
+async function freePort() {
+  const server = createServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+  await new Promise(resolve => server.close(resolve));
+  return port;
+}
+const frontendPort = await freePort(), backendPort = await freePort();
+const BASE = `http://127.0.0.1:${frontendPort}`;
 let browser;
 const errors = [];
 try {
-  const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js', 'frontend', '--host', '127.0.0.1', '--port', '5177'],
-    {API_PROXY_TARGET: 'http://127.0.0.1:8126'});
+  const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js', 'frontend', '--host', '127.0.0.1', '--port', String(frontendPort), '--strictPort'],
+    {API_PROXY_TARGET: `http://127.0.0.1:${backendPort}`});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'), ['-c',
     'import runpy,sys; sys.argv=["x"]; ns=runpy.run_path("backend/tests/admin_console_server.py", run_name="loaded"); '
-    + 'import uvicorn; uvicorn.run(ns["app"], host="127.0.0.1", port=8126, log_level="warning")'],
+    + 'import uvicorn; uvicorn.run(ns["app"], host="127.0.0.1", port=' + backendPort + ', log_level="warning")'],
   {PYTHONPATH: 'backend', APP_ENV: 'test', TRANSACTION_PROVIDER: 'synthetic', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: BASE});
-  await Promise.all([ready(BASE, frontendLogs), ready('http://127.0.0.1:8126/api/v1/health', backendLogs)]);
+  await Promise.all([ready(BASE, frontendLogs), ready(`http://127.0.0.1:${backendPort}/api/v1/health`, backendLogs)]);
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
     existsSync('/Applications/Google Chrome.app') ? {channel: 'chrome'} : {})});

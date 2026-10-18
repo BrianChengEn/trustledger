@@ -86,3 +86,12 @@ export function explanationModeCopy(mode: Explanation['explanation_mode'], fromC
     detail: 'Gemini was not called. This text is written from the rules and the privacy-safe summary.',
   };
 }
+
+
+export function ruleCoverage(tx: Transaction & {settlement_status?: string}, ready = true): string {
+  if (!ready) return 'Analysis unavailable';
+  if (tx.settlement_status && tx.settlement_status !== 'completed') return 'Rules not applicable';
+  if (tx.direction === 'unknown') return 'Insufficient evidence';
+  if (tx.direction !== 'debit') return 'Rules not applicable';
+  return 'No rule triggered';
+}

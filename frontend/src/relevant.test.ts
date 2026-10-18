@@ -26,3 +26,14 @@ describe('relevant memory card states', () => {
     expect(verificationLine('unverified')).toBe('Could not be verified with Backboard just now.');
   });
 });
+
+
+describe('backend safeguards retained with main card', () => {
+  it('never presents generic other as relevant even if a response contains rows', () => {
+    expect(relevantView(body({memories: [m('remote_verified')]}), false, 'other')).toEqual({kind: 'empty'});
+  });
+  it('does not hide provider failures behind an empty generic category', () => {
+    expect(relevantView(body({memories: [m('unverified')]}), true, 'other')).toEqual({kind: 'error'});
+    expect(relevantView(body({retrieval_mode: 'unavailable', memories: [m('unverified')]}), false, 'other')).toEqual({kind: 'unavailable'});
+  });
+});

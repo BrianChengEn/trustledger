@@ -750,7 +750,13 @@ try {
   await page.getByRole('combobox').selectOption('largest');
   assert.equal(await page.locator('.txtable tbody tr').count(),100);
   await toToday();
-  await page.getByText(/100 transactions checked by the rules/).waitFor();
+  const insufficient = view.transactions.filter(row => row.direction === 'unknown' && row.settlement_status === 'completed').length;
+  if (insufficient) {
+    await page.getByText(`${insufficient} transactions have insufficient evidence.`,{exact:false}).waitFor();
+    assert.equal(await page.getByText(/100 transactions checked by the rules/).count(),0, 'missing direction must not be presented as fully checked');
+  } else {
+    await page.getByText(/100 transactions checked by the rules/).waitFor();
+  }
   await assertStableScale();
   assert.deepEqual(errors,[]);
   console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, Nessie/BankSim source isolation and generated 100-row user history with identical source IDs, physical paging, details, filters and sorting.');

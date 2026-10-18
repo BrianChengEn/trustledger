@@ -1,13 +1,13 @@
 import {useEffect, useState} from 'react';
 import {labels, money, request, type Explanation, type Alert, type Transaction} from './api';
 import {Icon} from './icons';
-import {alertHints, explanationModeCopy, fullDate, isPriorEvidence, memoryCategory, memorySentence, memoryStore, outcomeCopy, prettyCategory} from './lib';
+import {alertHints, explanationModeCopy, fullDate, isPriorEvidence, memorySentence, memoryStore, outcomeCopy, prettyCategory, ruleCoverage} from './lib';
 import {usePreview} from './preview';
 import {alertIcons, statusText} from './Today';
 import {categoryIcon} from './Activity';
 import Pager from './Pager';
 import RelevantMemoryCard from './RelevantMemoryCard';
-import {useRelevantMemories} from './relevant';
+import {useRelevantMemories, verificationLine} from './relevant';
 import {Callout, Chip} from './ui';
 import {useWorkspace, type Run} from './workspace';
 
@@ -87,7 +87,7 @@ function AiStep({tx, run, stale, fieldCount, onRun, enabled}: {
     {run?.state === 'running' && <div className="airun" role="status"><span className="spinner" aria-hidden="true"/>
       <div><b>Analyzing {tx.merchant_display} · {money(tx.amount)}</b><p>Sending the generalized fields to Jev through Backboard. This can take a few seconds…</p></div></div>}
     {run?.state === 'failed' && <Callout tone="warn" icon="alertTriangle" title="Analysis request failed" role="alert">{run.message}</Callout>}
-    {run?.state === 'done' && <AiResult result={run.result}/>}
+    {run?.state === 'done' && <AiResult result={run.result} coverage={ruleCoverage(tx)}/>}
     {run?.state === 'done' && stale && <Callout tone="neutral" icon="info" title="Your memories changed since this analysis">
       Run it again to include your latest saved preferences as context.</Callout>}
     <div className="actions">
@@ -98,10 +98,10 @@ function AiStep({tx, run, stale, fieldCount, onRun, enabled}: {
   </>;
 }
 
-function AiResult({result}: {result: NonNullable<Extract<Run, {state: 'done'}>['result']>}) {
+function AiResult({result, coverage}: {result: NonNullable<Extract<Run, {state: 'done'}>['result']>; coverage: string}) {
   const prior = result.evidence.some(isPriorEvidence);
   const id = result.request_id.slice(0, 8);
-  const rule = <p className="ruleline"><Icon name="listChecks" size={15}/><span>Rules outcome (authoritative): <b>{labels[result.alert_type]}</b>
+  const rule = <p className="ruleline"><Icon name="listChecks" size={15}/><span>Rules outcome (authoritative): <b>{result.alert_type === 'none' ? coverage : labels[result.alert_type]}</b>
     {result.needs_human ? ', human review required' : ''}. Unchanged by this analysis.</span></p>;
   const context = <p className="ruleline"><Icon name="hardDrive" size={15}/><span>{prior
     ? 'Context used: you previously confirmed this category as normal. It informs the analysis but did not hide the alert.'
@@ -183,40 +183,42 @@ function Decision({alert, tx, enabled}: {alert: Alert; tx: Transaction; enabled:
 
 /** The case file: one transaction explained in depth, with evidence, optional AI and the human decision. */
 export default function Case({id, from}: {id: string; from?: string}) {
-  const {transactions, alerts, runs, analyze, memoryKey, memories, loaded, ready, revision, go, href} = useWorkspace();
+  const {transactions, alerts, runs, analyze, memoryKey, loaded, ready, revision, go, href} = useWorkspace();
   const tx = transactions.find(t => t.id === id);
   const alert = alerts.find(a => a.transaction_id === id);
   const {preview} = usePreview(tx?.id, memoryKey);
+  // Hooks also run while the transaction is loading or missing; the hook gates its request.
+  const relevant = useRelevantMemories(tx?.id, true, tx?.merchant_category);
   if (!tx) return loaded ? <div className="page"><div className="empty"><Icon name="search" size={24}/>
     <p>That transaction was not found.</p><button onClick={() => go({view: 'activity'})}>Back to Activity</button></div></div>
     : <p className="loading" role="status">Loading…</p>;
   const run = runs[tx.id];
-  // The facts note and the Relevant memory card follow the same fresh result; an error or unavailable result shows neither.
-  const relevant = useRelevantMemories(tx.id, !!alert);
   const memory = relevant.view.kind === 'found' ? relevant.view.memories[0] : undefined;
   const backTo = from === 'activity' ? 'Activity' : 'Today';
   return <div className="page case">
     <header className="casehead">
       <button className="back" onClick={() => go({view: from === 'activity' ? 'activity' : 'today'})}><Icon name="arrowLeft" size={15}/>{backTo}</button>
       <span className={'icontile large' + (alert?.status === 'open' ? ' alert' : '')}><Icon name={alert ? alertIcons[alert.alert_type] : categoryIcon(tx.merchant_category)} size={26}/></span>
-      <div className="casetitle"><div className="eyebrow">{!ready ? 'Analysis unavailable' : alert ? labels[alert.alert_type] : 'No alert'}</div><h1>{tx.merchant_display}</h1></div>
+      <div className="casetitle"><div className="eyebrow">{!ready ? 'Analysis unavailable' : alert ? labels[alert.alert_type] : ruleCoverage(tx)}</div><h1>{tx.merchant_display}</h1></div>
       <div className="caseamount"><strong>{money(tx.amount)}</strong>{alert && <small>{statusText[alert.status]}</small>}</div>
     </header>
     <aside className="facts" aria-label="Transaction details">
       <dl>
         <div><dt>When</dt><dd>{tx.date_only ? tx.occurred_at.slice(0, 10) + ' (date only)' : fullDate(tx.occurred_at)}</dd></div>
         <div><dt>Category</dt><dd>{prettyCategory(tx.merchant_category)}</dd></div>
-        <div><dt>Type</dt><dd>{tx.kind === 'purchase' ? (tx.is_subscription ? 'Recurring subscription' : 'One-time purchase') : tx.kind} · {tx.direction === 'unknown' ? 'Direction unknown' : tx.direction}</dd></div>
+        <div><dt>Type</dt><dd>{tx.kind === 'purchase' ? (tx.source === 'nessie' ? 'Purchase (subscription evidence unavailable)' : tx.is_subscription ? 'Recurring subscription' : 'One-time purchase') : tx.kind} · {tx.direction === 'unknown' ? 'Direction unknown' : tx.direction}</dd></div>
         <div><dt>Data source</dt><dd>{tx.source === 'synthetic' ? 'Synthetic fixture' : 'Capital One Nessie sandbox'}</dd></div>
         <div><dt>Reference</dt><dd className="mono">{tx.id}</dd></div>
       </dl>
-      {memory && (() => { const s = memoryStore(memory.source); return <div className="memnote">
+      {memory && <div className="memnote">
         <Icon name="hardDrive" size={16}/><div><b>You told TrustLedger this category is normal</b>
-          <p>{s.label}. Context only; it does not hide alerts. <a href={href({view: 'memory'})}>Manage in Memory</a></p></div></div>; })()}
+          <p>{memoryStore(memory.source).label}. {verificationLine(memory.verification)} Context only; it does not hide alerts.
+            {' '}<a href={href({view: 'memory'})}>Manage in Memory</a></p></div>
+      </div>}
     </aside>
     <div className="steps">
       <Step n={1} title={alert ? 'Why it was flagged' : 'What was checked'} tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
-        {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still ask for a plain-language explanation or run an AI second opinion.</p>}
+        {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>{ruleCoverage(tx)}. Only supported checks can run: completed debits support the amount rule; Nessie merchant grouping and subscription evidence are unavailable. An absent alert is not evidence that a transaction is safe.</p>}
         <ExplanationPanel key={revision} tx={tx}/>
       </Step>
       <Step n={2} title="AI second opinion" tag={<Chip tone="ai" icon="sparkles">Optional</Chip>}>
@@ -224,7 +226,8 @@ export default function Case({id, from}: {id: string; from?: string}) {
           enabled={ready} fieldCount={preview ? Object.keys(preview.safe_payload).length : null} onRun={() => void analyze(tx.id)}/>
       </Step>
       <div className="rightcol">
-        {ready && alert && <RelevantMemoryCard view={relevant.view} retry={relevant.retry} category={tx.merchant_category}/>}
+        <RelevantMemoryCard view={relevant.view} retry={relevant.retry} category={tx.merchant_category}
+          failure={relevant.result?.failure} requiresReview={alert?.status === 'open'}/>
         <Step n={3} title="Your decision">
           {ready && alert ? <Decision alert={alert} tx={tx} enabled={ready}/> : <p>{ready ? 'Nothing to decide: no alert exists for this charge.' : 'Refresh before making a decision.'}</p>}
         </Step>

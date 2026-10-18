@@ -25,9 +25,12 @@ def approved_memory(summary: str) -> bool:
 
 def prior_confirmation(category: str, summaries: list[str]) -> Literal["normal", "review", "unknown"]:
     """Map a consented category sentence to a safe label. Review and opt-out write nothing."""
-    label = category if category in CATEGORIES else "other"
+    # Missing category evidence cannot establish similarity between unrelated records.
+    if category not in CATEGORIES or category == 'other':
+        return "unknown"
+    label = category
     for summary in summaries:
-        if not summary.startswith(_PREFIX) or _MARK not in summary:
+        if not approved_memory(summary):
             continue
         found = summary[len(_PREFIX):].split(_MARK, 1)[0]
         if found == label:
