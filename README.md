@@ -133,6 +133,39 @@ The BankSim CSV stays outside Git. With the checked 4,112-customer CSV and 18-ac
 
 Offline labels are stored separately under ignored `evaluation/datasets/account-demo-labels`: 4,979 original BankSim positive cases and 22 explicitly simulated Nessie positives, about 1.2109% combined. Each account has one or two positive slots; exact 1.2108% is impossible in 100 integer rows. Labels never enter runtime SQLite, the browser, rules, Gemini, Jev or Backboard. BankSim preserves EUR and simulation days; Nessie uses only its own account's templates and preserves USD, date precision and unknown direction. Generated histories are constructed examples, not original customer histories or measured detector accuracy. Databases and offline labels are not distributed in the PR; collaborators supply their local synthetic source files.
 
+### Share the same account snapshot through GitHub Releases
+
+Git tracks the schema, generator, and installer. A versioned **dataset Release** distributes the two generated SQLite snapshots without adding databases to Git history. Teammates download the same starting transactions; their later confirmations and memories remain independent. No live provider key or original CSV is needed to install a snapshot. Repository access is required for the private Release.
+
+In a fresh checkout containing this installer, run `bash scripts/bootstrap-mac.sh`, then download both assets from the selected dataset Release. For the first bundle:
+
+```bash
+gh release download dataset-2026-10-18-v1 --repo BrianChengEn/trustledger \
+  --pattern 'trustledger-account-demo-2026-10-18-v1.zip*' --dir artifacts/account-demo-download
+backend/.venv/bin/python scripts/account_demo_bundle.py install \
+  --archive artifacts/account-demo-download/trustledger-account-demo-2026-10-18-v1.zip \
+  --sha256 "$(cut -d ' ' -f 1 artifacts/account-demo-download/trustledger-account-demo-2026-10-18-v1.zip.sha256)"
+```
+
+Use the Release's tagged code (or the sharing-tool PR before merge); older main checkouts lack this installer. Obtain the checksum from the authenticated, trusted Release alongside the archive. Installation checks it before opening the archive, accepts only the five documented members, validates SQLite integrity/schema/counts, and publishes a complete batch under `backend/data/sources/account-demo`. It rejects existing directories and symlinks. To preserve an existing batch, use `--output-dir backend/data/another-source/sources/account-demo` and start the backend with `SOURCE_DATABASE_DIR` set to the absolute path of `backend/data/another-source/sources`. Stop the backend before installing or changing source directories.
+
+Start the backend and frontend normally, sign in as Admin when login is enabled, and use **Data sources → 交易資料來源** to select a BankSim or Nessie account. The first full snapshot contains 4,112 BankSim accounts/411,200 rows and 18 Nessie accounts/1,800 rows. The ordinary product demo still has 18 transactions; the optional selected-account user workspace is a separate change in PR #34. This download does not activate live Nessie or AI services. `DATASET-INFO.json` records the compatible code commit, generator version, original/exported fingerprints and counts; retain it and `LICENSE-BANKSIM.txt` with the installed batch.
+
+Maintainers create a new snapshot with the existing backend environment:
+
+```bash
+backend/.venv/bin/python scripts/account_demo_bundle.py pack \
+  --source-dir backend/data/sources/account-demo \
+  --output artifacts/trustledger-account-demo-YYYY-MM-DD-vN.zip \
+  --code-ref FULL_COMPATIBLE_CODE_COMMIT_SHA
+```
+
+Pack reads a closed, complete generator batch whose fingerprints match its manifest. It refuses noncanonical tables, review/prediction/cache rows, and SQLite sidecars. It copies and revalidates the exact manifest-addressed database bytes, compacts them to remove deleted-page remnants, replaces Nessie credential-scoped provenance owners with opaque local bindings, and preserves all transaction IDs, amounts, currencies, dates, directions, kinds, and source-record provenance. Exported database fingerprints therefore differ from the originals. It includes source attribution and the repository-recorded CC BY-NC-SA 4.0 terms for BankSim-derived data. Original CSVs, product databases, confirmations, memories, credentials, and offline labels are excluded. The available first snapshot's BankSim input fingerprint is `ad04de75f3e95e45a04ddba1d7780e66aa812eaf7d21af33883a744c95989a67`; it is recorded as its own input identity, not relabelled as the different original fingerprint in `data/manifests/banksim.yaml`.
+
+The installer reserves a fresh directory and publishes its `manifest.json` readiness marker last. An ordinary failure removes only its own staged files. A process crash can leave an unpublished directory; preserve it for inspection and choose a fresh destination on retry. No existing dataset is replaced.
+
+After validating an install and reviewing the contents, attach the ZIP and its `.sha256` sidecar to a new private-repository dataset Release pinned to the reviewed code commit. Never replace an existing dataset version or commit the generated artifacts. Changes to source inputs require a new dataset version. Bundle tooling and verification were assisted by OpenAI Codex.
+
 ## Tests
 
 ```bash

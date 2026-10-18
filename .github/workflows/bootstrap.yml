@@ -1,7 +1,5 @@
 name: Bootstrap and verify starter
 on:
-  push:
-    paths: ['starter-source.zip', '.github/workflows/bootstrap.yml']
   workflow_dispatch:
 permissions:
   contents: write
