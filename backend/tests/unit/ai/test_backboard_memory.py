@@ -7,8 +7,8 @@ import httpx
 from app.adapters.synthetic import load_transactions
 from app.core.store import Store
 from app.services.ai.backboard_client import (
-    ASSISTANT_NAME, MemoryCallError, add_memory, delete_memory, get_memory, parse_created,
-    parse_search, search_memories,
+    ASSISTANT_NAME, MemoryCallError, add_memory, delete_memory, get_memory, list_memories,
+    parse_created, parse_search, search_memories,
 )
 from app.services.ai.memory_policy import approved_memory, memory_sentence
 from app.services.ai.memory_sync import consented_summaries, write_consented_memory as write_placed_memory
@@ -90,6 +90,61 @@ def test_missing_key_and_unsafe_content_make_no_request():
                 raise AssertionError("missing key was ignored")
 
     asyncio.run(run())
+
+
+def test_auth_rate_limit_and_timeout_expose_only_codes():
+    """401, 429, and transport errors stay codes. Provider bodies are not kept."""
+
+    def handler(status):
+        def respond(_request: httpx.Request) -> httpx.Response:
+            if status == "timeout":
+                raise httpx.ReadTimeout("secret timeout text")
+            return httpx.Response(status, json={"detail": "secret-body"})
+        return respond
+
+    async def run():
+        found = {}
+        for status, expected in ((401, "rejected"), (429, "rejected"), (503, "request_failed"),
+                                 ("timeout", "request_failed")):
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handler(status))) as client:
+                try:
+                    await list_memories(ASSISTANT_A, KEY, client=client)
+                except MemoryCallError as exc:
+                    found[status] = str(exc)
+                else:
+                    found[status] = "accepted"
+        return found
+
+    found = asyncio.run(run())
+    assert found == {401: "rejected", 429: "rejected", 503: "request_failed", "timeout": "request_failed"}
+    assert all("secret" not in code for code in found.values())
+
+
+def test_rate_limit_marks_memory_failed_not_live(tmp_path):
+    store = Store(tmp_path / "rate.db")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST" and request.url.path == "/api/assistants":
+            return httpx.Response(200, json={
+                "name": ASSISTANT_NAME, "assistant_id": ASSISTANT_A,
+                "created_at": "2026-10-17T00:00:00Z",
+            })
+        if request.method == "GET":
+            return httpx.Response(200, json={"memories": [], "total_count": 0})
+        return httpx.Response(429, json={"detail": "secret-body"})
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await write_consented_memory(store, "owner-rate", STREAMING, KEY, client)
+
+    placed = asyncio.run(run())
+    assert placed.status == "failed" and placed.outcome == "degraded"
+    assert placed.source == "local-fallback"
+    assert store.list_memories("owner-rate")[0].source == "local-fallback"
+    with store.connect() as db:
+        state = db.execute("SELECT state FROM memory_jobs WHERE owner=?",
+                           ("owner-rate",)).fetchone()["state"]
+    assert state == "failed"
 
 
 def test_add_get_search_delete_and_provider_failure():

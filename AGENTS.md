@@ -23,6 +23,8 @@ or `feat/local-memory-feedback`.
   inference memory stays off. Admin sandbox reads and the explicit SQLite baseline
   CLI are implemented. A missing key uses rules-only/local-fallback; failed calls
   are degraded and must not be labeled rules+jev-live or backboard-live.
+  `bash scripts/check.sh` must not call Backboard. The opt-in live memory test is
+  `BACKBOARD_LIVE_TEST=1` pytest `backend/tests/integration/test_backboard_live.py`.
 - Local memory must be labelled local-fallback; only write after normal confirmation + consent.
 - Run bash scripts/check.sh. Do not claim tests pass if dependencies could not be installed.
 - Never commit node_modules, .venv, .env, databases, or credentials.
