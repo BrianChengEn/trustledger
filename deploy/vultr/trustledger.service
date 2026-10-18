@@ -1,0 +1,24 @@
+[Unit]
+Description=TrustLedger restricted synthetic demo
+After=network.target
+
+[Service]
+User=trustledger
+Group=trustledger
+WorkingDirectory=/opt/trustledger/current/backend
+EnvironmentFile=/etc/trustledger/runtime.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONPATH=/opt/trustledger/current/backend
+ExecStartPre=/opt/trustledger/current/backend/.venv/bin/python /opt/trustledger/current/deploy/vultr/preflight.py
+ExecStart=/opt/trustledger/current/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/trustledger
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,95 @@
+TrustLedger: restricted Vultr release (prepared, NOT deployed)
+
+Release model
+One Ubuntu 24.04 Cloud Compute VM, Nginx TLS/static React, systemd with one
+loopback Uvicorn worker. SQLite and source stores stay in /var/lib/trustledger.
+No vendor keys; synthetic, rules-only, local-fallback memory. Every web/API
+request requires private evaluator HTTP Basic credentials over HTTPS, followed
+by the application's user passcode. Admin sign-in is disabled; local-only
+admin editing and data-source APIs remain blocked. Admin workflows therefore
+are NOT part of the first public demo. This is a shared-owner evaluator demo,
+not production multi-user financial authentication. Do not claim all success
+criteria until external checks pass and any required admin scope is agreed.
+
+Account gate BEFORE provisioning
+Sign in to the account owner's Vultr console. Verify email, credit eligibility
+through the official event/sponsor offer (no assumed promo code), actual credit
+balance/expiry and payment requirements. Record the selected plan, region,
+vCPU/RAM/storage, hourly/monthly price, IPv4 and optional fees in private release
+notes. Target one shared CPU, 1 GB RAM or 2 GB if required, no GPU; prefer nearby
+New Jersey if available. Calculate expected hours x quoted hourly price, with
+extras separately. Public pricing could not be retrieved (HTTP 403); do not
+use a guessed rate. Obtain owner's explicit billing approval before creating
+anything. No resources have been provisioned by this configuration.
+
+Host setup AFTER account/billing approval
+Use an SSH public key. Create a non-root deployment account with key access and
+sudo; verify that account before disabling password/root SSH. In BOTH Vultr
+firewall and UFW allow TCP 22 only from operator IP and TCP 80/443 publicly.
+Never allow 8000. Keep the working SSH session open while testing firewall.
+Install nginx, apache2-utils, certbot, python3-venv, git, and verified Node 22.12+
+from trusted repositories. Build uses locks; no frontend env or provider keys.
+Create service user trustledger with no login. Create /opt/trustledger/releases
+owned by the deployment account, /var/lib/trustledger mode 0700 owned by
+trustledger, and /etc/trustledger mode 0750 root:www-data.
+
+Secrets, DNS and TLS
+Point an approved hostname A record at the VM; remove stale AAAA unless IPv6 is
+configured. Do not buy a domain without approval. Stop nginx initially and use
+certbot certonly --standalone -d APPROVED_HOST with the owner's ACME agreement
+and contact email. Keep port 80 reachable for renewals; configure the certbot
+renewal web server hooks to stop nginx before standalone renewal and restart it
+afterwards. Test certbot renew --dry-run after setup; check the renewal timer.
+Create /etc/trustledger/evaluators.htpasswd using htpasswd -cB interactively;
+root:www-data mode 0640. Share the evaluator credential privately with judges.
+Copy runtime.env.example to /etc/trustledger/runtime.env root:root mode 0600.
+Generate a random 32-byte hex session secret and separate >=16-character user
+passcode privately. Do not print them in reports or logs. Replace the hostname.
+Do NOT add a vendor key or admin passcode; preflight deliberately rejects them.
+
+Activation (requires a tested SHA AND explicit release-owner approval)
+Clone the private repository as the deployment account with its approved GitHub
+access; do not embed tokens in URLs. Fetch the deployment PR ref but do not merge
+it automatically. Review the PR and exact tested SHA. Copy trustledger.service
+to /etc/systemd/system; copy trustledger-proxy.conf to /etc/nginx/; substitute the
+hostname in nginx.conf.template into /etc/nginx/conf.d/trustledger.conf. Disable
+the default nginx site. Run nginx -t before starting nginx. Run systemctl
+daemon-reload and systemctl enable trustledger. As the deployment account run:
+  bash deploy/vultr/release.sh TESTED_FULL_SHA APPROVED_FULL_SHA
+Then start nginx. The SHA arguments must match; supplying them is an operator
+assertion, not independent proof of review. Configuration remains in the
+unmerged deployment PR until the team explicitly merges it. Deployment from it
+must be explicitly approved; main alone does not contain these runtime files.
+
+Rollback
+Record the last EXTERNALLY verified SHA privately. The previous symlink records
+the prior locally healthy release only. Run rollback.sh VERIFIED_FULL_SHA to
+switch code. Both release and rollback retain /var/lib/trustledger unchanged.
+Release backs up all existing SQLite stores consistently while service is
+stopped. Never copy a demo DB into the persistent directory, run reset, restore
+a backup over live data, or run schema-changing releases without review. A
+future incompatible schema change requires a separate rollback decision. Keep
+old release folders; do not delete the last verified one. Backups are root-only.
+
+External release gate and submission evidence
+From a separate machine/browser verify all of these and record actual outcomes:
+- HTTP redirects without accepting credentials; HTTPS certificate is valid.
+- No evaluator credentials: /, /api/v1/transactions and /health return 401.
+- Evaluator credentials but no app session: transactions, POST analyses,
+  explanations and memory APIs reject requests with 401.
+- Wrong app passcode fails; correct user login works. Cookie has Secure,
+  HttpOnly and SameSite=Strict. User can load 18 transactions, alerts, Privacy,
+  Memory and submit a consented local review. No provider network requests.
+- Refresh React routes; test navigation in the built frontend, not Vite.
+- User/unauthenticated admin and data-source requests return 403 at proxy.
+- Direct port 8000 is unreachable externally. Dotfiles/docs/DB not served.
+- A controlled burst reaches 429. Do not load-test paid providers.
+- Restart systemd and repeat transaction/review/memory reads to prove persistence.
+- Inspect logs privately for secret leakage; do not publish raw logs or cookies.
+- Record actual URL, full SHA, Vultr instance ID/region/plan, redacted console
+  evidence and verified outcomes for Devpost BEFORE optional integrations.
+
+Provider activation is separate: Brian must approve paid Jev/Gemini/Backboard
+verification; Kenny owns Nessie enablement. Ian's PR #30 is already on the base;
+no frontend changes are needed for the synthetic release. PR #34 is excluded.
+Do not merge superseded PR #23 or #26. No production provider is verified here.
