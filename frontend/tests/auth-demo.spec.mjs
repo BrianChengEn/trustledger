@@ -116,9 +116,6 @@ try {
   await guest.getByRole('button', {name: 'Changes', exact: false}).click();
   await guest.locator('.changes li').first().waitFor();
   await assertNoScroll(guest, 'change log');
-  await guest.getByRole('link', {name: /^Memory/}).click();
-  await guest.getByRole('heading', {name: /allowed it to remember/}).waitFor();
-  await assertNoScroll(guest, 'admin memory');
   await guest.getByRole('link', {name: /Data sources/}).click();
   await assertNoScroll(guest, 'data sources');
 

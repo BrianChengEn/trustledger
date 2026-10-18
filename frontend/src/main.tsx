@@ -44,7 +44,6 @@ const userNav: NavItem[] = [
 ];
 const adminNav: NavItem[] = [
   {view: 'admin', label: 'Demo data', icon: 'pencil'},
-  {view: 'memory', label: 'Memory', icon: 'hardDrive'},
   {view: 'sources', label: 'Data sources', icon: 'database', id: 'NAV-ADMIN'},
 ];
 
@@ -118,13 +117,12 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
   const sources = mode === 'admin' && (route.view === 'sources' || !!route.customer);
   const adminPage = mode === 'admin' && route.view === 'admin';
   // Each role only sees its own pages; anything else goes home.
-  const adminMemory = mode === 'admin' && route.view === 'memory';
-  const allowed = mode === 'admin' ? adminPage || sources || adminMemory : route.view !== 'admin' && route.view !== 'sources' && !route.customer;
+  const allowed = mode === 'admin' ? adminPage || sources : route.view !== 'admin' && route.view !== 'sources' && !route.customer;
   useEffect(() => {
     if (!allowed) go(mode === 'admin' ? {view: 'admin'} : {view: 'today'});
   }, [allowed, mode]);
-  const active = sources ? 'sources' : adminPage ? 'admin' : adminMemory ? 'memory' : route.view === 'case' ? 'today' : route.view;
-  const badge = (view: Route['view']) => mode === 'user' ? (view === 'today' ? open : view === 'memory' ? memories.length : 0) : view === 'memory' ? memories.length : 0;
+  const active = sources ? 'sources' : adminPage ? 'admin' : route.view === 'case' ? 'today' : route.view;
+  const badge = (view: Route['view']) => mode === 'user' ? (view === 'today' ? open : view === 'memory' ? memories.length : 0) : 0;
 
   // Sub-features shown in the drop-down menus (each jumps straight to the right place).
   const firstOf = (type: Alert['alert_type']) => alerts.find(a => a.alert_type === type)?.transaction_id;
@@ -139,11 +137,6 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
       {heading: 'Demo data', items: [
         {label: 'Charges', hint: 'Add, edit or delete synthetic charges', icon: 'wallet', go: () => go({view: 'admin'})},
         {label: 'Change log', hint: 'Every edit, scenario and reset', icon: 'clock', go: () => go({view: 'admin', tab: 'log'})},
-      ]},
-    ]},
-    memory: {eyebrow: 'MEMORY', title: 'What the user allowed.', blurb: 'Saved category preferences. Delete one here before resetting the demo.', groups: [
-      {heading: 'Saved preferences', items: [
-        {label: 'Saved preferences', hint: `${memories.length} stored`, icon: 'hardDrive', go: () => go({view: 'memory'})},
       ]},
     ]},
     sources: {eyebrow: 'DATA SOURCES', title: 'Where transactions come from.', blurb: 'The workspace works the same whichever source feeds it.', groups: [
@@ -230,7 +223,7 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
       </div>
     </header>
     <main id="main">
-      {((mode === 'user' && allowed) || adminMemory) && <WorkspaceView route={route}/>}
+      {mode === 'user' && allowed && <WorkspaceView route={route}/>}
       {adminPage && <AdminDemo/>}
       {auth.session.role === 'admin' && <div hidden={!sources} className="adminview"><SourcesIntro/><Admin active={sources}/></div>}
     </main>
