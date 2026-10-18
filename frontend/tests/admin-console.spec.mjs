@@ -714,8 +714,12 @@ try {
     visible.forEach(index=>visited.add(index));
     if (await next.isDisabled()) break;
     const before = await page.locator('.activity .pager span').innerText();
+    const target = await page.locator('.activity .tablewrap').evaluate((el, page) =>
+      Math.min(el.scrollHeight - el.clientHeight, page * el.clientHeight), Number(before.split('/')[0]));
     await next.click();
     await page.waitForFunction(before=>document.querySelector('.activity .pager span').textContent!==before,before);
+    // The page label rounds during smooth scrolling; inspect rows only at the destination.
+    await page.waitForFunction(target=>Math.abs(document.querySelector('.activity .tablewrap').scrollTop-target)<=1,target);
   }
   assert(await next.isDisabled(),'all history pages terminate');
   assert.equal(visited.size,100,'each history row is reachable through the physical Pager');

@@ -66,8 +66,12 @@ def test_account_demo_requires_explicit_valid_selection_and_fails_closed(tmp_pat
             assert client.post('/api/v1/workspace/refresh', json={}).status_code == 503
     store = AccountDataset(target / 'nessie.db', 'nessie')
     with store.connect() as db:
-        db.execute('DELETE FROM account_origins WHERE transaction_id=(SELECT min(id) FROM transactions)')
-        db.execute('DELETE FROM transactions WHERE id=(SELECT min(id) FROM transactions)')
+        code = 'acct_' + '0' * 32
+        selected = db.execute('SELECT owner,id FROM transactions WHERE account_token=? ORDER BY id LIMIT 1',
+                              (code,)).fetchone()
+        db.execute('DELETE FROM account_origins WHERE owner=? AND transaction_id=?', tuple(selected))
+        db.execute('DELETE FROM transactions WHERE owner=? AND id=?', tuple(selected))
+        assert db.execute('SELECT count(*) FROM transactions WHERE account_token=?', (code,)).fetchone()[0] == 99
     app = create_app(Settings(_env_file=None, database_path=tmp_path / 'product.db',
                              transaction_provider='account-demo', demo_account_token='acct_' + '0' * 32))
     with TestClient(app, base_url='http://127.0.0.1') as client:
