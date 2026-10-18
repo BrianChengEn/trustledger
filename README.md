@@ -104,6 +104,20 @@ Shared steps, role-specific keys, and fixes: [TEAM-SETUP-60MIN.md](TEAM-SETUP-60
 
 Explicit synthetic transfer setup is available from `backend/` with `.venv/bin/python -m app.adapters.seed_nessie --transfers`. It requires the selected Nessie provider, backend key and confirmed existing baseline account mappings. It retains existing transfers, adds only the deficit to 10 per account, and verifies each creation through readback. Repeating the verified setup created zero records. The current sandbox has 18 accounts and 180 transfers. Ordinary browsing and refresh never create banking records; genuine provider failures still stop connected actions.
 
+## Sign in (user and admin)
+
+The app opens on a sign-in page. Choose **User** or **Admin**, then type the passcode set in `backend/.env`
+(copy `backend/.env.example`; that file is git-ignored):
+
+| Role | Sees | Passcode setting |
+| --- | --- | --- |
+| User | Today, Activity, Privacy, Memory | `DEMO_USER_PASSCODE` |
+| Admin | Demo data editor (add, edit, delete charges, inject scenarios, reset), Data sources (Nessie console), "Preview as user" | `DEMO_ADMIN_PASSCODE` |
+
+Set `REQUIRE_LOGIN=true`, `ALLOW_DEMO_EDIT=true` and a random `SESSION_SECRET`, then restart the backend. This is a
+localhost demo gate, not production authentication. Admin edits only change synthetic data; the first edit makes a
+`.pre-demo-edit.bak` copy of the database, and **Reset demo** restores the original 18 charges.
+
 ## Tests
 
 ```bash

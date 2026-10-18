@@ -22,6 +22,11 @@ HISTORY_SCHEMA = """CREATE TABLE IF NOT EXISTS query_history (
 )"""
 
 
+DEMO_COLUMNS = ("owner,id,occurred_at,amount_cents,currency,direction,merchant_display,merchant_category,"
+                "source,account_token,is_subscription,kind")
+DEMO_INSERT = f"INSERT INTO demo_transactions ({DEMO_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)"
+
+
 class ConflictingConfirmation(Exception):
     pass
 
@@ -32,6 +37,7 @@ class Store:
     def __init__(self, filename: Path):
         filename.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.filename = filename
+        self._backup_before_demo_edit()
         self.lock = threading.Lock()
         with self.connect() as db:
             db.executescript("""
@@ -138,6 +144,15 @@ class Store:
             if 'kind' not in demo_columns:
                 db.execute("ALTER TABLE demo_transactions ADD COLUMN kind TEXT NOT NULL DEFAULT 'purchase' "
                            "CHECK(kind IN ('purchase','transfer','deposit','withdrawal'))")
+            if 'origin' not in demo_columns:
+                db.execute("ALTER TABLE demo_transactions ADD COLUMN origin TEXT NOT NULL DEFAULT 'baseline' "
+                           "CHECK(origin IN ('baseline','admin'))")
+            if 'edited_at' not in demo_columns:
+                db.execute("ALTER TABLE demo_transactions ADD COLUMN edited_at TEXT")
+            db.execute("""CREATE TABLE IF NOT EXISTS demo_edit_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL, at TEXT NOT NULL,
+                action TEXT NOT NULL CHECK(action IN ('create','update','delete','scenario','reset')),
+                tx_id TEXT, summary TEXT NOT NULL CHECK(length(summary) <= 200))""")
             movement_schema = db.execute("SELECT sql FROM sqlite_master "
                                          "WHERE name='workspace_movements'").fetchone()[0]
             if "'unknown'" not in movement_schema:
@@ -210,6 +225,23 @@ class Store:
             db.execute("CREATE INDEX IF NOT EXISTS history_owner ON query_history(owner,id)")
         filename.chmod(0o600)
 
+    def _backup_before_demo_edit(self) -> None:
+        """Before the first admin-edit migration, keep one untouched copy of an existing database that has data."""
+        if not self.filename.exists():
+            return
+        backup = self.filename.with_name(self.filename.stem + '.pre-demo-edit.bak')
+        try:
+            with sqlite3.connect(self.filename) as source:
+                columns = {row[1] for row in source.execute('PRAGMA table_info(demo_transactions)')}
+                has_rows = bool(columns) and source.execute('SELECT COUNT(*) FROM demo_transactions').fetchone()[0] > 0
+                if not has_rows or 'origin' in columns or backup.exists():
+                    return
+                with sqlite3.connect(backup) as target:
+                    source.backup(target)
+            backup.chmod(0o600)
+        except sqlite3.DatabaseError:
+            pass  # An unreadable file is left for the normal startup path to report.
+
     @contextmanager
     def connect(self, *, timeout: float = 5):
         connection = sqlite3.connect(self.filename, timeout=timeout)
@@ -236,7 +268,7 @@ class Store:
             initialized = db.execute("INSERT OR IGNORE INTO demo_transaction_sets VALUES(?,?)",
                                      (owner, "synthetic-v2")).rowcount
             if initialized:
-                db.executemany("INSERT INTO demo_transactions VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", values)
+                db.executemany(DEMO_INSERT, values)
             elif db.execute('SELECT version FROM demo_transaction_sets WHERE owner=?',
                             (owner,)).fetchone()[0] == 'synthetic-v1':
                 existing = db.execute('SELECT id,account_token,kind FROM demo_transactions WHERE owner=?',
@@ -247,12 +279,12 @@ class Store:
                     ids = {row['id'] for row in existing}
                     additions = [row for row in values if row[9] == account and row[11] == 'transfer'
                                  and row[1] not in ids][:missing]
-                    db.executemany('INSERT INTO demo_transactions VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', additions)
+                    db.executemany(DEMO_INSERT, additions)
                 db.execute("UPDATE demo_transaction_sets SET version='synthetic-v2' WHERE owner=?", (owner,))
 
     def list_transactions(self, owner):
         with self.connect() as db:
-            rows = db.execute("SELECT * FROM demo_transactions WHERE owner=? ORDER BY id",
+            rows = db.execute(f"SELECT {DEMO_COLUMNS} FROM demo_transactions WHERE owner=? ORDER BY id",
                               (owner,)).fetchall()
         result = []
         for stored in rows:

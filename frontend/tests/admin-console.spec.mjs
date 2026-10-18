@@ -30,7 +30,7 @@ const apiStates = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js',
     'frontend', '--host', '127.0.0.1', '--port', '5174'],
-    {VITE_API_BASE_URL: 'http://127.0.0.1:8123'});
+    {API_PROXY_TARGET: 'http://127.0.0.1:8123'});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH: 'backend',
       TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: 'http://127.0.0.1:5174'});
@@ -57,6 +57,11 @@ try {
     });
     assert.deepEqual(sample.scales,[sample.expected],'data and button actions must not shrink the page');
   }
+  // Shortcut menus open on click (the caret beside a tab), never on hover, so they cannot cover the workspace unexpectedly.
+  async function openMenu(label) {
+    await page.getByRole('button',{name:`Show ${label} shortcuts`,exact:true}).click();
+    await page.getByRole('region',{name:`${label} features`,exact:true}).waitFor();
+  }
   let queryCalls = 0;
   let deletes = 0;
   let analysisCalls = 0;
@@ -64,6 +69,10 @@ try {
   async function appPage() {
     const next = await browser.newPage({viewport: {width:1440,height:1000},reducedMotion:'reduce'});
     next.setDefaultTimeout(5000);
+    // Same-origin through the Vite proxy so the sign-in cookie is sent; the browser session is an admin.
+    const signedIn = await next.request.post('http://127.0.0.1:5174/api/v1/auth/login',
+      {data: {role: 'admin', passcode: 'browser-admin-pass'}});
+    assert.equal(signedIn.status(), 200, 'test admin sign-in');
     next.on('pageerror', error => errors.push(error.message));
     next.on('request', req => {
       if (req.url().endsWith('/admin/nessie/query')) queryCalls++;
@@ -80,12 +89,34 @@ try {
       new URL(route.request().url()).hostname) ? route.continue() : route.abort());
     return next;
   }
+  // The admin console and the user's screens are different modes now; these helpers switch between them.
+  async function toConsole() {
+    const back = page.getByRole('button',{name:'Back to admin',exact:true});
+    if (await back.count()) await back.click();
+    await page.locator('#NAV-ADMIN').click();
+  }
+  async function toUser(name) {
+    const preview = page.getByRole('button',{name:'Preview as user',exact:true});
+    if (await preview.count()) await preview.click();
+    await page.locator('.topbar').getByRole('link',name instanceof RegExp?{name}:{name,exact:true}).click();
+  }
+  async function toToday() {
+    const preview = page.getByRole('button',{name:'Preview as user',exact:true});
+    if (await preview.count()) await preview.click();
+    await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  }
+  // Pages that start on the user's screens open in the admin's "Preview as user" mode.
+  async function userGoto(target, url) {
+    await target.addInitScript(() => { try { if (!sessionStorage.getItem('e2e-init')) { sessionStorage.setItem('e2e-init', '1'); sessionStorage.setItem('trustledger.preview', '1'); } } catch {} });
+    await target.goto(url);
+    await target.evaluate(() => sessionStorage.setItem('e2e-init', '1'));
+  }
   page = await appPage();
   await page.goto('http://127.0.0.1:5174');
+  await page.getByRole('button',{name:'Preview as user',exact:true}).click();
   await page.getByRole('link', {name: /^Today/}).waitFor();
   await page.locator('.startcard').waitFor();
-  await page.locator('#NAV-ADMIN').hover();
-  await page.getByRole('region',{name:'Data sources features',exact:true}).waitFor();
+  await openMenu('Today');
   assert.equal(await page.locator('.scrim').count(),0,'hover menus must not blur or cover the workspace');
   await assertStableScale();
   mkdirSync(join(root,'artifacts'),{recursive:true});
@@ -93,7 +124,7 @@ try {
   await page.mouse.move(0,0);
   assert.equal(await page.locator('.workspacebar').count(), 0,
     'backend integration must preserve the approved UI without an added workspace toolbar');
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   await page.locator('#V-QUERY').waitFor();
   await page.getByRole('heading',{name:'This workspace',exact:true}).waitFor();
   assert.equal(await page.locator('#Q-FUNC option').count(), 8);
@@ -118,9 +149,7 @@ try {
   const account = accountResult.response_body[0].resource_id;
   assert.match(customer, /^customer_[0-9a-f]{32}$/);
   assert.match(account, /^acct_[0-9a-f]{32}$/);
-  const overview = await (await fetch('http://127.0.0.1:8123/api/v1/workspace/refresh', {
-    method:'POST',headers:{'content-type':'application/json','origin':'http://127.0.0.1:5174'},body:'{}',
-  })).json();
+  const overview = await (await page.request.post('http://127.0.0.1:5174/api/v1/workspace/refresh', {data:{}})).json();
   for (const row of overview.accounts) {
     assert(accountResult.response_body.some(account=>account.resource_id===row.account_token));
     assert.equal(overview.transactions.filter(tx=>tx.account_token===row.account_token&&tx.kind==='transfer').length,10);
@@ -152,7 +181,7 @@ try {
   await queryTable.evaluate(element=>{
     element.removeAttribute('style'); element.parentElement.removeAttribute('style');
   });
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser('Activity');
   await page.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
   assert.equal(await page.locator('.account-context').count(),0);
   assert.equal(await page.locator('.inspect').count(),0);
@@ -187,12 +216,12 @@ try {
     assert.equal(await ledger.locator('tbody tr').first().locator('td.amount').innerText(),'$849.00');
   }
   await checkLedgerPages();
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   assert((await page.locator('#Q-RESULT').innerText()).includes('transfers.by_account'));
   await page.locator('#Q-FUNC').selectOption('accounts.get');
   assert.equal(await page.locator('#Q-ID').evaluate(element=>element.tagName),'SELECT');
   assert(await page.locator('#Q-RUN').isDisabled());
-  const metadata = await (await fetch('http://127.0.0.1:8123/api/v1/admin/nessie/history')).json();
+  const metadata = await (await page.request.get('http://127.0.0.1:5174/api/v1/admin/nessie/history')).json();
   assert(metadata.items.every(row=>!('response_body' in row)&&!('resource_id' in row)));
   await page.locator('#NAV-H').click();
   await page.locator('#H-MORE').click();
@@ -244,7 +273,7 @@ try {
   await fakeQuery({...customerResult,response_body:[{value:'<script>window.injected=true</script>'}]});
   assert.equal(await page.evaluate(()=>window.injected),undefined);
 
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   await page.getByRole('button',{name:/Unusual amount/}).first().click();
   await page.getByRole('heading',{name:'AI second opinion'}).waitFor();
   assert.equal(analysisCalls,0,'navigation must not call inference');
@@ -269,18 +298,18 @@ try {
   await page.getByRole('button',{name:'Confirm normal and remember',exact:true}).click();
   await confirmationCaptured;
   assert.equal(await page.getByRole('button',{name:'Refresh',exact:true}).count(),0);
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   await page.locator('#NAV-CUSTOMERS').click();
   await page.locator('#C-SELECT option').nth(1).waitFor({state:'attached'});
   const firstCustomer = await page.locator('#C-SELECT option').nth(1).getAttribute('value');
   await page.locator('#C-SELECT').selectOption(firstCustomer);
   await page.locator('#V-CUSTOMERS .startcard').waitFor();
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   releaseConfirmation();
-  await page.goto(confirmedCase);
+  await userGoto(page, confirmedCase);
   await page.getByText('Memory saved',{exact:true}).waitFor();
   const memoryEntry = page.waitForResponse(response=>response.url().endsWith('/api/v1/workspace/refresh'));
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toUser(/^Memory/);
   await memoryEntry;
   await page.getByRole('button',{name:'Delete memory',exact:true}).click();
   await page.getByRole('button',{name:'Keep it',exact:true}).click();
@@ -295,21 +324,21 @@ try {
   await page.getByRole('button',{name:'Yes, delete this memory',exact:true}).click();
   await deleteCaptured;
   assert.equal(await page.getByRole('button',{name:'Refresh',exact:true}).count(),0);
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser('Activity');
   await page.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toUser(/^Memory/);
   releaseMemoryDelete();
   await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
   assert.equal(analysisCalls,1);
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   const sourceMemoryEntry = page.waitForResponse(response=>response.url().endsWith('/api/v1/workspace/refresh'));
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toUser('Memory');
   await sourceMemoryEntry;
   await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
   const manualRefresh = page.waitForResponse(response=>response.url().endsWith('/api/v1/workspace/refresh'));
   await page.getByRole('button',{name:'Refresh memories',exact:true}).click();
   await manualRefresh;
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   let releaseRefresh, captureRefresh;
   const refreshHeld = new Promise(resolve=>{releaseRefresh=resolve;});
   const refreshCaptured = new Promise(resolve=>{captureRefresh=resolve;});
@@ -317,15 +346,15 @@ try {
     captureRefresh(); await refreshHeld; await route.continue();
   },{times:1});
   // Hold the navigation refresh; holding an earlier automatic read can disable the manual button.
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toUser(/^Memory/);
   await refreshCaptured;
-  await page.locator('#NAV-ADMIN').click();
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toConsole();
+  await toUser(/^Memory/);
   const memoryAfterLoading = page.waitForRequest(request=>request.url().endsWith('/api/v1/workspace/refresh'));
   releaseRefresh();
   await memoryAfterLoading;
   await page.waitForFunction(()=>!document.querySelector('button[aria-label="Refresh memories"]').disabled);
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   await run('accounts.list');
   mkdirSync(join(root,'artifacts'),{recursive:true});
   await page.screenshot({path:join(root,'artifacts/admin-desktop.png'),fullPage:true});
@@ -410,7 +439,7 @@ try {
   await workspace.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
   await page.locator('.sourcegrid').getByText('Nessie sandbox',{exact:true}).waitFor();
   assert.match(await page.locator('.statusbtn').innerText(),/Nessie sandbox/);
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser('Activity');
   await page.locator('.workspace:visible').getByText('Unusual amount · normal',{exact:true}).first().waitFor();
   for (const width of [1024,320,390,768]) {
     await page.setViewportSize({width,height:900});
@@ -428,28 +457,28 @@ try {
   assert.equal(await unavailable.getByRole('radio').count(),0);
   assert(await unavailable.getByRole('button',{name:'Analyze with Jev',exact:true}).isDisabled());
   assert(await unavailable.getByRole('button',{name:'Explain this alert',exact:true}).isDisabled());
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).click();
+  await toUser('Activity');
   await unavailable.getByText('No rule triggered',{exact:true}).first().waitFor();
   const cachedCount = await unavailable.locator('tbody tr').count();
   await page.route('**/api/v1/workspace/refresh',route=>route.fulfill({status:502,
     json:{error:{code:'nessie_unavailable'}}}),{times:1});
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).waitFor();
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser(/^Memory/);
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).waitFor();
+  await toUser('Activity');
   await unavailable.getByText('Analysis unavailable',{exact:true}).first().waitFor();
   assert.equal(await unavailable.locator('tbody tr').count(),cachedCount);
   assert.equal(await unavailable.getByText('No rule triggered',{exact:true}).count(),0);
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).click();
   await unavailable.getByText('Unusual amount',{exact:true}).first().waitFor();
   await unavailable.locator('tbody tr').filter({has:page.getByText('Unusual amount',{exact:true})}).getByRole('button').first().click();
   await unavailable.getByRole('radio',{name:/Needs further review/}).click();
   await page.route('**/api/v1/workspace/refresh',route=>route.fulfill({status:502,
     json:{error:{code:'nessie_unavailable'}}}),{times:1});
   await unavailable.getByRole('button',{name:'Confirm needs review',exact:true}).click();
-  await unavailable.getByText('Your decision was recorded. Refresh to load its current state.',{exact:true}).waitFor();
+  await page.locator('.toasts').getByText('Your decision was recorded. Refresh to load its current state.',{exact:true}).waitFor();
   assert.equal(await unavailable.getByText('Nothing was recorded',{exact:false}).count(),0);
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).click();
   await unavailable.getByText('You marked this for review',{exact:true}).waitFor();
 
   await page.close();
@@ -460,16 +489,14 @@ try {
   await ready('http://127.0.0.1:8123/api/v1/health',syntheticLogs);
   // The restarted synthetic server gets a fresh context, with no previous faults or connections.
   page = await appPage();
-  await page.goto('http://127.0.0.1:5174/#/activity');
+  await userGoto(page, 'http://127.0.0.1:5174/#/activity');
   await page.reload();
   await page.getByText('Synthetic demo data.',{exact:true}).waitFor();
   assert.equal(await page.locator('.txtable tbody tr').count(),18);
-  const offline = await (await fetch('http://127.0.0.1:8123/api/v1/workspace/refresh', {
-    method:'POST',headers:{'content-type':'application/json','origin':'http://127.0.0.1:5174'},body:'{}',
-  })).json();
+  const offline = await (await page.request.post('http://127.0.0.1:5174/api/v1/workspace/refresh', {data:{}})).json();
   assert.equal(offline.data_mode,'synthetic');
   assert.equal(offline.transactions.filter(row=>row.kind==='transfer').length,10);
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   await page.locator('.queuerow').first().waitFor();
   assert.equal(await page.locator('.queuerow').count(),3);
   const widgets = page.getByRole('region',{name:'Widgets',exact:true});
@@ -492,17 +519,17 @@ try {
     assert.equal(await page.locator('html').getAttribute('data-theme'),theme);
     assert.equal(await page.getByRole('button',{name,exact:true}).getAttribute('aria-pressed'),'true');
   }
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).hover();
+  await openMenu('Activity');
   await page.getByRole('button',{name:/Flagged only/}).click();
   await page.waitForURL('**/#/activity/flagged');
   await page.locator('.txtable tbody tr').nth(2).waitFor();
   assert.equal(await page.locator('.txtable tbody tr').count(),3);
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).hover();
+  await openMenu('Activity');
   await page.getByRole('button',{name:/Recurring charges/}).click();
   await page.waitForURL('**/#/activity/recurring');
   await page.getByRole('button',{name:/^Recurring/,pressed:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:/^Recurring/}).getAttribute('aria-pressed'),'true');
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   await page.getByRole('button',{name:/Possible duplicate/}).click();
   await page.getByRole('heading',{name:'AI second opinion',exact:true}).waitFor();
   assert.equal(analysisCalls,1,'neither customer browsing nor synthetic navigation invokes inference');
@@ -514,7 +541,7 @@ try {
   assert.equal((await explanation.json()).sent_to_provider,false);
   await page.getByText('Rules explanation',{exact:true}).waitFor();
   await assertStableScale();
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   await page.route('**/api/v1/workspace/refresh',async route=>{
     const response = await route.fetch();
     const snapshot = await response.json();
@@ -533,7 +560,7 @@ try {
       ...snapshot.transactions[index % snapshot.transactions.length],id:'txn_page_'+index}));
     await route.fulfill({response,json:snapshot});
   });
-  await page.goto('http://127.0.0.1:5174/#/activity');
+  await userGoto(page, 'http://127.0.0.1:5174/#/activity');
   await page.reload();
   await page.locator('.txtable tbody tr').nth(99).waitFor({state:'attached'});
   await checkLedgerPages();
@@ -541,6 +568,9 @@ try {
   phone.on('pageerror',error=>errors.push(error.message));
   await phone.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)
     ? route.continue() : route.abort());
+  const phoneIn = await phone.request.post('http://127.0.0.1:5174/api/v1/auth/login',
+    {data: {role: 'user', passcode: 'browser-user-pass'}});
+  assert.equal(phoneIn.status(), 200, 'test user sign-in');
   await phone.goto('http://127.0.0.1:5174/#/activity');
   await phone.locator('.txtable tbody tr').nth(17).waitFor({state:'attached'});
   assert.equal(await phone.locator('html').getAttribute('data-stage'),null);
@@ -553,7 +583,7 @@ try {
   await phone.close();
   // Real source API/SQLite integration; source selection never changes product or inference state.
   const previousAnalysis = analysisCalls, previousExplanation = explanationCalls;
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   await page.locator('#NAV-DATA').click();
   const sourceLedger = page.locator('#V-SOURCES');
   await sourceLedger.getByText('No imported transactions for this source.',{exact:true}).waitFor();
