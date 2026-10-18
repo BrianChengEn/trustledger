@@ -10,6 +10,7 @@ from app.api.routes import router
 from app.core.config import Settings
 from app.core.http import RequestGuardMiddleware, ResponseSecurityMiddleware, error_response
 from app.core.store import Store
+from app.services.ai.gemini_explanation import ExplanationCache
 from app.core.transactions import ProviderError, TransactionNotFound
 
 
@@ -19,6 +20,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.store = Store(app.state.settings.database_path)
     load_transactions(app.state.store, app.state.settings.demo_user_id)
     app.state.nessie = NessieClient(app.state.settings.nessie_api_key.get_secret_value())
+    app.state.explanation_cache = ExplanationCache()
     origins = list({app.state.settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"})
     # Last added is outermost: response headers -> request guard -> CORS -> routes.
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
