@@ -4,10 +4,15 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from app.core.config import Settings
 from app.core.store import Store
 from app.main import create_app
+
+SENTENCE = ('The demo user explicitly confirmed a streaming alert as normal. '
+            'Recheck future evidence.')
+LAUNCHER = Path(__file__).resolve().parents[3] / 'scripts/dev-level2-backend.sh'
 
 spec = importlib.util.spec_from_file_location(
     'seed_level2_pair', Path(__file__).resolve().parents[3] / 'scripts/seed_level2_pair.py')
@@ -66,6 +71,14 @@ def test_pair_local_consent_retrieve_delete_contract(tmp_path):
         assert body['retrieval_mode'] == 'local_fallback'
         assert body['memories'][0]['verification'] == 'local_only'
         assert body['memories'][0]['source'] == 'local-fallback'
+        summary = body['memories'][0]['summary']
+        assert summary == SENTENCE
+        for forbidden in ('StreamWave', 'txn_syn', 'acct_', '11.99', '1199', 'demo-user'):
+            assert forbidden not in summary
+        second = next(a for a in client.get('/api/v1/alerts').json()
+                      if a['transaction_id'] == 'txn_syn_009')
+        assert second['alert_type'] == 'duplicate' and second['needs_human'] is True
+        assert second['status'] == 'open' and second['alert_id'] == 'alert_txn_syn_009'
         after = client.post('/api/v1/analyses', json={'transaction_id': 'txn_syn_009'}).json()
         for field in ['severity', 'alert_type', 'needs_human']:
             assert after[field] == before[field]
@@ -79,3 +92,46 @@ def test_pair_local_consent_retrieve_delete_contract(tmp_path):
         verification = client.get('/api/v1/memories/' + mid + '/deletion-verification').json()
         assert verification == dict(memory_id=mid, status='unverified', checked_at=None,
                                     failure='reference_unavailable')
+
+
+def test_level2_refuses_memory_without_consent(tmp_path):
+    path = tmp_path / seed.DATABASE.name
+    seed.prepare_database(path)
+    settings = Settings(_env_file=None, database_path=path, allow_memory_write=True, app_env='test',
+                        backboard_api_key='', gemini_api_key='', jev_api_key='', nessie_api_key='',
+                        transaction_provider='synthetic', fraud_provider='rules-only')
+    with TestClient(create_app(settings)) as client:
+        response = client.post('/api/v1/alerts/alert_txn_syn_004/confirmations',
+                               json={'decision': 'normal', 'consent_to_memory': False})
+        assert response.status_code == 200
+        body = response.json()
+        assert body['memory_status'] == 'not-requested' and body['memory_id'] is None
+        assert client.get('/api/v1/memories').json() == []
+        later = client.get('/api/v1/transactions/txn_syn_009/relevant-memories').json()
+        assert later['memories'] == [] and later['retrieval_mode'] == 'local_fallback'
+        second = next(a for a in client.get('/api/v1/alerts').json()
+                      if a['transaction_id'] == 'txn_syn_009')
+        assert second['status'] == 'open' and second['needs_human'] is True
+
+
+def test_launcher_stays_on_isolated_test_runtime(tmp_path, monkeypatch):
+    text = LAUNCHER.read_text()
+    assert text.index('export APP_ENV=test') < text.index('uvicorn')
+    assert 'TRANSACTION_PROVIDER=synthetic' in text
+    assert 'level2-similar-alerts.db' in text
+    assert 'trustledger-demo.db' not in text
+    assert "BACKBOARD_API_KEY=''" in text and "NESSIE_API_KEY=''" in text
+    assert "NESSIE_CUSTOMER_ID=''" in text
+    assert '--port 8001' in text and 'ALLOW_MEMORY_WRITE=true' in text
+    monkeypatch.delenv('APP_ENV', raising=False)
+    monkeypatch.delenv('TRANSACTION_PROVIDER', raising=False)
+    path = tmp_path / 'level2-similar-alerts.db'
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, app_env='development', transaction_provider='synthetic',
+                 database_path=path, allow_memory_write=True)
+    settings = Settings(_env_file=None, app_env='test', transaction_provider='synthetic',
+                        database_path=path, allow_memory_write=True, backboard_api_key='',
+                        nessie_api_key='', nessie_customer_id='')
+    assert settings.transaction_provider == 'synthetic'
+    assert settings.database_path.name == 'level2-similar-alerts.db'
+    assert settings.backboard_api_key.get_secret_value() == ''
