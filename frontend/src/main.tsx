@@ -98,7 +98,7 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
   const route = useRoute();
   const auth = useAuth();
   const nav = mode === 'admin' ? adminNav : userNav;
-  const {alerts, transactions, memories} = useWorkspace();
+  const {alerts, transactions, memories, health} = useWorkspace();
   // Shortcut menus open only when asked (the caret next to a tab) and close on outside click, Escape or navigation.
   const [menu, setMenu] = useState<Route['view'] | null>(null);
   useEffect(() => {
@@ -190,7 +190,7 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
     <div className="frame">
     <header className="topbar">
       <a className="logo" href="#/today" aria-label="TrustLedger home"><span className="logomark"><Icon name="shieldCheck" size={20} weight={1.4}/></span>
-        <span>TrustLedger<small>Synthetic demo</small></span></a>
+        <span>TrustLedger<small>{health?.data_mode === 'nessie-live' ? 'Nessie sandbox' : health?.data_mode === 'synthetic' ? 'Synthetic test' : 'Data unavailable'}</small></span></a>
       <nav aria-label="Main">
         {nav.map((n, index) => {
           const m = menus[n.view]; const isOpen = menu === n.view;
