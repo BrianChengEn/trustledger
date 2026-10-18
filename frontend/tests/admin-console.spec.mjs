@@ -20,8 +20,9 @@ function start(command, args, env = {}) {
   let logs = '';
   child.stdout.on('data', data => {logs += data;});
   child.stderr.on('data', data => {logs += data;});
+  child.testLogs = () => logs;
   children.push(child);
-  return () => logs;
+  return child.testLogs;
 }
 async function ready(url, logs) {
   for (let i = 0; i < 100; i++) {
@@ -36,7 +37,7 @@ const apiStates = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js',
     'frontend', '--host', '127.0.0.1', '--port', String(uiPort)],
-    {API_PROXY_TARGET: 'http://127.0.0.1:8123'});
+    {API_PROXY_TARGET: 'http://127.0.0.1:8123', VITE_CACHE_DIR: join(temp, 'vite-cache')});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH: 'backend',
       TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: uiOrigin});
@@ -492,6 +493,7 @@ try {
   const syntheticLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'synthetic',
       DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:uiOrigin});
+  const syntheticBackend = children.at(-1);
   await ready('http://127.0.0.1:8123/api/v1/health',syntheticLogs);
   // The restarted synthetic server gets a fresh context, with no previous faults or connections.
   page = await appPage();
@@ -650,19 +652,19 @@ try {
   await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===26);
   const bankOptions = await page.locator('#S-ACCOUNT option').evaluateAll(nodes=>nodes.map(n=>n.value).filter(Boolean));
   await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
-  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  await sourceLedger.getByText('110 transactions',{exact:true}).waitFor();
   assert((await sourceLedger.innerText()).includes('synthetic-derived'));
   assert((await sourceLedger.locator('tbody').innerText()).includes('€180.01'));
-  for (let offset=25;offset<=75;offset+=25) {
+  for (let offset=25;offset<=100;offset+=25) {
     await page.locator('#S-NEXT').click();
-    await sourceLedger.getByText(`${offset+1}–${offset+25} of 100`,{exact:true}).waitFor();
+    await sourceLedger.getByText(`${offset+1}–${Math.min(offset+25,110)} of 110`,{exact:true}).waitFor();
   }
   assert(await page.locator('#S-NEXT').isDisabled());
   await page.locator('#S-ACCOUNT-NEXT').click();
   await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===7);
   const lastBank = await page.locator('#S-ACCOUNT option').last().getAttribute('value');
   await page.locator('#S-ACCOUNT').selectOption(lastBank);
-  await sourceLedger.getByText('1–25 of 100',{exact:true}).waitFor();
+  await sourceLedger.getByText('1–25 of 110',{exact:true}).waitFor();
   await page.locator('#S-ACCOUNT-PREV').click();
   await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===27);
   let releaseAccount, captureAccount;
@@ -675,7 +677,7 @@ try {
   await capturedAccount;
   assert.equal(await sourceLedger.locator('tbody tr').count(),0);
   await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
-  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  await sourceLedger.getByText('110 transactions',{exact:true}).waitFor();
   const lateAccount=page.waitForResponse(response=>response.url().includes('account_token='+bankOptions[1]));
   releaseAccount(); await lateAccount;
   assert.equal(await page.locator('#S-ACCOUNT').inputValue(),bankOptions[0]);
@@ -686,15 +688,85 @@ try {
   await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
   assert((await sourceLedger.locator('tbody').innerText()).includes('$1.24'));
   assert((await sourceLedger.locator('tbody').innerText()).includes('Date only'));
+  const sourceKinds = new Set();
+  let sourceRows = 0;
+  for (let offset=0;offset<100;offset+=25) {
+    if (offset) await sourceLedger.locator('#S-NEXT').click();
+    await sourceLedger.getByText(`${offset+1}–${offset+25} of 100`,{exact:true}).waitFor();
+    const kinds = await sourceLedger.locator('tbody tr td:first-child small').allTextContents();
+    kinds.forEach(text=>sourceKinds.add(text.split(' · ').at(-1)));
+    sourceRows += kinds.length;
+  }
+  assert.equal(sourceRows,100);
+  assert.deepEqual([...sourceKinds].sort(),['deposit','purchase','transfer','withdrawal']);
+  assert(await sourceLedger.locator('#S-NEXT').isDisabled());
   assert.equal(analysisCalls,previousAnalysis);
   assert.equal(explanationCalls,previousExplanation);
   await page.screenshot({path:join(root,'artifacts/account-demo-nessie.png'),fullPage:true});
+  // A user's generated history must be the same account/IDs as the source table, not the 18-row fixture.
+  await page.close();
+  await new Promise(resolve=>{syntheticBackend.once('exit',resolve);syntheticBackend.kill('SIGTERM');});
+  const userAccount = 'acct_' + '0'.repeat(32);
+  const accountLogs = start(resolve(root, 'backend/.venv/bin/python'),
+    ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'account-demo',
+      DEMO_ACCOUNT_TOKEN:userAccount, DATABASE_PATH:join(temp,'account-user.db'),
+      FRONTEND_ORIGIN:uiOrigin});
+  await ready('http://127.0.0.1:8123/api/v1/health',accountLogs);
+  page = await appPage();
+  await userGoto(page, `${uiOrigin}/#/activity`);
+  await page.getByText('Synthetic demo data.',{exact:true}).waitFor();
+  await page.waitForFunction(()=>document.querySelectorAll('.txtable tbody tr').length===100);
+  const view = await (await page.request.post(`${uiOrigin}/api/v1/workspace/refresh`,{data:{}})).json();
+  const source = await (await page.request.get(`${uiOrigin}/api/v1/data-sources/nessie/transactions?limit=100&account_token=`+userAccount)).json();
+  assert.equal(view.data_mode,'synthetic');
+  assert.deepEqual(view.transactions.map(row=>row.id).sort(),source.items.map(row=>row.id).sort());
+  assert(view.transactions.every(row=>row.account_token===userAccount && row.date_only && row.currency==='USD'));
+  assert.equal(await page.locator('.txtable tbody tr').count(),100);
+  await page.locator('.txtable tbody tr button').evaluateAll(nodes=>nodes.forEach((node,index)=>node.setAttribute('data-history-index',String(index))));
+  const visited = new Set();
+  const next = page.locator('.activity .pager').getByRole('button',{name:'Next page',exact:true});
+  for (let count=0;count<100;count++) {
+    const visible = await page.locator('.txtable tbody tr').evaluateAll(rows=>rows.filter(row=>{
+      const r=row.getBoundingClientRect(),c=row.closest('.tablewrap').getBoundingClientRect();
+      return r.top+r.height/2>=c.top && r.top+r.height/2<=c.bottom;
+    }).map(row=>row.querySelector('button').getAttribute('data-history-index')));
+    visible.forEach(index=>visited.add(index));
+    if (await next.isDisabled()) break;
+    const before = await page.locator('.activity .pager span').innerText();
+    const target = await page.locator('.activity .tablewrap').evaluate((el, page) =>
+      Math.min(el.scrollHeight - el.clientHeight, page * el.clientHeight), Number(before.split('/')[0]));
+    await next.click();
+    await page.waitForFunction(before=>document.querySelector('.activity .pager span').textContent!==before,before);
+    // The page label rounds during smooth scrolling; inspect rows only at the destination.
+    await page.waitForFunction(target=>Math.abs(document.querySelector('.activity .tablewrap').scrollTop-target)<=1,target);
+  }
+  assert(await next.isDisabled(),'all history pages terminate');
+  assert.equal(visited.size,100,'each history row is reachable through the physical Pager');
+  await page.locator('.txtable tbody tr').last().getByRole('button').click();
+  await page.locator('.facts').getByText(view.transactions.at(-1).id,{exact:true}).waitFor();
+  await page.locator('.facts').getByText(view.transactions.at(-1).direction === 'unknown'
+    ? 'Direction unknown' : view.transactions.at(-1).direction,{exact:false}).waitFor();
+  await page.getByRole('button',{name:'Activity',exact:true}).click();
+  await page.getByRole('searchbox').fill('not-a-merchant');
+  await page.getByText('No transactions match',{exact:false}).waitFor();
+  await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+  assert.equal(await page.locator('.txtable tbody tr').count(),100);
+  await page.getByRole('button',{name:/^Flagged/}).click();
+  await page.getByText('No transactions match',{exact:false}).waitFor();
+  await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+  await page.getByRole('combobox').selectOption('largest');
+  assert.equal(await page.locator('.txtable tbody tr').count(),100);
+  await toToday();
+  await page.getByText(/100 transactions checked by the rules/).waitFor();
+  await assertStableScale();
   assert.deepEqual(errors,[]);
-  console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, responsive checks and isolated Nessie/BankSim SQLite/API source switching, EUR/day display, pagination and stale-response isolation.');
+  console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, Nessie/BankSim source isolation and generated 100-row user history with identical source IDs, physical paging, details, filters and sorting.');
 } catch (error) {
   if (page) {
     console.error('Browser failure:', {url:page.url(),errors});
     console.error('API status:',apiStates.slice(-12));
+    console.error('Page:', (await page.content()).slice(0, 1500));
+    console.error('Services:', children.map(child => child.testLogs().slice(-3000)));
     console.error('Workspace state:', (await page.locator('main').innerText().catch(()=>'<unavailable>')).slice(0,1000));
   }
   throw error;

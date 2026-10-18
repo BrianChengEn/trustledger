@@ -30,7 +30,7 @@ let browser;
 const errors = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js', 'frontend', '--host', '127.0.0.1', '--port', '5176'],
-    {API_PROXY_TARGET: 'http://127.0.0.1:8125'});
+    {API_PROXY_TARGET: 'http://127.0.0.1:8125', VITE_CACHE_DIR: join(temp, 'vite-cache')});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'), ['-c',
     'import runpy,sys; sys.argv=["x"]; ns=runpy.run_path("backend/tests/admin_console_server.py", run_name="loaded"); '
     + 'import uvicorn; uvicorn.run(ns["app"], host="127.0.0.1", port=8125, log_level="warning")'],

@@ -92,7 +92,7 @@ bash scripts/dev-backend.sh
 bash scripts/dev-frontend.sh
 ```
 
-- App: http://127.0.0.1:5173
+- App: http://127.0.0.1:5176
 - API docs: http://127.0.0.1:8000/docs
 - Smoke check, with the backend already running: `backend/.venv/bin/python scripts/smoke.py`
 
@@ -120,18 +120,26 @@ localhost demo gate, not production authentication. Admin edits only change synt
 
 ## Local account datasets
 
-The Admin **Data sources → 交易資料來源** table can browse local generated accounts from either source. Existing source views, Nessie refresh and the 18-record product demo remain unchanged. Search or page through the account options, choose one, then use the existing record pages to read its 100 transactions. Generated histories are labelled `synthetic-derived`; no banking records are created remotely.
+This integration preserves the UI from `7e44e298a22ebbf9e67dc6fd5ff538300d03782a`, including Memory Lab, Privacy Lab and the Relevant memory card. The Admin source table keeps its existing account/search/paging controls. BankSim retains all 594,643 source records across 4,112 accounts, with original per-account counts, EUR and simulation days. Nessie has 18 accounts with 100 synthetic-derived records each: 1,542 purchases, 96 transfers, 144 deposits and 18 withdrawals across the cohort. The restricted research-calibrated diary-event profile is not a claim about all bank-ledger transactions or model accuracy.
 
-Prepare an existing normalized Nessie snapshot, then explicitly generate the separate local batch:
+Prepare a normalized synthetic Nessie snapshot and explicitly generate v3 into a fresh directory; never overwrite an old batch:
 
 ```bash
-backend/.venv/bin/python scripts/import_source_databases.py --nessie-cache backend/data/trustledger-demo.db
-backend/.venv/bin/python scripts/generate_account_demo.py --banksim-csv /path/to/banksim.csv --nessie-db backend/data/sources/nessie.db
+backend/.venv/bin/python scripts/generate_account_demo.py --banksim-csv /path/to/banksim.csv --nessie-db /path/to/normalized/nessie.db --output-dir backend/data/v3/sources/account-demo --labels-dir evaluation/datasets/account-demo-v3-labels
 ```
 
-The BankSim CSV stays outside Git. With the checked 4,112-customer CSV and 18-account Nessie snapshot, this produces 411,200 BankSim-derived and 1,800 Nessie-derived rows under `backend/data/sources/account-demo`. Exact source fingerprints, seed and generator version make the batch repeatable; changed inputs require a new output directory. No original source or product database is modified. A running backend discovers a complete default batch on its next account request; `SOURCE_DATABASE_DIR` selects a different source directory.
+The CSV, SQLite files and offline labels stay outside Git. Source/profile/seed fingerprints isolate v3 review and memory owners from earlier batches. `scripts/account_demo_bundle.py` can verify/install a separately supplied compatible archive; this update does not publish a dataset Release. Existing source databases and the ordinary 18-record synthetic demo remain intact.
 
-Offline labels are stored separately under ignored `evaluation/datasets/account-demo-labels`: 4,979 original BankSim positive cases and 22 explicitly simulated Nessie positives, about 1.2109% combined. Each account has one or two positive slots; exact 1.2108% is impossible in 100 integer rows. Labels never enter runtime SQLite, the browser, rules, Gemini, Jev or Backboard. BankSim preserves EUR and simulation days; Nessie uses only its own account's templates and preserves USD, date precision and unknown direction. Generated histories are constructed examples, not original customer histories or measured detector accuracy. Databases and offline labels are not distributed in the PR; collaborators supply their local synthetic source files.
+To run the selected UI against a local v3 Nessie account, use two terminals:
+
+```bash
+bash scripts/dev-account-demo-backend.sh
+API_PROXY_TARGET=http://127.0.0.1:8002 bash scripts/dev-frontend.sh
+```
+
+Open http://127.0.0.1:5176 and sign in as User (blank unless configured). The dedicated backend defaults to localhost8002, selects the first registered Nessie account, and stores product decisions separately in `backend/data/account-user-v3.db`. `DEMO_ACCOUNT_TOKEN` selects another registered Nessie account at startup; `SOURCE_DATABASE_DIR`, `DATABASE_PATH`, `BACKEND_PORT` and `FRONTEND_ORIGIN` override local paths/ports. Missing or incomplete data stops the operation, never substitutes 18 fixture rows. Admin requires a configured `DEMO_ADMIN_PASSCODE`; demo editing stays off in this mode. All vendor keys are explicitly empty, inference is rules-only and consented memory is labelled local-fallback. No remote banking writes occur.
+
+The Labs remain read-only. When this source account has no duplicate story, they honestly show the selected UI's empty-story state; they do not invent the original fixture transactions. The ordinary synthetic/Level 2 environments retain the full walkthrough. Labels never enter runtime SQLite, browser output or provider payloads.
 
 ## Tests
 
