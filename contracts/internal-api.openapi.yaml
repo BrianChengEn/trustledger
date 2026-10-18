@@ -1123,6 +1123,84 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  /api/v1/data-sources/{source}/accounts:
+    get:
+      summary: Accounts
+      operationId: listSourceAccounts
+      parameters:
+      - name: source
+        in: path
+        required: true
+        schema:
+          enum:
+          - nessie
+          - banksim
+          type: string
+          title: Source
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 80
+          default: ''
+          title: Q
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceAccountPage'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No session when login is required (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Paginated local synthetic account options; admin session required
+        when login is enforced. No provider calls.
   /api/v1/data-sources/{source}/transactions:
     get:
       summary: Transactions
@@ -1154,6 +1232,15 @@ paths:
           minimum: 0
           default: 0
           title: Offset
+      - name: account_token
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^acct_[0-9a-f]{32}$
+          - type: 'null'
+          title: Account Token
       description: Local source data; an admin session is required when REQUIRE_LOGIN is enabled. No model calls.
       responses:
         '401':
@@ -1192,6 +1279,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
         '503':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
           description: Safe source request error
           content:
             application/json:
@@ -2568,6 +2661,7 @@ components:
           - cached
           - degraded
           - not-imported
+          - synthetic-derived
           title: Data Mode
           type: string
         last_synced_at:
@@ -2591,6 +2685,46 @@ components:
       - data_mode
       title: SourcePage
       type: object
+    SourceAccount:
+      properties:
+        account_token:
+          type: string
+          title: Account Token
+        label:
+          type: string
+          title: Label
+        transaction_count:
+          type: integer
+          title: Transaction Count
+      additionalProperties: false
+      type: object
+      required:
+      - account_token
+      - label
+      - transaction_count
+      title: SourceAccount
+    SourceAccountPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SourceAccount'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        next_offset:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Offset
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      - total
+      - next_offset
+      title: SourceAccountPage
     DemoLogEntry:
       properties:
         id:

@@ -11,6 +11,8 @@ from app.adapters.nessie_fixture import BASELINE_SHA256
 from app.adapters.nessie import API_BASE
 from app.adapters.synthetic import load_transactions
 from app.adapters.dataset_import import import_banksim
+from app.adapters.account_demo import build_account_demo
+from tests.unit.data.test_account_demo import inputs
 from app.core.config import Settings
 from app.main import create_app
 
@@ -71,6 +73,12 @@ with source_csv.open('w', newline='') as file:
     writer.writerows([[120, f'C{index}', '2', 'F', '28007', f'M{index}', '28007',
                        'es_health', '180.01', index % 2] for index in range(30)])
 import_banksim(source_csv, app.state.source_stores['banksim'])
+account_csv = settings.database_path.parent / 'banks.csv'
+account_nessie = settings.database_path.parent / 'original-nessie.db'
+if not account_nessie.exists():
+    inputs(settings.database_path.parent, bank_customers=30)
+build_account_demo(account_csv, account_nessie, settings.database_path.parent / 'sources/account-demo',
+                   settings.database_path.parent / 'offline-account-labels')
 data = load_baseline(app.state.store)
 with app.state.store.connect() as db:
     run = db.execute('INSERT INTO seed_runs(owner,dataset_sha256,api_base_url,credential_fingerprint,'

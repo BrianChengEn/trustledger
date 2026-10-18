@@ -27,6 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     source_dir = app.state.settings.source_database_dir or app.state.settings.database_path.parent / 'sources'
     app.state.source_stores = {name: DatasetStore(source_dir / f'{name}.db', name)
                                for name in ('nessie', 'banksim')}
+    app.state.account_stores = {}
     load_transactions(app.state.store, app.state.settings.demo_user_id)
     app.state.nessie = NessieClient(app.state.settings.nessie_api_key.get_secret_value())
     app.state.explanation_cache = ExplanationCache()
