@@ -26,7 +26,7 @@ export default function Login() {
   return <div className="app"><div className="frame loginframe">
     <header className="topbar loginbar">
       <span className="logo"><span className="logomark"><Icon name="shieldCheck" size={20} weight={1.4}/></span>
-        <span>TrustLedger<small>Synthetic demo</small></span></span>
+        <span>TrustLedger<small>Sandbox demo</small></span></span>
       <ThemeSwitch/>
     </header>
     <main className="loginmain">

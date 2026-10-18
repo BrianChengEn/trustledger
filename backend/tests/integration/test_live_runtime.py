@@ -126,3 +126,44 @@ def test_generated_account_datasets_are_unavailable_in_normal_runtime(live):
     # Even an already-cached generated store cannot bypass the runtime gate.
     client.app.state.account_stores['nessie'] = object()
     assert account_store(request, 'nessie') is None
+
+
+def test_verified_transfer_schema_keeps_unknowns_and_rejects_unrelated_reviews(live):
+    """Structural fixture from live GET: id, amount, description, status, transaction_date.
+
+    Identifiers/amounts below are isolated test values, not exported customer records.
+    """
+    client, _ = live
+    calls = []
+
+    def upstream(request):
+        calls.append(request.method)
+        if request.url.path.endswith('/accounts'):
+            body = [{'_id': ACCOUNT, 'customer_id': CUSTOMER, 'type': 'Checking',
+                     'balance': 10, 'rewards': 0}]
+        elif request.url.path.endswith('/transfers'):
+            body = [{'id': 'f' * 24, 'amount': 849, 'description': 'private test description',
+                     'status': 'completed', 'transaction_date': '2026-10-17'}]
+        else:
+            body = []
+        return httpx.Response(200, json=body)
+
+    client.app.state.nessie = NessieClient('private-key', transport=httpx.MockTransport(upstream))
+    tx, = client.get('/api/v1/transactions').json()
+    assert tx['direction'] == 'unknown' and tx['merchant_display'] == 'Transfer'
+    assert tx['merchant_category'] == 'other' and tx['is_subscription'] is False
+    assert 'private test description' not in str(tx)
+    analysis = client.post('/api/v1/analyses', json={'transaction_id': tx['id']})
+    assert analysis.status_code == 200 and analysis.json()['alert_type'] == 'none'
+    preview = client.get('/api/v1/privacy/preview/' + tx['id'])
+    assert preview.status_code == 200 and preview.json()['safe_payload']['local_day_part'] == 'unknown'
+    assert client.get('/api/v1/alerts').json() == []
+    confirmation = client.post('/api/v1/alerts/alert_' + tx['id'] + '/confirmations',
+                               json={'decision': 'normal', 'consent_to_memory': True})
+    assert confirmation.status_code == 404  # no alert exists; never invent one to force a review
+    assert client.get('/api/v1/memories').json() == []
+    relevant = client.get('/api/v1/transactions/' + tx['id'] + '/relevant-memories')
+    assert relevant.status_code == 200 and relevant.json()['memories'] == []
+    assert client.delete('/api/v1/memories/unrelated-owner-memory',
+                         headers={'content-type': 'application/json'}).status_code == 404
+    assert all(method == 'GET' for method in calls)
