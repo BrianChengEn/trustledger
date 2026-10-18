@@ -55,8 +55,10 @@ export default function Activity({initial}: {initial?: string}) {
         <thead><tr><th>Merchant</th><th>When</th><th>Check result</th><th className="amount">Amount</th></tr></thead>
         <tbody>{rows.map((t, i) => {
           const a = alertFor(t.id);
-          return <tr key={t.id} style={stagger(i)} className="clickrow">
-            <td data-label="Merchant"><button className="rowlink" onClick={() => go({view: 'case', tx: t.id, from: 'activity'})}>
+          // The whole row opens the detail page. The merchant button stays for keyboard and screen-reader users;
+          // its click bubbles up to the row, so there is one handler.
+          return <tr key={t.id} style={stagger(i)} className="clickrow" onClick={() => go({view: 'case', tx: t.id, from: 'activity'})}>
+            <td data-label="Merchant"><button className="rowlink">
               <span className="icontile small"><Icon name={categoryIcon(t.merchant_category)} size={16}/></span>
               <span><b>{t.merchant_display}</b><small>{prettyCategory(t.merchant_category)}{t.is_subscription ? ' · recurring' : ''} · {t.source}</small></span></button></td>
             <td data-label="When">{t.date_only ? t.occurred_at.slice(0, 10) : day(t.occurred_at)}<small>{t.date_only ? 'Date only' : time(t.occurred_at)}</small></td>

@@ -5,6 +5,7 @@ import {request, type Execution, type HistoryItem, type HistoryPage,
 import {go, useRoute} from './route';
 import {WorkspaceProvider} from './workspace';
 import {CustomerReview} from './WorkspaceView';
+import SourceLedger from './SourceLedger';
 
 const prefix = '/admin/nessie';
 const queries: [NessieQuery, string][] = [
@@ -55,7 +56,7 @@ function Customers({active}: {active: boolean}) {
     finally {setBusy(false);}
   }
   useEffect(()=>{void load();}, []);
-  return <section id="V-CUSTOMERS">
+  return <div className="paged"><section id="V-CUSTOMERS">
     <div className="panel"><label htmlFor="C-SELECT">選擇合成客戶</label>
       <select id="C-SELECT" value={customer} disabled={busy} onChange={event=>{
         go(event.target.value ? {view: 'today', customer: event.target.value} : {view: 'sources'});
@@ -68,11 +69,11 @@ function Customers({active}: {active: boolean}) {
     {customer&&<WorkspaceProvider key={customer} customerId={customer} active={active}>
       <CustomerReview route={route}/>
     </WorkspaceProvider>}
-  </section>;
+  </section><Pager/></div>;
 }
 
 export default function Admin({active = true}: {active?: boolean}) {
-  const [view, setView] = useState<'query'|'history'|'customers'>('query');
+  const [view, setView] = useState<'query'|'history'|'customers'|'data'>('query');
   const route = useRoute();
   useEffect(() => {if (route.customer) setView('customers');}, [route.customer]);
   const [query, setQuery] = useState<NessieQuery>('customers.list');
@@ -138,8 +139,10 @@ export default function Admin({active = true}: {active?: boolean}) {
       <button id="NAV-Q" aria-current={view==='query'?'page':undefined} onClick={() => setView('query')}>查詢</button>
       <button id="NAV-H" aria-current={view==='history'?'page':undefined} onClick={() => {setView('history'); void loadHistory();}}>歷史</button>
       <button id="NAV-CUSTOMERS" aria-current={view==='customers'?'page':undefined} onClick={()=>setView('customers')}>使用者交易</button>
+      <button id="NAV-DATA" aria-current={view==='data'?'page':undefined} onClick={()=>setView('data')}>交易資料來源</button>
     </nav>
     {view==='customers'&&<Customers active={active}/>}
+    {view==='data'&&active&&<SourceLedger/>}
     {error && <p className="error" role="alert">{error}</p>}
     <div id="V-QUERY" hidden={view!=='query'} className="admin-query">
       <form className="panel" onSubmit={event => {event.preventDefault(); void run();}}>

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
+import {createServer} from 'node:net';
 import {existsSync, mkdirSync, mkdtempSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
@@ -8,6 +9,11 @@ import {chromium} from 'playwright';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const temp = mkdtempSync(join(tmpdir(), 'trustledger-admin-'));
+const listener = createServer();
+await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
+const uiPort = listener.address().port;
+await new Promise(resolve => listener.close(resolve));
+const uiOrigin = `http://127.0.0.1:${uiPort}`;
 const children = [];
 function start(command, args, env = {}) {
   const child = spawn(command, args, {cwd: root, env: {...process.env, ...env}, stdio: 'pipe'});
@@ -26,21 +32,20 @@ async function ready(url, logs) {
 }
 let browser, page;
 const errors = [];
+const apiStates = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js',
-    'frontend', '--host', '127.0.0.1', '--port', '5174'],
-    {VITE_API_BASE_URL: '', API_PROXY_TARGET: 'http://127.0.0.1:8123'});
+    'frontend', '--host', '127.0.0.1', '--port', String(uiPort)],
+    {API_PROXY_TARGET: 'http://127.0.0.1:8123'});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH: 'backend',
-      TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: 'http://127.0.0.1:5174'});
+      TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: uiOrigin});
   const connectedBackend = children.at(-1);
-  await Promise.all([ready('http://127.0.0.1:5174', frontendLogs),
+  await Promise.all([ready(uiOrigin, frontendLogs),
     ready('http://127.0.0.1:8123/api/v1/health', backendLogs)]);
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
     existsSync('/Applications/Google Chrome.app') ? {channel: 'chrome'} : {})});
-  page = await browser.newPage({viewport: {width: 1440, height: 1000}, reducedMotion: 'reduce'});
-  page.setDefaultTimeout(5000);
   async function assertResponsiveBaseline() {
     const layout = await page.evaluate(() => {
       return {width: innerWidth, scroll: document.documentElement.scrollWidth};
@@ -58,25 +63,66 @@ try {
     });
     assert.deepEqual(sample.scales,[sample.expected],'data and button actions must not shrink the page');
   }
+  // Shortcut menus open on click (the caret beside a tab), never on hover, so they cannot cover the workspace unexpectedly.
+  async function openMenu(label) {
+    await page.getByRole('button',{name:`Show ${label} shortcuts`,exact:true}).click();
+    await page.getByRole('region',{name:`${label} features`,exact:true}).waitFor();
+  }
   let queryCalls = 0;
   let deletes = 0;
   let analysisCalls = 0;
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('request', req => {
-    if (req.url().endsWith('/admin/nessie/query')) queryCalls++;
-    if (req.method()==='DELETE') deletes++;
-    if (req.url().endsWith('/analyses')) analysisCalls++;
-  });
-  await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(
-    new URL(route.request().url()).hostname) ? route.continue() : route.abort());
-  await page.goto('http://127.0.0.1:5174');
-  await page.getByRole('button', {name: 'Admin', exact: true}).click();
-  assert.equal(await page.getByLabel('Passcode').inputValue(), '');
-  await page.getByRole('button', {name: 'Sign in', exact: true}).click();
+  let explanationCalls = 0;
+  async function appPage() {
+    const next = await browser.newPage({viewport: {width:1440,height:1000},reducedMotion:'reduce'});
+    next.setDefaultTimeout(5000);
+    // Same-origin through the Vite proxy so the sign-in cookie is sent; the browser session is an admin.
+    const signedIn = await next.request.post(`${uiOrigin}/api/v1/auth/login`,
+      {data: {role: 'admin', passcode: 'browser-admin-pass'}});
+    assert.equal(signedIn.status(), 200, 'test admin sign-in');
+    next.on('pageerror', error => errors.push(error.message));
+    next.on('request', req => {
+      if (req.url().endsWith('/admin/nessie/query')) queryCalls++;
+      if (req.method()==='DELETE') deletes++;
+      if (req.url().endsWith('/analyses')) analysisCalls++;
+      if (req.url().endsWith('/explanation')) explanationCalls++;
+    });
+    next.on('response', response => {
+      const path = new URL(response.url()).pathname;
+      if (path.startsWith('/api/v1/')) apiStates.push({status:response.status(),
+        path:path.replace(/(?:txn|acct|customer|memory)_[A-Za-z0-9_-]+/g,'{resource}')});
+    });
+    await next.route('**/*', route => ['127.0.0.1','localhost'].includes(
+      new URL(route.request().url()).hostname) ? route.continue() : route.abort());
+    return next;
+  }
+  // The admin console and the user's screens are different modes now; these helpers switch between them.
+  async function toConsole() {
+    const back = page.getByRole('button',{name:'Back to admin',exact:true});
+    if (await back.count()) await back.click();
+    await page.locator('#NAV-ADMIN').click();
+  }
+  async function toUser(name) {
+    const preview = page.getByRole('button',{name:'Preview as user',exact:true});
+    if (await preview.count()) await preview.click();
+    await page.locator('.topbar').getByRole('link',name instanceof RegExp?{name}:{name,exact:true}).click();
+  }
+  async function toToday() {
+    const preview = page.getByRole('button',{name:'Preview as user',exact:true});
+    if (await preview.count()) await preview.click();
+    await toUser(/^Today/);
+  }
+  // Pages that start on the user's screens open in the admin's "Preview as user" mode.
+  async function userGoto(target, url) {
+    await target.addInitScript(() => { try { if (!sessionStorage.getItem('e2e-init')) { sessionStorage.setItem('e2e-init', '1'); sessionStorage.setItem('trustledger.preview', '1'); } } catch {} });
+    await target.goto(url);
+    await target.evaluate(() => sessionStorage.setItem('e2e-init', '1'));
+  }
+  page = await appPage();
+  await page.goto(uiOrigin);
+  await page.getByRole('button',{name:'Preview as user',exact:true}).click();
   await page.getByRole('link', {name: /^Today/}).waitFor();
   await page.locator('.startcard').waitFor();
-  await page.locator('#NAV-ADMIN').hover();
-  await page.getByRole('region',{name:'Data sources features',exact:true}).waitFor();
+  await openMenu('Today');
   assert.equal(await page.locator('.scrim').count(),0,'hover menus must not blur or cover the workspace');
   await assertStableScale();
   mkdirSync(join(root,'artifacts'),{recursive:true});
@@ -84,7 +130,7 @@ try {
   await page.mouse.move(0,0);
   assert.equal(await page.locator('.workspacebar').count(), 0,
     'backend integration must preserve the approved UI without an added workspace toolbar');
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   await page.locator('#V-QUERY').waitFor();
   await page.getByRole('heading',{name:'This workspace',exact:true}).waitFor();
   assert.equal(await page.locator('#Q-FUNC option').count(), 8);
@@ -109,9 +155,7 @@ try {
   const account = accountResult.response_body[0].resource_id;
   assert.match(customer, /^customer_[0-9a-f]{32}$/);
   assert.match(account, /^acct_[0-9a-f]{32}$/);
-  const overview = await (await fetch('http://127.0.0.1:8123/api/v1/workspace/refresh', {
-    method:'POST',headers:{'content-type':'application/json','origin':'http://127.0.0.1:5174'},body:'{}',
-  })).json();
+  const overview = await (await page.request.post(`${uiOrigin}/api/v1/workspace/refresh`, {data:{}})).json();
   for (const row of overview.accounts) {
     assert(accountResult.response_body.some(account=>account.resource_id===row.account_token));
     assert.equal(overview.transactions.filter(tx=>tx.account_token===row.account_token&&tx.kind==='transfer').length,10);
@@ -143,7 +187,7 @@ try {
   await queryTable.evaluate(element=>{
     element.removeAttribute('style'); element.parentElement.removeAttribute('style');
   });
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser('Activity');
   await page.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
   assert.equal(await page.locator('.account-context').count(),0);
   assert.equal(await page.locator('.inspect').count(),0);
@@ -178,12 +222,12 @@ try {
     assert.equal(await ledger.locator('tbody tr').first().locator('td.amount').innerText(),'$849.00');
   }
   await checkLedgerPages();
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   assert((await page.locator('#Q-RESULT').innerText()).includes('transfers.by_account'));
   await page.locator('#Q-FUNC').selectOption('accounts.get');
   assert.equal(await page.locator('#Q-ID').evaluate(element=>element.tagName),'SELECT');
   assert(await page.locator('#Q-RUN').isDisabled());
-  const metadata = await (await fetch('http://127.0.0.1:8123/api/v1/admin/nessie/history')).json();
+  const metadata = await (await page.request.get(`${uiOrigin}/api/v1/admin/nessie/history`)).json();
   assert(metadata.items.every(row=>!('response_body' in row)&&!('resource_id' in row)));
   await page.locator('#NAV-H').click();
   await page.locator('#H-MORE').click();
@@ -235,7 +279,7 @@ try {
   await fakeQuery({...customerResult,response_body:[{value:'<script>window.injected=true</script>'}]});
   assert.equal(await page.evaluate(()=>window.injected),undefined);
 
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   await page.getByRole('button',{name:/Unusual amount/}).first().click();
   await page.getByRole('heading',{name:'AI second opinion'}).waitFor();
   assert.equal(analysisCalls,0,'navigation must not call inference');
@@ -260,18 +304,18 @@ try {
   await page.getByRole('button',{name:'Confirm normal and remember',exact:true}).click();
   await confirmationCaptured;
   assert.equal(await page.getByRole('button',{name:'Refresh',exact:true}).count(),0);
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   await page.locator('#NAV-CUSTOMERS').click();
   await page.locator('#C-SELECT option').nth(1).waitFor({state:'attached'});
   const firstCustomer = await page.locator('#C-SELECT option').nth(1).getAttribute('value');
   await page.locator('#C-SELECT').selectOption(firstCustomer);
   await page.locator('#V-CUSTOMERS .startcard').waitFor();
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   releaseConfirmation();
-  await page.goto(confirmedCase);
+  await userGoto(page, confirmedCase);
   await page.getByText('Memory saved',{exact:true}).waitFor();
   const memoryEntry = page.waitForResponse(response=>response.url().endsWith('/api/v1/workspace/refresh'));
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toUser(/^Memory/);
   await memoryEntry;
   await page.getByRole('button',{name:'Delete memory',exact:true}).click();
   await page.getByRole('button',{name:'Keep it',exact:true}).click();
@@ -286,39 +330,37 @@ try {
   await page.getByRole('button',{name:'Yes, delete this memory',exact:true}).click();
   await deleteCaptured;
   assert.equal(await page.getByRole('button',{name:'Refresh',exact:true}).count(),0);
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser('Activity');
   await page.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toUser(/^Memory/);
   releaseMemoryDelete();
   await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
   assert.equal(analysisCalls,1);
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   const sourceMemoryEntry = page.waitForResponse(response=>response.url().endsWith('/api/v1/workspace/refresh'));
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toUser('Memory');
   await sourceMemoryEntry;
   await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
-  await page.waitForFunction(async()=>{
-    const refresh = document.querySelector('button[aria-label="Refresh memories"]');
-    if (refresh.disabled) return false;
-    await new Promise(requestAnimationFrame);
-    await new Promise(requestAnimationFrame);
-    return !refresh.disabled;
-  });
+  const manualRefresh = page.waitForResponse(response=>response.url().endsWith('/api/v1/workspace/refresh'));
+  await page.getByRole('button',{name:'Refresh memories',exact:true}).click();
+  await manualRefresh;
+  await toConsole();
   let releaseRefresh, captureRefresh;
   const refreshHeld = new Promise(resolve=>{releaseRefresh=resolve;});
   const refreshCaptured = new Promise(resolve=>{captureRefresh=resolve;});
   await page.route('**/api/v1/workspace/refresh',async route=>{
     captureRefresh(); await refreshHeld; await route.continue();
   },{times:1});
-  await page.getByRole('button',{name:'Refresh memories',exact:true}).click();
+  // Hold the navigation refresh; holding an earlier automatic read can disable the manual button.
+  await toUser(/^Memory/);
   await refreshCaptured;
-  await page.locator('#NAV-ADMIN').click();
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
+  await toConsole();
+  await toUser(/^Memory/);
   const memoryAfterLoading = page.waitForRequest(request=>request.url().endsWith('/api/v1/workspace/refresh'));
   releaseRefresh();
   await memoryAfterLoading;
   await page.waitForFunction(()=>!document.querySelector('button[aria-label="Refresh memories"]').disabled);
-  await page.locator('#NAV-ADMIN').click();
+  await toConsole();
   await run('accounts.list');
   mkdirSync(join(root,'artifacts'),{recursive:true});
   await page.screenshot({path:join(root,'artifacts/admin-desktop.png'),fullPage:true});
@@ -350,6 +392,16 @@ try {
   assert.equal(await workspace.locator('tbody tr').count(),overview.transactions.length);
   await workspace.getByText('Unusual amount',{exact:true}).first().waitFor();
   await workspace.locator('tbody tr').filter({has:page.getByText('Unusual amount',{exact:true})}).getByRole('button').first().click();
+  assert.equal(explanationCalls,0,'browsing must not request explanations');
+  const customerExplanation = page.waitForResponse(response=>response.url().endsWith('/explanation'));
+  await workspace.getByRole('button',{name:'Explain this alert',exact:true}).click();
+  const explained = await customerExplanation;
+  assert(explained.url().includes('/customers/'+customerCodes[0]+'/transactions/'));
+  assert.equal(explained.status(),200);
+  assert.equal((await explained.json()).explanation_mode,'template');
+  await workspace.getByText('Rules explanation',{exact:true}).waitFor();
+  await assertStableScale();
+  assert.equal(explanationCalls,1);
   await workspace.getByRole('radio',{name:/looks normal/}).click();
   const customerConsent = workspace.getByRole('checkbox');
   assert(!(await customerConsent.isChecked()));
@@ -393,7 +445,7 @@ try {
   await workspace.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
   await page.locator('.sourcegrid').getByText('Nessie sandbox',{exact:true}).waitFor();
   assert.match(await page.locator('.statusbtn').innerText(),/Nessie sandbox/);
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser('Activity');
   await page.locator('.workspace:visible').getByText('Unusual amount · normal',{exact:true}).first().waitFor();
   for (const width of [1024,320,390,768]) {
     await page.setViewportSize({width,height:900});
@@ -410,45 +462,47 @@ try {
   assert.equal(await unavailable.getByText('No applicable rule was triggered',{exact:false}).count(),0);
   assert.equal(await unavailable.getByRole('radio').count(),0);
   assert(await unavailable.getByRole('button',{name:'Analyze with Jev',exact:true}).isDisabled());
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  assert(await unavailable.getByRole('button',{name:'Explain this alert',exact:true}).isDisabled());
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).click();
+  await toUser('Activity');
   await unavailable.getByText('No rule triggered',{exact:true}).first().waitFor();
   const cachedCount = await unavailable.locator('tbody tr').count();
   await page.route('**/api/v1/workspace/refresh',route=>route.fulfill({status:502,
     json:{error:{code:'nessie_unavailable'}}}),{times:1});
-  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).waitFor();
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
+  await toUser(/^Memory/);
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).waitFor();
+  await toUser('Activity');
   await unavailable.getByText('Analysis unavailable',{exact:true}).first().waitFor();
   assert.equal(await unavailable.locator('tbody tr').count(),cachedCount);
   assert.equal(await unavailable.getByText('No rule triggered',{exact:true}).count(),0);
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).click();
   await unavailable.getByText('Unusual amount',{exact:true}).first().waitFor();
   await unavailable.locator('tbody tr').filter({has:page.getByText('Unusual amount',{exact:true})}).getByRole('button').first().click();
   await unavailable.getByRole('radio',{name:/Needs further review/}).click();
   await page.route('**/api/v1/workspace/refresh',route=>route.fulfill({status:502,
     json:{error:{code:'nessie_unavailable'}}}),{times:1});
   await unavailable.getByRole('button',{name:'Confirm needs review',exact:true}).click();
-  await unavailable.getByText('Your decision was recorded. Refresh to load its current state.',{exact:true}).waitFor();
+  await page.locator('.toasts').getByText('Your decision was recorded. Refresh to load its current state.',{exact:true}).waitFor();
   assert.equal(await unavailable.getByText('Nothing was recorded',{exact:false}).count(),0);
-  await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
+  await page.locator('.toasts').getByRole('button',{name:'Retry',exact:true}).click();
   await unavailable.getByText('You marked this for review',{exact:true}).waitFor();
 
+  await page.close();
   await new Promise(resolve=>{connectedBackend.once('exit',resolve);connectedBackend.kill('SIGTERM');});
   const syntheticLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'synthetic',
-      DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
+      DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:uiOrigin});
   await ready('http://127.0.0.1:8123/api/v1/health',syntheticLogs);
-  await page.goto('http://127.0.0.1:5174/#/activity');
+  // The restarted synthetic server gets a fresh context, with no previous faults or connections.
+  page = await appPage();
+  await userGoto(page, `${uiOrigin}/#/activity`);
   await page.reload();
   await page.getByText('Synthetic demo data.',{exact:true}).waitFor();
   assert.equal(await page.locator('.txtable tbody tr').count(),18);
-  const offline = await (await fetch('http://127.0.0.1:8123/api/v1/workspace/refresh', {
-    method:'POST',headers:{'content-type':'application/json','origin':'http://127.0.0.1:5174'},body:'{}',
-  })).json();
+  const offline = await (await page.request.post(`${uiOrigin}/api/v1/workspace/refresh`, {data:{}})).json();
   assert.equal(offline.data_mode,'synthetic');
   assert.equal(offline.transactions.filter(row=>row.kind==='transfer').length,10);
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   await page.locator('.queuerow').first().waitFor();
   assert.equal(await page.locator('.queuerow').count(),3);
   const widgets = page.getByRole('region',{name:'Widgets',exact:true});
@@ -471,21 +525,29 @@ try {
     assert.equal(await page.locator('html').getAttribute('data-theme'),theme);
     assert.equal(await page.getByRole('button',{name,exact:true}).getAttribute('aria-pressed'),'true');
   }
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).hover();
+  await openMenu('Activity');
   await page.getByRole('button',{name:/Flagged only/}).click();
   await page.waitForURL('**/#/activity/flagged');
   await page.locator('.txtable tbody tr').nth(2).waitFor();
   assert.equal(await page.locator('.txtable tbody tr').count(),3);
-  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).hover();
+  await openMenu('Activity');
   await page.getByRole('button',{name:/Recurring charges/}).click();
   await page.waitForURL('**/#/activity/recurring');
   await page.getByRole('button',{name:/^Recurring/,pressed:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:/^Recurring/}).getAttribute('aria-pressed'),'true');
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await toToday();
   await page.getByRole('button',{name:/Possible duplicate/}).click();
   await page.getByRole('heading',{name:'AI second opinion',exact:true}).waitFor();
   assert.equal(analysisCalls,1,'neither customer browsing nor synthetic navigation invokes inference');
-  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  assert.equal(explanationCalls,1,'only the explicit customer explanation requested text');
+  const syntheticExplanation = page.waitForResponse(response=>response.url().endsWith('/explanation'));
+  await page.getByRole('button',{name:'Explain this alert',exact:true}).click();
+  const explanation = await syntheticExplanation;
+  assert(explanation.url().includes('/api/v1/transactions/txn_syn_004/explanation'));
+  assert.equal((await explanation.json()).sent_to_provider,false);
+  await page.getByText('Rules explanation',{exact:true}).waitFor();
+  await assertStableScale();
+  await toToday();
   await page.route('**/api/v1/workspace/refresh',async route=>{
     const response = await route.fetch();
     const snapshot = await response.json();
@@ -504,7 +566,7 @@ try {
       ...snapshot.transactions[index % snapshot.transactions.length],id:'txn_page_'+index}));
     await route.fulfill({response,json:snapshot});
   });
-  await page.goto('http://127.0.0.1:5174/#/activity');
+  await userGoto(page, `${uiOrigin}/#/activity`);
   await page.reload();
   await page.locator('.txtable tbody tr').nth(99).waitFor({state:'attached'});
   await checkLedgerPages();
@@ -512,9 +574,10 @@ try {
   phone.on('pageerror',error=>errors.push(error.message));
   await phone.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)
     ? route.continue() : route.abort());
-  await phone.goto('http://127.0.0.1:5174/#/activity');
-  await phone.getByRole('button', {name: 'User', exact: true}).click();
-  await phone.getByRole('button', {name: 'Sign in', exact: true}).click();
+  const phoneIn = await phone.request.post(`${uiOrigin}/api/v1/auth/login`,
+    {data: {role: 'user', passcode: 'browser-user-pass'}});
+  assert.equal(phoneIn.status(), 200, 'test user sign-in');
+  await phone.goto(`${uiOrigin}/#/activity`);
   await phone.locator('.txtable tbody tr').nth(17).waitFor({state:'attached'});
   assert.equal(await phone.locator('html').getAttribute('data-stage'),null);
   assert(await phone.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
@@ -524,11 +587,114 @@ try {
   await phone.locator('.payload > div').nth(7).waitFor();
   await phone.screenshot({path:join(root,'artifacts/v031-phone.png'),fullPage:true});
   await phone.close();
+  // Real source API/SQLite integration; source selection never changes product or inference state.
+  const previousAnalysis = analysisCalls, previousExplanation = explanationCalls;
+  await toConsole();
+  await page.locator('#NAV-DATA').click();
+  const sourceLedger = page.locator('#V-SOURCES');
+  await sourceLedger.getByText('No imported transactions for this source.',{exact:true}).waitFor();
+  const firstSourceRefresh = page.waitForResponse(response=>response.url().endsWith('/data-sources/nessie/refresh'));
+  await sourceLedger.locator('#S-REFRESH').click();
+  assert.equal((await firstSourceRefresh).status(),200);
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  assert((await sourceLedger.innerText()).includes('Unknown merchant'));
+  assert.equal(await sourceLedger.locator('#S-NESSIE').getAttribute('aria-pressed'),'true');
+  await sourceLedger.locator('#S-BANKSIM').click();
+  await sourceLedger.getByText('30 transactions',{exact:true}).waitFor();
+  assert((await sourceLedger.locator('tbody').innerText()).includes('€180.01'));
+  assert((await sourceLedger.locator('tbody').innerText()).includes('Simulation day 120'));
+  assert.equal(await sourceLedger.getByRole('link',{name:'Review transaction'}).count(),0);
+  assert.equal(await sourceLedger.locator('tbody tr').count(),25);
+  await assertStableScale();
+  await page.screenshot({path:join(root,'artifacts/v050-source-banksim.png'),fullPage:true});
+  await sourceLedger.locator('#S-NEXT').click();
+  await sourceLedger.getByText('26–30 of 30',{exact:true}).waitFor();
+  assert.equal(await sourceLedger.locator('tbody tr').count(),5);
+  await sourceLedger.locator('#S-NESSIE').click();
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  const sourceRefresh = page.waitForResponse(response=>response.url().endsWith('/data-sources/nessie/refresh'));
+  await sourceLedger.locator('#S-REFRESH').click();
+  const sourceResult = await (await sourceRefresh).json();
+  assert.equal(sourceResult.source,'nessie');
+  assert(sourceResult.items.every(row=>row.source==='nessie' && row.currency==='USD' && !('owner' in row) && !('fraud' in row)));
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  let releaseBankSim, captureBankSim;
+  const heldBankSim = new Promise(resolve=>{releaseBankSim=resolve;});
+  const capturedBankSim = new Promise(resolve=>{captureBankSim=resolve;});
+  await page.route('**/data-sources/banksim/transactions?*',async route=>{
+    const response = await route.fetch();
+    captureBankSim(); await heldBankSim; await route.fulfill({response});
+  },{times:1});
+  await sourceLedger.locator('#S-BANKSIM').click();
+  await capturedBankSim;
+  assert.equal(await sourceLedger.locator('tbody tr').count(),0,'switch clears the previous source immediately');
+  await sourceLedger.locator('#S-NESSIE').click();
+  await sourceLedger.locator('tbody tr').first().waitFor();
+  const lateBankSim = page.waitForResponse(response=>response.url().includes('/data-sources/banksim/transactions'));
+  releaseBankSim(); await lateBankSim;
+  assert.equal(await sourceLedger.locator('#S-NESSIE').getAttribute('aria-pressed'),'true');
+  assert(!(await sourceLedger.locator('tbody').innerText()).includes('Simulation day'));
+  assert.equal(analysisCalls,previousAnalysis,'source browsing does not invoke Jev');
+  assert.equal(explanationCalls,previousExplanation,'source browsing does not invoke Gemini');
+  await assertStableScale();
+  await page.screenshot({path:join(root,'artifacts/v050-source-nessie.png'),fullPage:true});
+  await sourceLedger.getByRole('link',{name:'Review current Nessie transactions',exact:true}).click();
+  await page.locator('#V-CUSTOMERS .today').waitFor();
+  assert.equal(analysisCalls,previousAnalysis);
+  assert.equal(explanationCalls,previousExplanation);
+  // Generated source accounts reuse this table and cannot change source/owner on a late response.
+  await toConsole();
+  await page.locator('#NAV-DATA').click();
+  await page.locator('#S-BANKSIM').click();
+  await page.locator('#S-ACCOUNT').waitFor();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===26);
+  const bankOptions = await page.locator('#S-ACCOUNT option').evaluateAll(nodes=>nodes.map(n=>n.value).filter(Boolean));
+  await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
+  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  assert((await sourceLedger.innerText()).includes('synthetic-derived'));
+  assert((await sourceLedger.locator('tbody').innerText()).includes('€180.01'));
+  for (let offset=25;offset<=75;offset+=25) {
+    await page.locator('#S-NEXT').click();
+    await sourceLedger.getByText(`${offset+1}–${offset+25} of 100`,{exact:true}).waitFor();
+  }
+  assert(await page.locator('#S-NEXT').isDisabled());
+  await page.locator('#S-ACCOUNT-NEXT').click();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===7);
+  const lastBank = await page.locator('#S-ACCOUNT option').last().getAttribute('value');
+  await page.locator('#S-ACCOUNT').selectOption(lastBank);
+  await sourceLedger.getByText('1–25 of 100',{exact:true}).waitFor();
+  await page.locator('#S-ACCOUNT-PREV').click();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===27);
+  let releaseAccount, captureAccount;
+  const heldAccount = new Promise(resolve=>{releaseAccount=resolve;});
+  const capturedAccount = new Promise(resolve=>{captureAccount=resolve;});
+  await page.route('**/data-sources/banksim/transactions?*account_token=*',async route=>{
+    const response=await route.fetch(); captureAccount(); await heldAccount; await route.fulfill({response});
+  },{times:1});
+  await page.locator('#S-ACCOUNT').selectOption(bankOptions[1]);
+  await capturedAccount;
+  assert.equal(await sourceLedger.locator('tbody tr').count(),0);
+  await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
+  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  const lateAccount=page.waitForResponse(response=>response.url().includes('account_token='+bankOptions[1]));
+  releaseAccount(); await lateAccount;
+  assert.equal(await page.locator('#S-ACCOUNT').inputValue(),bankOptions[0]);
+  await page.locator('#S-NESSIE').click();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===3);
+  const nessieCode=await page.locator('#S-ACCOUNT option').last().getAttribute('value');
+  await page.locator('#S-ACCOUNT').selectOption(nessieCode);
+  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  assert((await sourceLedger.locator('tbody').innerText()).includes('$1.24'));
+  assert((await sourceLedger.locator('tbody').innerText()).includes('Date only'));
+  assert.equal(analysisCalls,previousAnalysis);
+  assert.equal(explanationCalls,previousExplanation);
+  await page.screenshot({path:join(root,'artifacts/account-demo-nessie.png'),fullPage:true});
   assert.deepEqual(errors,[]);
-  console.log('PASS: updated UI, eight safe queries/history, scoped customer widgets, menu filters, persisted widget layout, themes, consent/memory, cached failures, recorded-decision recovery, synthetic 18 rows/3 alerts and responsive checks.');
+  console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, responsive checks and isolated Nessie/BankSim SQLite/API source switching, EUR/day display, pagination and stale-response isolation.');
 } catch (error) {
   if (page) {
     console.error('Browser failure:', {url:page.url(),errors});
+    console.error('API status:',apiStates.slice(-12));
     console.error('Workspace state:', (await page.locator('main').innerText().catch(()=>'<unavailable>')).slice(0,1000));
   }
   throw error;

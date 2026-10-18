@@ -40,12 +40,12 @@ export default function Login() {
         </ul>
       </section>
       <form className="loginform panel" onSubmit={submit} aria-labelledby="login-title">
-        <h2 id="login-title"><Icon name="lock" size={18}/>Sign in</h2>
+        <h2 id="login-title"><Icon name="key" size={18}/>Sign in</h2>
         <Seg label="Sign in as" value={role} onChange={next => { setRole(next); setProblem(''); setPasscode(''); }}
           options={[{key: 'user', label: 'User'}, {key: 'admin', label: 'Admin'}]}/>
         <p className="quiet">{role === 'user'
           ? 'Review your own charges, decide what is normal, and control what is remembered.'
-          : 'Review the demo workspace and access the Nessie sandbox console.'}</p>
+          : 'Edit the synthetic demo data and run scenarios to show how the app reacts.'}</p>
         <label htmlFor="passcode">Passcode</label>
         <input id="passcode" type="password" autoComplete="off" value={passcode} disabled={busy || adminOff}
           onChange={event => setPasscode(event.target.value)} aria-invalid={!!problem} aria-describedby={problem ? 'login-problem' : undefined}/>
@@ -53,7 +53,7 @@ export default function Login() {
         {unreachable && !problem && <p className="loginproblem" role="alert">Cannot reach the TrustLedger server. Start the backend on port 8000, then reload.</p>}
         {problem && <p id="login-problem" className="loginproblem" role="alert">{problem}</p>}
         <button className="primary" type="submit" disabled={busy || adminOff}>{busy ? 'Signing in…' : 'Sign in'}<Icon name="arrowRight" size={16}/></button>
-        <p className="quiet loginnote">Local synthetic demo only. User and Admin passcodes are blank by default; leave this field empty unless configured.</p>
+        <p className="quiet loginnote">Demo sign-in. Synthetic data only; no real accounts or money. Ask whoever is running this demo for the passcode.</p>
       </form>
     </main>
     <footer className="foot">Synthetic data only · no real accounts · rules decide, you confirm · AI-assisted code, credited in the submission.</footer>

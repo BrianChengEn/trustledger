@@ -8,41 +8,6 @@ info:
 servers:
   - url: http://127.0.0.1:8000
 paths:
-  /api/v1/auth/me:
-    get:
-      operationId: getDemoSession
-      responses:
-        '200':
-          description: Local demo session, without secrets.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/SessionView' }
-  /api/v1/auth/login:
-    post:
-      operationId: loginDemo
-      description: Local synthetic demo only. Both roles accept blank passcodes by default; configured passcodes require an exact match.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/LoginRequest' }
-      responses:
-        '200':
-          description: Signed HttpOnly session cookie issued.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/SessionView' }
-        '401': { description: Invalid credentials }
-        '429': { description: Too many attempts }
-  /api/v1/auth/logout:
-    post:
-      operationId: logoutDemo
-      responses:
-        '200':
-          description: Session cookie cleared.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/SessionView' }
   /api/v1/health:
     get:
       operationId: getHealth
@@ -120,6 +85,24 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/PrivacyPreview' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/{transaction_id}/explanation:
+    post:
+      operationId: explainTransaction
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: >-
+            Plain-language explanation of the current rules alert.
+            Gemini is called only when configured and does not change the alert.
+            explanation_mode distinguishes a live Gemini reply, a rules template,
+            and a rules fallback after a failed Gemini call.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Explanation' }
         '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/alerts/{alert_id}/confirmations:
     post:
@@ -549,284 +532,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/transactions:
-    get:
-      operationId: customer_listTransactions
-      parameters:
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 25
-      responses:
-        '502':
-          $ref: '#/components/responses/NessieUnavailable'
-        '200':
-          description: Canonical transactions for the current demo user.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Transaction'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/analyses:
-    post:
-      operationId: customer_analyzeTransaction
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required:
-              - transaction_id
-              properties:
-                transaction_id:
-                  type: string
-                  minLength: 1
-                  maxLength: 80
-      responses:
-        '502':
-          $ref: '#/components/responses/NessieUnavailable'
-        '200':
-          description: Rules result plus optional Jev result.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Analysis'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/alerts:
-    get:
-      operationId: customer_listAlerts
-      responses:
-        '502':
-          $ref: '#/components/responses/NessieUnavailable'
-        '200':
-          description: Alerts for the current demo user.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Alert'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/privacy/preview/{transaction_id}:
-    get:
-      operationId: customer_previewPrivacyPayload
-      parameters:
-      - $ref: '#/components/parameters/TransactionId'
-      responses:
-        '502':
-          $ref: '#/components/responses/NessieUnavailable'
-        '200':
-          description: Exact safe payload and transformation explanation.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PrivacyPreview'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/alerts/{alert_id}/confirmations:
-    post:
-      operationId: customer_confirmAlert
-      parameters:
-      - $ref: '#/components/parameters/AlertId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required:
-              - decision
-              - consent_to_memory
-              properties:
-                decision:
-                  type: string
-                  enum:
-                  - normal
-                  - review
-                consent_to_memory:
-                  type: boolean
-      responses:
-        '502':
-          $ref: '#/components/responses/NessieUnavailable'
-        '200':
-          description: Confirmation outcome and memory write status.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Confirmation'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Conflicting or duplicate confirmation.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/memories:
-    get:
-      operationId: customer_listMemories
-      responses:
-        '502':
-          $ref: '#/components/responses/NessieUnavailable'
-        '200':
-          description: Sanitized summaries only.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MemorySummary'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/memories/{memory_id}:
-    delete:
-      operationId: customer_deleteMemory
-      parameters:
-      - name: memory_id
-        in: path
-        required: true
-        schema:
-          type: string
-          minLength: 1
-          maxLength: 100
-      responses:
-        '204':
-          description: Deleted
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '502':
-          description: Remote memory deletion failed; local memory is preserved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-    parameters:
-    - name: customer_code
-      in: path
-      required: true
-      schema:
-        type: string
-        pattern: ^customer_[0-9a-f]{32}$
-  /api/v1/admin/nessie/customers/{customer_code}/workspace/refresh:
-    post:
-      summary: Refresh Workspace
-      operationId: refresh_workspace_api_v1_admin_nessie_customers__customer_code__workspace_refresh_post
-      parameters:
-      - name: customer_code
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Customer Code
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WorkspaceSnapshot'
-        '422':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '403':
-          description: Safe workspace error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '404':
-          description: Safe workspace error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '409':
-          description: Safe workspace error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '502':
-          description: Safe workspace error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-        '503':
-          description: Safe workspace error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorEnvelope'
-  /api/v1/admin/nessie/customers/{customer_code}/health:
-    get:
-      operationId: customer_getHealth
-      responses:
-        '502':
-          $ref: '#/components/responses/NessieUnavailable'
-        '200':
-          description: Safe readiness status. Never includes keys or upstream bodies.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
         '403':
           description: Local Admin access required
           content:
@@ -1236,6 +941,827 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers/{customer_code}/transactions/{transaction_id}/explanation:
+    post:
+      operationId: explainCustomerTransaction
+      parameters:
+        - name: customer_code
+          in: path
+          required: true
+          schema: { type: string, pattern: '^customer_[0-9a-f]{32}$' }
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: >-
+            Plain-language explanation of the current rules alert.
+            Gemini is called only when configured and does not change the alert.
+            explanation_mode distinguishes a live Gemini reply, a rules template,
+            and a rules fallback after a failed Gemini call.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Explanation' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/{transaction_id}/relevant-memories:
+    get:
+      summary: Read owner-scoped relevant context
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelevantMemories'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
+        '401':
+          description: A demo session is required when REQUIRE_LOGIN is enabled (auth_required).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  /api/v1/memories/{memory_id}/deletion-verification:
+    get:
+      summary: Fresh point-in-time deletion verification; never deletes
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionVerification'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
+        '401':
+          description: A demo session is required when REQUIRE_LOGIN is enabled (auth_required).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  /api/v1/admin/nessie/customers/{customer_code}/transactions/{transaction_id}/relevant-memories:
+    get:
+      summary: Read owner-scoped relevant context
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: transaction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelevantMemories'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
+        '401':
+          description: A demo session is required when REQUIRE_LOGIN is enabled (auth_required).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403':
+          description: Local Admin access required; admin session required when sign-in is enforced.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  /api/v1/admin/nessie/customers/{customer_code}/memories/{memory_id}/deletion-verification:
+    get:
+      summary: Fresh point-in-time deletion verification; never deletes
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionVerification'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
+        '401':
+          description: A demo session is required when REQUIRE_LOGIN is enabled (auth_required).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '403':
+          description: Local Admin access required; admin session required when sign-in is enforced.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+  /api/v1/data-sources/{source}/accounts:
+    get:
+      summary: Accounts
+      operationId: listSourceAccounts
+      parameters:
+      - name: source
+        in: path
+        required: true
+        schema:
+          enum:
+          - nessie
+          - banksim
+          type: string
+          title: Source
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 80
+          default: ''
+          title: Q
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceAccountPage'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: No session when login is required (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Paginated local synthetic account options; admin session required
+        when login is enforced. No provider calls.
+  /api/v1/data-sources/{source}/transactions:
+    get:
+      summary: Transactions
+      operationId: listSourceTransactions
+      parameters:
+      - name: source
+        in: path
+        required: true
+        schema:
+          enum:
+          - nessie
+          - banksim
+          type: string
+          title: Source
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 25
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      - name: account_token
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^acct_[0-9a-f]{32}$
+          - type: 'null'
+          title: Account Token
+      description: Local source data; an admin session is required when REQUIRE_LOGIN is enabled. No model calls.
+      responses:
+        '401':
+          description: No session when login is required (auth_required)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcePage'
+        '422':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/data-sources/nessie/refresh:
+    post:
+      summary: Refresh Nessie
+      operationId: refreshSourceNessie
+      description: Local source data; an admin session is required when REQUIRE_LOGIN is enabled. No model calls.
+      responses:
+        '401':
+          description: No session when login is required (auth_required)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcePage'
+        '403':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe source request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/auth/me:
+    get:
+      tags:
+      - demo-auth
+      operationId: me_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionView'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Current demo session. No sign-in needed; reports whether the server enforces sign-in.
+  /api/v1/auth/login:
+    post:
+      tags:
+      - demo-auth
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionView'
+        '401':
+          description: Wrong passcode (invalid_credentials)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Admin sign-in is not configured (admin_not_configured)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          description: Too many failed attempts (too_many_attempts)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Demo sign-in by role and passcode. Sets an HttpOnly, SameSite=Strict session cookie. Not production authentication.
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - demo-auth
+      operationId: logout_api_v1_auth_logout_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionView'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Ends the demo session.
+  /api/v1/admin/demo/status:
+    get:
+      tags:
+      - local-admin
+      operationId: status_api_v1_admin_demo_status_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoStatus'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/transactions:
+    get:
+      tags:
+      - local-admin
+      operationId: list_rows_api_v1_admin_demo_transactions_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DemoRow'
+                type: array
+                title: Response List Rows Api V1 Admin Demo Transactions Get
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+    post:
+      tags:
+      - local-admin
+      operationId: create_api_v1_admin_demo_transactions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoTransactionIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoRow'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/transactions/{tx_id}:
+    patch:
+      tags:
+      - local-admin
+      operationId: update_api_v1_admin_demo_transactions__tx_id__patch
+      parameters:
+      - name: tx_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: ^txn_[A-Za-z0-9_-]+$
+          title: Tx Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoTransactionPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoRow'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown transaction (not_found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+    delete:
+      tags:
+      - local-admin
+      operationId: delete_api_v1_admin_demo_transactions__tx_id__delete
+      parameters:
+      - name: tx_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: ^txn_[A-Za-z0-9_-]+$
+          title: Tx Id
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Unknown transaction (not_found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/scenarios/{name}:
+    post:
+      tags:
+      - local-admin
+      operationId: scenario_api_v1_admin_demo_scenarios__name__post
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          enum:
+          - duplicate
+          - large_purchase
+          - price_hike
+          type: string
+          title: Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioResult'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/reset:
+    post:
+      tags:
+      - local-admin
+      operationId: reset_api_v1_admin_demo_reset_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetResult'
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: 'Refused: decision_exists, row_cap, remote_memory_exists or not_synthetic_mode'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+  /api/v1/admin/demo/log:
+    get:
+      tags:
+      - local-admin
+      operationId: log_api_v1_admin_demo_log_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DemoLogEntry'
+                title: Response Log Api V1 Admin Demo Log Get
+        '401':
+          description: No session (auth_required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Not an admin (admin_only) or editing is switched off (demo_edit_disabled)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Request does not match the API contract (invalid_request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
+
 components:
   parameters:
     TransactionId:
@@ -1260,23 +1786,6 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
   schemas:
-    LoginRequest:
-      type: object
-      additionalProperties: false
-      required: [role]
-      properties:
-        role: { type: string, enum: [user, admin] }
-        passcode: { type: string, maxLength: 64, default: '' }
-    SessionView:
-      type: object
-      additionalProperties: false
-      required: [authenticated, role, login_required, admin_available, demo_edit_enabled]
-      properties:
-        authenticated: { type: boolean }
-        role: { type: [string, 'null'], enum: [user, admin, null] }
-        login_required: { type: boolean }
-        admin_available: { type: boolean }
-        demo_edit_enabled: { type: boolean }
     HealthResponse:
       type: object
       additionalProperties: false
@@ -1372,6 +1881,90 @@ components:
             is_subscription: { type: boolean }
             subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
             prior_user_confirmation: { type: string, enum: [normal, review, unknown] }
+    SharedExplanation:
+      type: object
+      additionalProperties: false
+      required: [task, alert_type, severity, needs_human, reason_codes, features]
+      properties:
+        task: { type: string, enum: [explain_existing_alert] }
+        alert_type: { type: string, enum: [duplicate, amount_anomaly, subscription_change, none] }
+        severity: { type: string, enum: [low, medium, high] }
+        needs_human: { type: boolean }
+        reason_codes:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            enum:
+              - duplicate_rule_matched
+              - same_category_same_amount_within_24h
+              - amount_anomaly_rule_matched
+              - amount_bucket_at_or_above_demo_threshold
+              - subscription_rule_matched
+              - subscription_increase_over_20_percent
+              - no_demo_rule_matched
+              - human_review_required
+              - human_review_not_required
+              - prior_category_confirmation_normal
+              - prior_category_confirmation_review
+              - recurring_subscription
+              - subscription_delta_over_20_percent
+              - subscription_delta_up_to_20_percent
+              - subscription_delta_none
+              - subscription_delta_unknown
+        features:
+          type: object
+          additionalProperties: false
+          required: [merchant_category, amount_bucket, currency, local_day_part, same_category_same_amount_24h_count, is_subscription, subscription_delta_bucket, prior_user_confirmation]
+          properties:
+            merchant_category: { type: string }
+            amount_bucket: { type: string, enum: ['0-10', '10-25', '25-50', '50-100', '100-250', '250+'] }
+            currency: { type: string, enum: [USD] }
+            local_day_part: { type: string, enum: [morning, afternoon, evening, overnight] }
+            same_category_same_amount_24h_count: { type: integer, minimum: 0, maximum: 20 }
+            is_subscription: { type: boolean }
+            subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
+            prior_user_confirmation: { type: string, enum: [normal, review, unknown] }
+    Explanation:
+      type: object
+      additionalProperties: false
+      required: [transaction_id, alert_type, severity, needs_human, why_flagged, supporting_evidence, what_it_means, what_to_check, next_steps, explanation_mode, model_version, failure, safe_payload, shared, sent_to_provider, from_cache]
+      properties:
+        transaction_id: { type: string }
+        alert_type: { type: string, enum: [duplicate, amount_anomaly, subscription_change, none] }
+        severity: { type: string, enum: [low, medium, high] }
+        needs_human: { type: boolean }
+        why_flagged: { type: string, minLength: 1, maxLength: 500 }
+        supporting_evidence: { type: string, minLength: 1, maxLength: 500 }
+        what_it_means: { type: string, minLength: 1, maxLength: 500 }
+        what_to_check: { type: string, minLength: 1, maxLength: 500 }
+        next_steps:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items: { type: string, minLength: 1, maxLength: 180 }
+        explanation_mode: { type: string, enum: [gemini-live, template, fallback] }
+        model_version: { type: [string, 'null'] }
+        failure:
+          type: [string, 'null']
+          enum: [timeout, unavailable, quota, rate_limited, invalid_output, provider_error, invalid_input, null]
+        safe_payload:
+          type: object
+          additionalProperties: false
+          required: [merchant_category, amount_bucket, currency, local_day_part, same_category_same_amount_24h_count, is_subscription, subscription_delta_bucket, prior_user_confirmation]
+          properties:
+            merchant_category: { type: string }
+            amount_bucket: { type: string, enum: ['0-10', '10-25', '25-50', '50-100', '100-250', '250+'] }
+            currency: { type: string, enum: [USD] }
+            local_day_part: { type: string, enum: [morning, afternoon, evening, overnight] }
+            same_category_same_amount_24h_count: { type: integer, minimum: 0, maximum: 20 }
+            is_subscription: { type: boolean }
+            subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
+            prior_user_confirmation: { type: string, enum: [normal, review, unknown] }
+        shared: { $ref: '#/components/schemas/SharedExplanation' }
+        sent_to_provider: { type: boolean }
+        from_cache: { type: boolean }
     Confirmation:
       type: object
       additionalProperties: false
@@ -1813,3 +2406,605 @@ components:
       - transactions
       - sync
       title: WorkspaceSnapshot
+
+    RelevantMemory:
+      additionalProperties: false
+      properties:
+        memory_id:
+          title: Memory Id
+          type: string
+        summary:
+          maxLength: 240
+          title: Summary
+          type: string
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        source:
+          enum:
+          - backboard
+          - local-fallback
+          title: Source
+          type: string
+        verification:
+          enum:
+          - remote_verified
+          - local_only
+          - unverified
+          title: Verification
+          type: string
+      required:
+      - memory_id
+      - summary
+      - created_at
+      - source
+      - verification
+      title: RelevantMemory
+      type: object
+    RelevantMemories:
+      additionalProperties: false
+      properties:
+        memories:
+          items:
+            $ref: '#/components/schemas/RelevantMemory'
+          title: Memories
+          type: array
+        retrieval_mode:
+          enum:
+          - remote_verified
+          - local_fallback
+          - unavailable
+          title: Retrieval Mode
+          type: string
+        checked_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          default: null
+          title: Checked At
+        failure:
+          anyOf:
+          - enum:
+            - missing_key
+            - missing_assistant
+            - provider_error
+            - content_mismatch
+            - storage_unavailable
+            - verification_limit
+            - reference_unavailable
+            - deletion_not_completed
+            type: string
+          - type: 'null'
+          default: null
+          title: Failure
+      required:
+      - memories
+      - retrieval_mode
+      title: RelevantMemories
+      type: object
+      example:
+        memories: []
+        retrieval_mode: remote_verified
+        checked_at: '2026-10-18T12:00:00Z'
+        failure: null
+    DeletionVerification:
+      additionalProperties: false
+      properties:
+        memory_id:
+          title: Memory Id
+          type: string
+        status:
+          enum:
+          - absent
+          - present
+          - unverified
+          title: Status
+          type: string
+        checked_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          default: null
+          title: Checked At
+        failure:
+          anyOf:
+          - enum:
+            - missing_key
+            - missing_assistant
+            - provider_error
+            - content_mismatch
+            - storage_unavailable
+            - verification_limit
+            - reference_unavailable
+            - deletion_not_completed
+            type: string
+          - type: 'null'
+          default: null
+          title: Failure
+      required:
+      - memory_id
+      - status
+      title: DeletionVerification
+      type: object
+      example:
+        memory_id: example-memory
+        status: absent
+        checked_at: '2026-10-18T12:00:00Z'
+        failure: null
+
+    SourceTransaction:
+      additionalProperties: false
+      description: 'Public canonical projection: no owners, labels or prediction fields.'
+      properties:
+        id:
+          title: Id
+          type: string
+        source:
+          enum:
+          - nessie
+          - banksim
+          title: Source
+          type: string
+        amount_minor:
+          title: Amount Minor
+          type: integer
+        currency:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Currency
+        kind:
+          title: Kind
+          type: string
+        direction:
+          title: Direction
+          type: string
+        account_token:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Account Token
+        merchant_display:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Merchant Display
+        merchant_category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Merchant Category
+        source_category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Category
+        merchant_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Merchant Code
+        occurred_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Occurred At
+        occurred_date:
+          anyOf:
+          - format: date
+            type: string
+          - type: 'null'
+          title: Occurred Date
+        simulation_step:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Simulation Step
+        is_subscription:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Subscription
+        settlement_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Settlement Status
+      required:
+      - id
+      - source
+      - amount_minor
+      - currency
+      - kind
+      - direction
+      - account_token
+      - merchant_display
+      - merchant_category
+      - source_category
+      - merchant_code
+      - occurred_at
+      - occurred_date
+      - simulation_step
+      - is_subscription
+      - settlement_status
+      title: SourceTransaction
+      type: object
+    SourcePage:
+      additionalProperties: false
+      properties:
+        source:
+          enum:
+          - nessie
+          - banksim
+          title: Source
+          type: string
+        items:
+          items:
+            $ref: '#/components/schemas/SourceTransaction'
+          title: Items
+          type: array
+        total:
+          title: Total
+          type: integer
+        next_offset:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Offset
+        data_mode:
+          enum:
+          - research
+          - cached
+          - degraded
+          - not-imported
+          - synthetic-derived
+          title: Data Mode
+          type: string
+        last_synced_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          default: null
+          title: Last Synced At
+        customer_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Customer Code
+      required:
+      - source
+      - items
+      - total
+      - next_offset
+      - data_mode
+      title: SourcePage
+      type: object
+    SourceAccount:
+      properties:
+        account_token:
+          type: string
+          title: Account Token
+        label:
+          type: string
+          title: Label
+        transaction_count:
+          type: integer
+          title: Transaction Count
+      additionalProperties: false
+      type: object
+      required:
+      - account_token
+      - label
+      - transaction_count
+      title: SourceAccount
+    SourceAccountPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SourceAccount'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+        next_offset:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Next Offset
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      - total
+      - next_offset
+      title: SourceAccountPage
+    DemoLogEntry:
+      properties:
+        id:
+          type: integer
+          title: Id
+        at:
+          type: string
+          title: At
+        action:
+          type: string
+          enum:
+          - create
+          - update
+          - delete
+          - scenario
+          - reset
+          title: Action
+        tx_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Tx Id
+        summary:
+          type: string
+          title: Summary
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - at
+      - action
+      - tx_id
+      - summary
+      title: DemoLogEntry
+    ScenarioResult:
+      properties:
+        scenario:
+          type: string
+          enum:
+          - duplicate
+          - large_purchase
+          - price_hike
+          title: Scenario
+        created:
+          items:
+            $ref: '#/components/schemas/DemoRow'
+          type: array
+          title: Created
+      additionalProperties: false
+      type: object
+      required:
+      - scenario
+      - created
+      title: ScenarioResult
+    DemoRow:
+      properties:
+        id:
+          type: string
+          title: Id
+        occurred_at:
+          type: string
+          title: Occurred At
+        amount:
+          type: number
+          title: Amount
+        merchant_display:
+          type: string
+          title: Merchant Display
+        merchant_category:
+          type: string
+          title: Merchant Category
+        direction:
+          type: string
+          enum:
+          - debit
+          - credit
+          - unknown
+          title: Direction
+        is_subscription:
+          type: boolean
+          title: Is Subscription
+        kind:
+          type: string
+          enum:
+          - purchase
+          - transfer
+          - deposit
+          - withdrawal
+          title: Kind
+        origin:
+          type: string
+          enum:
+          - baseline
+          - admin
+          title: Origin
+        edited_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Edited At
+        decided:
+          type: boolean
+          title: Decided
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - occurred_at
+      - amount
+      - merchant_display
+      - merchant_category
+      - direction
+      - is_subscription
+      - kind
+      - origin
+      - edited_at
+      - decided
+      title: DemoRow
+    DemoTransactionIn:
+      properties:
+        merchant:
+          type: string
+          title: Merchant
+        category:
+          type: string
+          title: Category
+        amount:
+          anyOf:
+          - type: number
+            maximum: 99999.99
+            exclusiveMinimum: 0.0
+          - type: string
+          title: Amount
+        occurred_at:
+          type: string
+          format: date-time
+          title: Occurred At
+        direction:
+          type: string
+          enum:
+          - debit
+          - credit
+          title: Direction
+          default: debit
+        is_subscription:
+          type: boolean
+          title: Is Subscription
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - merchant
+      - category
+      - amount
+      - occurred_at
+      title: DemoTransactionIn
+      description: A synthetic charge entered by an admin. The id, source and account are always chosen by the server.
+    ResetResult:
+      properties:
+        restored:
+          type: integer
+          title: Restored
+        cleared_decisions:
+          type: integer
+          title: Cleared Decisions
+        cleared_memories:
+          type: integer
+          title: Cleared Memories
+      additionalProperties: false
+      type: object
+      required:
+      - restored
+      - cleared_decisions
+      - cleared_memories
+      title: ResetResult
+    LoginRequest:
+      properties:
+        role:
+          type: string
+          enum:
+          - user
+          - admin
+          title: Role
+        passcode:
+          type: string
+          maxLength: 64
+          title: Passcode
+          default: ''
+      additionalProperties: false
+      type: object
+      required:
+      - role
+      title: LoginRequest
+    SessionView:
+      properties:
+        authenticated:
+          type: boolean
+          title: Authenticated
+        role:
+          anyOf:
+          - type: string
+            enum:
+            - user
+            - admin
+          - type: 'null'
+          title: Role
+        login_required:
+          type: boolean
+          title: Login Required
+        admin_available:
+          type: boolean
+          title: Admin Available
+        demo_edit_enabled:
+          type: boolean
+          title: Demo Edit Enabled
+      additionalProperties: false
+      type: object
+      required:
+      - authenticated
+      - login_required
+      - admin_available
+      - demo_edit_enabled
+      title: SessionView
+    DemoTransactionPatch:
+      properties:
+        merchant:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Merchant
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
+        amount:
+          anyOf:
+          - type: number
+            maximum: 99999.99
+            exclusiveMinimum: 0.0
+          - type: string
+          - type: 'null'
+          title: Amount
+        occurred_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Occurred At
+        direction:
+          anyOf:
+          - type: string
+            enum:
+            - debit
+            - credit
+          - type: 'null'
+          title: Direction
+        is_subscription:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Subscription
+      additionalProperties: false
+      type: object
+      title: DemoTransactionPatch
+    DemoStatus:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+        rows:
+          type: integer
+          title: Rows
+        cap:
+          type: integer
+          title: Cap
+      additionalProperties: false
+      type: object
+      required:
+      - enabled
+      - rows
+      - cap
+      title: DemoStatus

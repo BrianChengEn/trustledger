@@ -6,7 +6,7 @@ import {usePreview} from './preview';
 import {Callout, PageHead} from './ui';
 import {useWorkspace} from './workspace';
 
-const actionMeta: Record<string, {icon: IconName; verb: string}> = {
+export const actionMeta: Record<string, {icon: IconName; verb: string}> = {
   dropped: {icon: 'eyeOff', verb: 'Removed'}, bucketed: {icon: 'layers', verb: 'Bucketed'},
   generalized: {icon: 'tag', verb: 'Generalized'}, tokenized: {icon: 'lock', verb: 'Tokenized'}, allowed: {icon: 'checkCircle', verb: 'Allowed'},
 };
@@ -16,7 +16,7 @@ const payloadKey: Record<string, string> = {
   prior_user_confirmation: 'prior_user_confirmation',
 };
 // Local side of each row: what the app holds. Labels describe local data; shared values come only from the backend.
-function localValue(field: string, tx: Movement): string {
+export function localValue(field: string, tx: Movement): string {
   switch (field) {
     case 'id / account_token': return `${tx.id} · ${tx.account_token}`;
     case 'merchant_display': return tx.merchant_display;
@@ -82,7 +82,7 @@ export default function PrivacyView({txId}: {txId?: string}) {
       Your transactions are never sent to AI as they are. Pick a charge to see the real, generalized request the backend would build.</PageHead>
     <div className="privtop">
     <Callout icon="lock" title="Viewing this page sends nothing.">
-      AI is only called when you press “Analyze with Jev” on a case, and then only with the payload below.</Callout>
+      Jev runs only when you press Analyze with Jev. An explanation runs only when you press Explain this alert. Neither call receives the raw transaction.</Callout>
     <div className="pick">
       <label htmlFor="priv-tx">Transaction</label>
       <select id="priv-tx" value={id ?? ''} onChange={e => go({view: 'privacy', tx: e.target.value})}>

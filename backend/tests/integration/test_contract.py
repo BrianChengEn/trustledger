@@ -43,8 +43,8 @@ def test_all_public_operations(contract, client):
     }
     memory_id = None
     for path, operation in paths.items():
-        if "/admin/" in path:
-            continue  # Admin request/response contracts are exercised below.
+        if any(prefix in path for prefix in ("/admin/", "/auth/", "/data-sources/")):
+            continue  # Scoped Admin, session and source contracts are tested separately.
         method, spec = next(iter(operation.items()))
         url = path.replace("{transaction_id}", "txn_syn_004").replace(
             "{alert_id}", "alert_txn_syn_004").replace("{memory_id}", memory_id or "missing")
@@ -67,6 +67,28 @@ def test_all_public_operations(contract, client):
             memory_id = response.json()["memory_id"]
         if path.endswith("/memories"):
             assert len(response.json()) == 1
+
+
+def test_source_operation_contracts_include_nullable_precision_and_safe_failures(contract, client):
+    base = '/api/v1/data-sources'
+    for source in ('nessie', 'banksim'):
+        response = client.get(base + '/' + source + '/transactions',
+                              headers={'host': '127.0.0.1'})
+        assert response.status_code == (503 if source == 'nessie' else 200)
+        template = contract['paths'][base + '/{source}/transactions']['get']
+        schema = template['responses'][str(response.status_code)]['content']['application/json']['schema']
+        validate(contract, schema, response.json())
+    response = client.post(base + '/nessie/refresh', json={},
+                           headers={'host': '127.0.0.1', 'origin': 'http://localhost:5173'})
+    assert response.status_code == 503
+    schema = contract['paths'][base + '/nessie/refresh']['post']['responses']['503']['content']['application/json']['schema']
+    validate(contract, schema, response.json())
+    row = dict(id='txn_source', source='banksim', amount_minor=18001, currency='EUR',
+               kind='unknown', direction='unknown', account_token=None, merchant_display=None,
+               merchant_category=None, source_category='es_health', merchant_code='M123',
+               occurred_at=None, occurred_date=None, simulation_step=120, is_subscription=None,
+               settlement_status=None)
+    validate(contract, {'$ref': '#/components/schemas/SourceTransaction'}, row)
 
 
 @pytest.mark.parametrize("method,path,maximum", [
@@ -238,12 +260,15 @@ def test_all_admin_operation_contracts(contract, client):
         ('post', '/customers/{customer_code}/analyses', {'transaction_id': '{transaction_id}'}),
         ('get', '/customers/{customer_code}/alerts', None),
         ('get', '/customers/{customer_code}/privacy/preview/{transaction_id}', None),
+        ('post', '/customers/{customer_code}/transactions/{transaction_id}/explanation', {}),
         ('post', '/customers/{customer_code}/alerts/{alert_id}/confirmations',
          {'decision': 'normal', 'consent_to_memory': True}),
         ('get', '/customers/{customer_code}/memories', None),
         ('delete', '/customers/{customer_code}/memories/{memory_id}', None),
+        ('get', '/customers/{customer_code}/transactions/{transaction_id}/relevant-memories', None),
+        ('get', '/customers/{customer_code}/memories/{memory_id}/deletion-verification', None),
     ]
-    expected = {(p, m) for p, item in contract["paths"].items() if "/admin/" in p for m in item}
+    expected = {(p, m) for p, item in contract["paths"].items() if p.startswith(prefix) for m in item}
     assert {(prefix + path, method) for method, path, _ in operations} == expected
     history_id = None
     customer_code = transaction_id = memory_id = ''

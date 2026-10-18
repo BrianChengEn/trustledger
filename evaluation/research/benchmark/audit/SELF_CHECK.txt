@@ -1,0 +1,26 @@
+TrustLedger BankSim 審計 self-check
+
+contract.self_check：通過
+step-causal 手算（alpha = 20，train prefix 長度 3，同一步驟的標籤互不可見）
+輸入：merchant [0, 0, 0, 1]，y [1, 0, 1, 0]，step [0, 0, 1, 2]
+手算：row0 = 0，row1 = 0，row2 = 11/22，row3 = 2/3
+contract.step_causal_merchant_rate：0, 0, 0.5, 0.6666666666666666
+手算與 contract 的差距都低於 1e-12。預期值不是從函式輸出抄回來的。
+
+平手規則抽樣：分數相同則金額高的在前，再相同則列索引小的在前。TP/FP/TN/FN = 1/1/1/1。
+合成 npz 配對：/tmp/tl-audit-selfcheck/happy（expect_banks=false，列數 1000，預算 919）
+對齊、有限分數、top-919、contract.evaluate 與獨立指標、fingerprint：通過。
+合成資料的內部品檢有做點估計排序，但沒有寫成 BankSim 榜單。
+兩份檔案的 y 不同：有抓到 alignment / y，而且沒有發布榜單。
+短檔列數 25，top-919 的 alert 數是 25，不是要求的 919：有抓到 alert_budget。
+JSON sidecar 存在時，六項可疑結果檢查都會觸發。
+沒有 JSON sidecar 時，上述檢查維持沉默，即使分數完全相同、AP 也是 1。
+負向對照：正確的 leakage_status、Track A、否定句與凍結人口數都沒有誤報。
+合成 customer block bootstrap：有 CI、是否含 0、block_count 與完整 test 點估計。排序函式不讀 bootstrap 平均數。
+審計文字有寫出 CI、點估計，以及 y 不一致時不發布榜單。
+
+真實分數目錄：工作樹的 evaluation/research/benchmark 底下沒有其他 agent 的 *.npz。
+沒有編造 BankSim 榜單，也沒有填先前 PR #15 的舊數字。
+
+結果：PASS
+合成檔在 /tmp/tl-audit-selfcheck，通過後會刪除，不在 repo 裡。

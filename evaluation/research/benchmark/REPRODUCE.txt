@@ -1,0 +1,108 @@
+TrustLedger BankSim 公開模型對照：重現步驟
+
+這份研究不改生產決策。分數可以重算。模型二進位沒有進 git。
+steps 150–179 已經在 PR #14 與 PR #15 看過。重跑得到的是同一份對照，不是新的盲測。
+
+1. 資料
+
+本機檔案：
+/tmp/tl-eval-data/banks.csv
+
+契約讀的是 evaluation/research/v2/run_framework.py 裡的 SOURCE，
+預設就是上面這個路徑。檔案應有表頭加 594,643 列。
+不要把 csv 提交進 git。evaluation/datasets/ 與 *.csv 都被忽略。
+
+2. 研究用的 Python
+
+使用獨立環境，不要裝進 backend/.venv，也不要寫進 backend/requirements：
+
+/tmp/tl-research-venv/bin/python
+
+這次測量時的版本：
+Python 3.9.6
+numpy 2.0.2
+scikit-learn 1.6.1
+xgboost 2.1.4
+lightgbm 4.6.0
+
+macOS 上 xgboost 與 lightgbm 需要 libomp。
+這台機器是 Homebrew keg-only 的 libomp 23.1.3：
+/opt/homebrew/opt/libomp
+
+若 import 失敗並提到 @rpath/libomp.dylib，先安裝 libomp，再讓動態連結找得到它。
+這是機器依賴。
+
+記憶體大約 8 GB。公開訓練的峰值 RSS 約 1.1 GB，
+TrustLedger 重現約 1.0 GB。不要同時跑兩份訓練和 scripts/check.sh。
+
+3. 在倉庫根目錄執行
+
+cd /Users/brian/Projects/trustledger
+
+契約自檢。成功時印出：
+contract self_check ok
+
+/tmp/tl-research-venv/bin/python evaluation/research/benchmark/contract.py
+
+TrustLedger 六個模型與洩漏審計。會覆寫 trustledger/scores、audit.json、NOTES.txt。
+四個舊模型應印出 MATCH。
+
+/tmp/tl-research-venv/bin/python evaluation/research/benchmark/trustledger/reproduce.py
+
+公開模型。會覆寫 public/scores、SUMMARY.json、NOTES.txt。
+超參數來自 contract.py，不會讀 test 標籤來選模型。
+KNN 這次沒有在全部訓練列上擬合。soft vote 會標成 APPROXIMATION。
+成功時印出：
+public training complete
+
+/tmp/tl-research-venv/bin/python evaluation/research/benchmark/public/train_public.py
+
+合併榜單。從 npz 重算指標，不重新訓練。
+成功時印出 models 16、alignment_problems 0，並寫入 leaderboard.json。
+
+/tmp/tl-research-venv/bin/python evaluation/research/benchmark/assemble.py
+
+4. 獨立審計
+
+審計程式要一個扁平目錄，裡面是同名的 .npz 與 .json。
+
+rm -rf /tmp/tl-flat-scores
+mkdir -p /tmp/tl-flat-scores
+find evaluation/research/benchmark/public/scores evaluation/research/benchmark/trustledger/scores \
+  -name '*.npz' -o -name '*.json' | while read -r f; do
+  ln -sf "$PWD/$f" "/tmp/tl-flat-scores/$(basename "$f")"
+done
+
+/tmp/tl-research-venv/bin/python evaluation/research/benchmark/audit/audit_predictions.py \
+  --scores /tmp/tl-flat-scores --overlap
+
+預期：完整性通過。
+預期退出碼 2。原因是六個 TrustLedger sidecar 沒有 leakage_status。
+這不是分數不一致。Average Precision 的契約值與獨立重算值應相同。
+報告寫到 evaluation/research/benchmark/audit/AUDIT.txt
+與 evaluation/research/benchmark/audit/audit_report.json。
+
+合成 self-check：
+
+/tmp/tl-research-venv/bin/python evaluation/research/benchmark/audit/audit_predictions.py \
+  --self-check
+
+成功時 SELF_CHECK.txt 的結果是 PASS。
+
+5. 不要做的事
+
+不要改 contract.py 之後又沿用這份榜單。
+不要用 test 標籤重新選超參數。
+不要把 expanding 的分數說成 PR #15 的重現。
+不要把公布的 Kaggle 或 GitHub 百分比和 leaderboard.json 混成同一張可比表。
+不要部署 npz，也不要把它們接進 API。
+scripts/check.sh 不覆蓋這份研究碼。沒跑它，就不要寫後端測試通過。
+
+6. 閱讀順序
+
+evaluation/research/benchmark/PROTOCOL.txt
+evaluation/research/benchmark/FINDINGS.txt
+evaluation/research/benchmark/leaderboard.json
+evaluation/research/benchmark/uncertainty.json
+evaluation/research/benchmark/trustledger/audit.json
+evaluation/research/benchmark/discovery/SHORTLIST.txt

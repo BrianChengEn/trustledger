@@ -58,14 +58,15 @@ def test_prompt_injection_merchant_never_reaches_explanation_provider(client):
     assert "other" in seen[0]
 
 
-def test_explanation_is_not_a_public_endpoint_or_analysis_field(client, monkeypatch):
+def test_analysis_does_not_invoke_or_embed_an_explanation(client, monkeypatch):
     def forbidden(*args, **kwargs):
-        raise AssertionError("Public analysis must not invoke internal explanations")
+        raise AssertionError("Public analysis must not invoke explanations")
     monkeypatch.setattr(ExplanationService, "explain", forbidden)
+    monkeypatch.setattr(
+        "app.services.ai.gemini_explanation.GeminiExplanationService.explain", forbidden)
     response = client.post("/api/v1/analyses", json={"transaction_id": "txn_syn_004"})
     assert response.status_code == 200
-    assert "explanation" not in response.json()
-    paths = client.app.openapi()["paths"]
-    assert len(paths) == 26
-    assert sum(len(operations) for operations in paths.values()) == 28
-    assert not any("explain" in path for path in paths)
+    body = response.json()
+    assert "explanation" not in body
+    assert body["provider_mode"] == "rules-only"
+    assert "/api/v1/transactions/{transaction_id}/explanation" in client.app.openapi()["paths"]

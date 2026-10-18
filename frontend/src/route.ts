@@ -1,8 +1,9 @@
 import {useEffect, useState} from 'react';
 
 export type Route = (
-  | {view: 'today'} | {view: 'activity'; filter?: string} | {view: 'memory'} | {view: 'sources'}
-  | {view: 'privacy'; tx?: string} | {view: 'case'; tx: string; from?: string}
+  | {view: 'today'} | {view: 'activity'; filter?: string} | {view: 'memory'; lab?: string} | {view: 'sources'}
+  | {view: 'admin'; tab?: string}
+  | {view: 'privacy'; tx?: string; lab?: string} | {view: 'case'; tx: string; from?: string}
 ) & {customer?: string};
 
 export function parse(hash: string): Route {
@@ -15,9 +16,11 @@ export function parse(hash: string): Route {
   catch { return customer ? {view: 'today', customer} : {view: 'today'}; }
   let route: Route;
   switch (view) {
-    case 'memory': case 'sources': route = {view}; break;
+    case 'sources': route = {view}; break;
+    case 'memory': route = id === 'lab' ? {view, lab: from ?? ''} : {view}; break;
     case 'activity': route = tx ? {view, filter: tx} : {view}; break;
-    case 'privacy': route = {view, tx}; break;
+    case 'admin': route = tx ? {view, tab: tx} : {view}; break;
+    case 'privacy': route = id === 'lab' ? {view, lab: from ?? ''} : {view, tx}; break;
     case 'case': route = tx ? {view, tx, from} : {view: 'today'}; break;
     default: route = {view: 'today'};
   }
@@ -25,8 +28,11 @@ export function parse(hash: string): Route {
 }
 export const href = (route: Route) =>
   '#/' + (route.customer && route.view !== 'sources' ? 'sources/' + encodeURIComponent(route.customer) + '/' : '')
-  + route.view + ('tx' in route && route.tx ? '/' + encodeURIComponent(route.tx) : '')
+  + route.view + (('view' in route && (route.view === 'memory' || route.view === 'privacy') && route.lab !== undefined)
+    ? '/lab' + (route.lab ? '/' + encodeURIComponent(route.lab) : '')
+    : 'tx' in route && route.tx ? '/' + encodeURIComponent(route.tx) : '')
   + (route.view === 'activity' && route.filter ? '/' + encodeURIComponent(route.filter) : '')
+  + (route.view === 'admin' && route.tab ? '/' + encodeURIComponent(route.tab) : '')
   + (route.view === 'case' && route.from ? '/' + route.from : '');
 
 export function useRoute() {

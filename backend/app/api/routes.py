@@ -1,3 +1,5 @@
+from app.schemas.relevant_memory import RelevantMemories, DeletionVerification
+from app.services.ai.relevant_memory import retrieve, deletion_status
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
@@ -5,10 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Res
 from contextlib import asynccontextmanager
 import httpx
 
-from app.api.dependencies import Analyses, Transactions
+from app.api.dependencies import Analyses, Explanations, Transactions
+from app.core.auth import require_admin_when_enforced, require_session
 from app.core.store import ConflictingConfirmation
 from app.schemas.api import (
-    Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Health,
+    Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Explanation, Health,
     MemorySummary, PrivacyPreview,
 )
 from app.schemas.transaction import Transaction
@@ -17,9 +20,23 @@ from app.services.ai.backboard_client import MemoryCallError
 from app.services.ai.memory_sync import consented_summaries, remove_remote_memory, write_consented_memory
 from app.services.workspace import owner as workspace_owner, require_nessie, select_customer
 
-router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_nessie)])
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_session), Depends(require_nessie)])
 customer_router = APIRouter(prefix='/api/v1/admin/nessie/customers/{customer_code}',
-                            dependencies=[Depends(select_customer), Depends(require_nessie)])
+                            dependencies=[Depends(require_admin_when_enforced), Depends(select_customer), Depends(require_nessie)])
+
+
+def private_markers(tx: Transaction) -> tuple[str, ...]:
+    """Local denylist for model output. These values are not placed in the Gemini document."""
+    amount = tx.amount
+    markers = [
+        tx.id, tx.account_token, tx.merchant_display, tx.occurred_at.isoformat(),
+        str(amount), f"{amount:.2f}", f"{amount:.1f}", f"{amount:g}",
+    ]
+    unique: list[str] = []
+    for marker in markers:
+        if len(marker) >= 3 and marker not in unique:
+            unique.append(marker)
+    return tuple(unique)
 
 
 def api_key(request: Request) -> str:
@@ -99,6 +116,20 @@ def preview(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
     return analyses.preview(transaction_id)
 
 
+@router.post("/transactions/{transaction_id}/explanation", response_model=Explanation)
+@customer_router.post('/transactions/{transaction_id}/explanation', response_model=Explanation)
+def explain_transaction(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
+                        request: Request, analyses: Analyses, explanations: Explanations):
+    """User-triggered explanation. Rules stay authoritative; Gemini is not called by analysis."""
+    analysis, features = analyses.rules_view(transaction_id, request.state.request_id)
+    before = analysis.model_dump_json()
+    transaction = analyses.transactions.get_transaction(transaction_id)
+    result = explanations.explain(analysis, features, private_markers(transaction))
+    if analysis.model_dump_json() != before:
+        raise HTTPException(500, "internal_error")
+    return result
+
+
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)
 @customer_router.post('/alerts/{alert_id}/confirmations', response_model=Confirmation)
 async def confirm(alert_id: Annotated[str, Path(min_length=1, max_length=80)],
@@ -170,3 +201,24 @@ async def delete(memory_id: Annotated[str, Path(min_length=1, max_length=100)], 
     if removed == "deleted":
         state.memory_outcome = "backboard-live"
     return Response(status_code=204)
+
+
+@router.get('/transactions/{transaction_id}/relevant-memories', response_model=RelevantMemories)
+@customer_router.get('/transactions/{transaction_id}/relevant-memories', response_model=RelevantMemories)
+async def relevant_memories(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
+                            request: Request, transactions: Transactions):
+    tx = transactions.get_transaction(transaction_id)
+    async with vendor_http(request) as http:
+        return await retrieve(request.app.state.store, workspace_owner(request),
+                              tx.merchant_category, api_key(request), http)
+
+
+@router.get('/memories/{memory_id}/deletion-verification', response_model=DeletionVerification)
+@customer_router.get('/memories/{memory_id}/deletion-verification', response_model=DeletionVerification)
+async def verify_deletion(memory_id: Annotated[str, Path(min_length=1, max_length=100)], request: Request):
+    async with vendor_http(request) as http:
+        result = await deletion_status(request.app.state.store, workspace_owner(request),
+                                       memory_id, api_key(request), http)
+    if result is None:
+        raise HTTPException(404, 'not_found')
+    return result

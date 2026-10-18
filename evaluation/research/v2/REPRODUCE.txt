@@ -1,0 +1,52 @@
+TrustLedger fraud framework v2
+Reproduction instructions
+
+This experiment does not import or modify production fraud decisions.
+It does not call Jev, Gemini, or Backboard.
+
+Requirements
+- Python environment with numpy, scikit-learn, and joblib.
+  The run that produced the committed metrics used scikit-learn 1.6.1 and numpy 2.0.2.
+- BankSim file at /tmp/tl-eval-data/banks.csv.
+  Header: step,customer,age,gender,zipcodeOri,merchant,zipMerchant,category,amount,fraud.
+  Expected population: 594,643 rows, 7,200 fraud, steps 0-179.
+  The file is CC BY-NC-SA 4.0. Do not commit it.
+- Do not point this script at the local Sparkov export. That file is rejected
+  inside the run when its card numbers, row count, or clock do not match the
+  official 2019-2020 kartik2112/fraud-detection description.
+
+Commands, from the repository root
+
+1. Validation only. Fits every candidate and selects on steps 120-134.
+   It does not score steps 135-179.
+
+   /tmp/tl-research-venv/bin/python evaluation/research/v2/run_framework.py
+
+   Writes evaluation/research/v2/results/framework_v2_val.json.
+
+2. Final evaluation. Refits every candidate currently listed in the script,
+   selects again on steps 120-134, then scores steps 135-149 and steps
+   150-179 once. The committed metrics come from this command.
+
+   /tmp/tl-research-venv/bin/python evaluation/research/v2/run_framework.py --final
+
+   Writes evaluation/research/v2/results/framework_v2.json
+   and evaluation/research/v2/models/recommended.joblib.
+
+Frozen protocol
+- Train: steps 0-119.
+- Model selection: steps 120-134, maximum average precision.
+- Within 0.01 average precision, prefer no merchant-rate feature, then fewer
+  feature groups, then higher recall at that slice's production-rule alert count.
+- Confirm: steps 135-149. Reported only. It cannot change the winner.
+  A precommitted gate can refuse a merchant-rate winner for deployment.
+- Test: steps 150-179. Previously inspected by PR #14. Comparison holdout,
+  not a pristine blind test.
+- Fixed review budgets: 459, 919, 1113, and 1838 alerts.
+- HistGradientBoosting hyperparameters match PR #14:
+  max_iter 80, learning_rate 0.08, max_leaf_nodes 31,
+  min_samples_leaf 40, l2_regularization 0.1, random_state 20261017.
+- Age, gender, zip, and raw customer or merchant ids are not features.
+
+The selection rule lives in evaluation/research/v2/run_framework.py.
+Do not retune it after reading test metrics.

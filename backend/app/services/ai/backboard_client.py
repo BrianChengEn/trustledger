@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from app.services.ai.memory_policy import approved_memory
 
 API_ROOT = "https://app.backboard.io/api"
+_ABSENT = object()
 ASSISTANT_NAME = "TrustLedger preference memory"
 ASSISTANT_PROMPT = (
     "Store only an explicit category confirmation. "
@@ -173,6 +174,7 @@ async def _send(
     *,
     json: dict | None = None,
     ok: set[int],
+    missing_is_absent: bool = False,
 ) -> object:
     key = api_key.strip()
     if not key:
@@ -184,6 +186,8 @@ async def _send(
             response = await http.request(method, url, headers=headers, json=json)
         except httpx.HTTPError:
             raise MemoryCallError("request_failed") from None
+        if response.status_code == 404 and missing_is_absent:
+            return _ABSENT
         if response.status_code == 404 and method == "DELETE":
             raise MemoryCallError("already_absent")
         if response.status_code not in ok:
@@ -292,3 +296,17 @@ async def delete_memory(
             return "already_absent"
         raise
     return parse_delete(data)
+
+
+async def memory_presence(assistant_id, memory_id, api_key, *, client=None):
+    """Fresh point lookup. A 404 is absence at read time, never a future guarantee."""
+    assistant = _assistant_id(assistant_id)
+    identity = _memory_id(memory_id)
+    data = await _send('GET', f'{API_ROOT}/assistants/{assistant}/memories/{identity}',
+                       api_key, client, ok={200}, missing_is_absent=True)
+    if data is _ABSENT:
+        return None
+    record = parse_memory(data)
+    if record.id != identity:
+        raise MemoryCallError('invalid_response')
+    return record

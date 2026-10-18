@@ -3,12 +3,16 @@
 import httpx
 import uvicorn
 import hashlib
+import csv
 
 from app.adapters.nessie import NessieClient
 from app.adapters.nessie_fixture import load_baseline
 from app.adapters.nessie_fixture import BASELINE_SHA256
 from app.adapters.nessie import API_BASE
 from app.adapters.synthetic import load_transactions
+from app.adapters.dataset_import import import_banksim
+from app.adapters.account_demo import build_account_demo
+from tests.unit.data.test_account_demo import inputs
 from app.core.config import Settings
 from app.main import create_app
 
@@ -55,9 +59,26 @@ def upstream(request):
 
 
 settings = Settings(_env_file=None, nessie_api_key="isolated-browser-test-key",
-                    fraud_provider='rules-only', session_secret='isolated-browser-session-secret',
-                    backboard_api_key="", jev_api_key="", allow_memory_write=True)
+                    fraud_provider='rules-only',
+                    backboard_api_key="", jev_api_key="", gemini_api_key="", allow_memory_write=True,
+                    require_login=True, demo_user_passcode="browser-user-pass", demo_admin_passcode="browser-admin-pass",
+                    session_secret="browser-test-session-secret-0123456789abcdef", allow_demo_edit=True)
 app = create_app(settings)
+# Small synthetic BankSim-shaped input for the source browser, never the real research dataset.
+source_csv = settings.database_path.parent / 'browser-banksim.csv'
+with source_csv.open('w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['step', 'customer', 'age', 'gender', 'zipcodeOri', 'merchant',
+                     'zipMerchant', 'category', 'amount', 'fraud'])
+    writer.writerows([[120, f'C{index}', '2', 'F', '28007', f'M{index}', '28007',
+                       'es_health', '180.01', index % 2] for index in range(30)])
+import_banksim(source_csv, app.state.source_stores['banksim'])
+account_csv = settings.database_path.parent / 'banks.csv'
+account_nessie = settings.database_path.parent / 'original-nessie.db'
+if not account_nessie.exists():
+    inputs(settings.database_path.parent, bank_customers=30)
+build_account_demo(account_csv, account_nessie, settings.database_path.parent / 'sources/account-demo',
+                   settings.database_path.parent / 'offline-account-labels')
 data = load_baseline(app.state.store)
 with app.state.store.connect() as db:
     run = db.execute('INSERT INTO seed_runs(owner,dataset_sha256,api_base_url,credential_fingerprint,'

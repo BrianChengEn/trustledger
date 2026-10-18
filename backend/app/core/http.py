@@ -83,16 +83,16 @@ class RequestGuardMiddleware:
 
     async def handle(self, scope: Scope, receive: Receive, send: Send):
         headers = Headers(scope=scope)
-        if scope.get("path", "").startswith("/api/v1/admin/nessie"):
+        if scope.get("path", "").startswith(("/api/v1/admin/nessie", "/api/v1/admin/demo", "/api/v1/data-sources")):
             origin = headers.get("origin")
             if URL(scope=scope).hostname not in self.local_hosts or (origin and origin not in self.admin_origins):
                 return await self.respond(scope, receive, send, 403, "local_access_only", "Local access is required.")
-            if scope["method"] in {"POST", "DELETE"} and (
+            if scope["method"] in {"POST", "PATCH", "DELETE"} and (
                 origin not in self.admin_origins or
                 headers.get("content-type", "").split(";")[0].strip().lower() != "application/json"
             ):
                 return await self.respond(scope, receive, send, 403, "local_json_required", "Local JSON access is required.")
-        if scope["method"] in {"POST", "DELETE"}:
+        if scope["method"] in {"POST", "PATCH", "DELETE"}:
             origin = headers.get("origin")
             if origin and origin not in self.origins:
                 return await self.respond(scope, receive, send, 403, "origin_denied",

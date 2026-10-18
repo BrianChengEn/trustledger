@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
@@ -18,16 +19,24 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     allow_memory_write: bool = False
     database_path: Path = BACKEND_DIR / "data" / "trustledger-demo.db"
+    source_database_dir: Path | None = None
     nessie_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     jev_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     backboard_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
-
-    # Local demo only: blank passcodes allow blank sign-in for either role.
+    # Server-side explanation only. A missing key keeps the rules explanation and does not call Gemini.
+    gemini_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
+    gemini_model: str = "gemini-3.5-flash-lite"
+    gemini_timeout_ms: int = Field(default=8000, ge=1000, le=20000)
+    # Demo sign-in (not production authentication). With REQUIRE_LOGIN=true every data route needs a session.
+    # An empty USER passcode makes user sign-in open; an empty ADMIN passcode disables admin sign-in entirely.
     require_login: bool = False
     demo_user_passcode: SecretStr = Field(default=SecretStr(""), repr=False)
     demo_admin_passcode: SecretStr = Field(default=SecretStr(""), repr=False)
+    # Signs session cookies. Empty means a random secret per server start (sessions end when the server restarts).
     session_secret: SecretStr = Field(default=SecretStr(""), repr=False)
     session_ttl_minutes: int = Field(default=480, ge=5, le=1440)
+    # Admin editing of the synthetic demo data. Off unless explicitly enabled.
+    allow_demo_edit: bool = False
 
     @field_validator("frontend_origin")
     @classmethod
@@ -45,4 +54,11 @@ class Settings(BaseSettings):
             valid = False
         if not valid:
             raise ValueError("frontend_origin must be an exact HTTP(S) origin")
+        return value
+
+    @field_validator("gemini_model")
+    @classmethod
+    def gemini_model_id(cls, value: str) -> str:
+        if not re.fullmatch(r"[A-Za-z0-9._-]{1,80}", value):
+            raise ValueError("gemini_model must be a model id")
         return value
