@@ -131,7 +131,11 @@ The local map is one `assistant_id` per demo owner, created with `POST /assistan
 | Recovery | Reconcile exactly one new matching fact excluding all baseline IDs. SQLite serializes same-sentence active jobs and enforces unique remote identity. Deletion is terminal; a delayed create acknowledgement cannot restore its local index |
 | No key | No memory HTTP call. SQLite only, `source=local-fallback`, health `local-fallback` |
 
-Health reports `backboard-live` only after a memory call in this process returns a parsed success. A key by itself does not. A failed memory call sets `degraded`. Live memory is not verified until a real provider response succeeds.
+Health reports `backboard-live` only after a memory call in this process returns a parsed success. A key by itself does not. A failed memory call sets `degraded`.
+
+Live check on 17 October 2026, against `https://app.backboard.io/api` with `X-API-Key`: assistant create (HTTP 200), memory add (HTTP 201), get, list, same-owner reuse, two-owner isolation, a second process, restart of this API, and assistant delete (HTTP 200) all succeeded. The stored text was the approved category sentence. Search is implemented and was not used to decide `prior_confirmation`. An invalid key returns the code `rejected`. Missing key, HTTP 429, HTTP 5xx, and timeout are mocked and do not say the write succeeded. Default pytest does not make these calls. Set `BACKBOARD_LIVE_TEST=1` to run `backend/tests/integration/test_backboard_live.py`.
+
+The same account returned HTTP 402 `Insufficient credits for System One` for Jev. `review` keeps the rule analysis and sets `provider_mode=degraded`. Memory CRUD does not use that inference call. Do not buy credits or enable auto-reload. `GET /api/v1/alerts` and a confirmation both call Jev for rows the rules already flag, so a successful memory write can sit next to `analysis_mode=degraded`. After a restart, health stays `rules-only` and `local-fallback` until this process actually calls Jev or reads memory.
 
 ## Nessie scope
 
@@ -150,8 +154,8 @@ The browser holds no vendor key. Vendor keys, if later set, stay in `backend/.en
 |---|---|---|---|---|---|
 | Synthetic load, 3 alerts, review, inspector | DONE | Shared | — | Keep it green | `check.sh` passes and the click path works |
 | SQLite memory affects the next analysis | DONE | Brian content, Benson store | — | Merged in PR #3 | Preview shows `normal` only for that category, then `unknown` after delete |
-| Jev through Backboard | IMPLEMENTED behind `BACKBOARD_API_KEY` | Brian | P1 | A real response must be seen before calling the demo live | Mocked tests cover success and failure. A missing key stays `rules-only` |
-| Backboard persistent memory | IMPLEMENTED behind `BACKBOARD_API_KEY` | Brian, with Benson on the route and store | P1 | A real memory response must be seen before calling the demo live | Mocked tests cover consent, isolation, read, delete, and SQLite fallback |
+| Jev through Backboard | IMPLEMENTED behind `BACKBOARD_API_KEY` | Brian | P1 | This account returns HTTP 402 for System One. Do not buy credits | Mocked tests cover success and failure. A missing key stays `rules-only`. HTTP 402 stays `degraded` |
+| Backboard persistent memory | VERIFIED live on 17 October 2026 | Brian, with Benson on the route and store | — | Keep CI mocked. Re-run only with `BACKBOARD_LIVE_TEST=1` | Create, store, retrieve, reuse, isolation, restart, and delete succeeded. No key stays `local-fallback` |
 | Nessie Admin reads / baseline CLI | IMPLEMENTED separately from dashboard | Kenny | P1 | Owner review; dashboard mapper remains an extension point | CI passes with no key and makes no network call |
 | Health mode after a provider attempt | DONE | Benson's route records Brian's result | — | `rules+jev-live`, `backboard-live`, or `degraded` only after a call | A key alone changes neither mode |
 | Frontend polish and small-screen pass | NOT STARTED | Ian | P1 | Use the current API | Demo path is usable without spoken help |
@@ -161,4 +165,4 @@ The browser holds no vendor key. Vendor keys, if later set, stay in `backend/.en
 | CI on `main` | DONE | Benson | P0 | Re-run on each PR | The PR #3 merge run `39075769257` passed |
 | Branch protection | UNVERIFIED | Benson | P1 | Private-repo API returned HTTP 403 | Settings show required CI, or the team accepts the limit in writing |
 
-Live Jev and Backboard memory remain unverified for this candidate. Pending memory writes that never become observable require manual reconciliation. Do not put keys in Git.
+Backboard memory CRUD was verified live. Jev System One was not: this account returns HTTP 402, and the demo must not describe that failure as live classification. Pending memory writes that never become observable require manual reconciliation. Do not put keys in Git.

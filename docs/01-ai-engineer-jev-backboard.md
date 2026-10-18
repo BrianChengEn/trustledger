@@ -230,7 +230,16 @@ merchant_display, raw_description, transaction_id, account_token
 - memory 位於 assistant scope，跨同 assistant threads。
 - memory 可 list/add/search/get/update/delete。
 
-MVP 建議不要把完整交易內容交給 Auto extraction。確認後由 `memory_policy.py` 先建立 sanitized sentence，再使用官方 Add Memory endpoint；之後分析可用 semantic search 或 `Readonly`。禁止將多個 demo users 放進同一 assistant。
+MVP 建議不要把完整交易內容交給 Auto extraction。目前程式就是這樣做，而且沒有採用下面舊稿裡的 semantic search 或 `Readonly`：
+
+- Jev 請求固定 `memory=off`。分類不會自動寫入 assistant memory。
+- 同意後只把類別句子 `POST` 到 `/assistants/{assistant_id}/memories`。句子以外的內容在送出前就被拒絕。
+- 每個 owner 在 SQLite 保存第一個 assistant id，之後重用。HTTP API 的 owner 是 `DEMO_USER_ID`，瀏覽器不能選。
+- 分析只用本地已索引、且通過 `approved_memory` 的句子。遠端 list 只用來確認讀取成功，不會把孤兒遠端列匯入。
+- 沒有 key 時不送 memory HTTP，SQLite `source=local-fallback`。失敗不得標成 `backboard-live`。
+- 預設測試不呼叫 Backboard。要打真實 API 時，在 `backend/` 執行 `BACKBOARD_LIVE_TEST=1 .venv/bin/python -m pytest -q tests/integration/test_backboard_live.py`。
+
+禁止將多個 demo users 放進同一 assistant。
 
 Memory write gate：
 

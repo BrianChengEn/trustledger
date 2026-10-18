@@ -10,16 +10,16 @@ This repository is a working synthetic demo. It is not a live bank connection an
 
 ## Current status
 
-This candidate combines the current main, Nessie Admin implementation, SQLite alignment and PR #7 consented Backboard memory. Live provider behavior has not been revalidated for this update.
+This candidate combines the current main, Nessie Admin implementation, SQLite alignment and PR #7 consented Backboard memory. On 17 October 2026, explicit Backboard memory CRUD was checked against the live API: create, store, retrieve, reuse, two-owner isolation, restart, and delete. System One classification on that same account returned HTTP 402 `Insufficient credits for System One`. The client keeps the rule result and reports `degraded`. Do not buy credits or turn on auto-reload.
 
 | Area | Status |
 |---|---|
 | Synthetic transactions, rules, review UI, Privacy Inspector | Implemented |
 | SQLite synthetic data, confirmations and consented category memory | Implemented; JSON remains an offline fixture only |
 | Consented memory affects the next analysis | Implemented on `main` |
-| Jev through Backboard | Implemented. Live only when `BACKBOARD_API_KEY` is set and the response parses |
+| Jev through Backboard | Implemented. A parsed response is required before health says `rules+jev-live`. This account currently receives HTTP 402, so a flagged review stays `degraded` |
 | Direct TypeSafe API | Not selected and not called |
-| Backboard persistent memory | Implemented behind `BACKBOARD_API_KEY`. No key uses SQLite. Live memory is not verified until a real provider response succeeds |
+| Backboard persistent memory | Implemented and checked live. No key uses SQLite and labels it `local-fallback`. A key alone does not flip health to `backboard-live` |
 | Capital One Nessie | Six allowlisted Admin reads and explicit synthetic baseline CLI; dashboard transaction adapter remains an extension point |
 | GitHub Actions CI | Backend, frontend and Admin browser checks run for each PR |
 | Production auth, hosting, deployment | Not started |
@@ -106,6 +106,28 @@ bash scripts/check.sh
 ```
 
 That runs backend Ruff and pytest, frontend typecheck, Vitest, production build and Admin browser checks. CI uses `backend/requirements.lock.txt` and `frontend/package-lock.json`, has no vendor secrets and does not call live APIs. Offline golden fixtures are checked with `python3 scripts/generate_synthetic_data.py --check`.
+
+The live memory check is separate and spends a small number of Backboard calls. It creates two temporary assistants, proves they do not share memories, then deletes them. From `backend/`:
+
+```bash
+BACKBOARD_LIVE_TEST=1 .venv/bin/python -m pytest -q tests/integration/test_backboard_live.py
+```
+
+Leave that variable unset for `bash scripts/check.sh`. The key stays in `backend/.env`. The test does not print it.
+
+## Show that memory is really Backboard
+
+Start the backend with `ALLOW_MEMORY_WRITE=true` and `BACKBOARD_API_KEY` set in `backend/.env`. The frontend never receives that key.
+
+1. `GET /api/v1/health` before any memory call in this process. Expect `memory_mode=local-fallback`. A saved key does not change that by itself.
+2. Confirm an **open** flagged alert as `normal` with `consent_to_memory=true`. Repeating an alert that was already confirmed does not write a new remote memory. `alert_txn_syn_005` is the electronics amount alert in the fixture.
+3. `GET /api/v1/memories`. The row `source` is `backboard`. The summary is only the category sentence, with no merchant or amount.
+4. `GET /api/v1/privacy/preview/txn_syn_005`. `prior_user_confirmation` is `normal` for electronics and stays `unknown` for another category.
+5. `GET /api/v1/health` after that preview. `memory_mode` is `backboard-live`.
+6. Stop and start the backend. Repeat steps 3 and 4. The same row is still there.
+7. Send the same confirmation again. The stored `memory_id` comes back, and the memory list does not grow.
+
+That confirmation also asks Jev about every rule-flagged transaction. On this account those calls return HTTP 402, so `analysis_mode` becomes `degraded` while the rule alert remains. The prior confirmation adds one evidence line. It does not clear `needs_human` or the alert type. The HTTP API has one server-side demo user. Two-owner isolation is the opt-in test above, not a browser-selected account.
 
 ## External APIs
 

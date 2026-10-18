@@ -85,9 +85,9 @@ The rules engine sets `confidence=1.0` when a deterministic rule matches. That n
 
 | Service | Integration in this repo | Credential this repo knows | Official interface checked | Owner | Status |
 |---|---|---|---|---|---|
-| Backboard System One, selected Jev route | `httpx` async `POST /threads/messages` | `BACKBOARD_API_KEY` | [System One](https://docs.backboard.io/concepts/system-one). `llm_provider=typesafe`, `model_name=jev-latest`, `stream=false` | Brian | IMPLEMENTED. Live only when the key is set and the response parses |
+| Backboard System One, selected Jev route | `httpx` async `POST /threads/messages` | `BACKBOARD_API_KEY` | [System One](https://docs.backboard.io/concepts/system-one). `llm_provider=typesafe`, `model_name=jev-latest`, `stream=false`, `memory=off` | Brian | IMPLEMENTED. HTTP 402 and any other non-200 stay `degraded`, not `rules+jev-live` |
 | Direct TypeSafe API | Not called | `JEV_API_KEY` is loaded and unused. Official SDK name is `TYPESAFE_API_KEY` | `POST https://api.typesafe.ai/v1/systemone` | Brian | Optional route, not selected |
-| Backboard memory | `httpx` explicit CRUD with a durable SQLite consent/job/index; one stored assistant per demo owner | `BACKBOARD_API_KEY`. `BACKBOARD_ASSISTANT_ID` is not read | [Memory](https://docs.backboard.io/concepts/memory), [SDK memory](https://docs.backboard.io/sdk/memory). Inference explicitly sets `memory=off` | Brian | IMPLEMENTED, mocked in CI; no key stays `local-fallback`. Uncertain writes stay pending with no automatic POST retry |
+| Backboard memory | `httpx` explicit CRUD with a durable SQLite consent/job/index; one stored assistant per demo owner | `BACKBOARD_API_KEY`. `BACKBOARD_ASSISTANT_ID` is not read | [Memory](https://docs.backboard.io/concepts/memory). Manual add, list, get, and delete. Inference stays `memory=off` | Brian | VERIFIED live on 17 October 2026. CI stays mocked. No key stays `local-fallback`. Uncertain writes stay pending with no automatic POST retry |
 
 `docs/.env.example` sets `JEV_BASE_URL=https://jev-ai.org/api/v1`. The running client does not read or request that host.
 

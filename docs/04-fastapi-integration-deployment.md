@@ -156,9 +156,9 @@ Secrets 只在 backend runtime。`/health` 只能回「configured/reachable/mode
 
 `GET /api/v1/memories`、`DELETE /api/v1/memories/{memory_id}`
 
-- 只回 sanitized summary。
+- 只回 sanitized summary。`source` 為 `backboard` 或 `local-fallback`。
 - delete 驗證 current demo assistant ownership。
-- upstream async delete 必須回誠實狀態；若 internal contract 僅 204，只有確認完成後才回 204，否則調整 contract需團隊同意。
+- `backboard` 列先刪遠端。HTTP 200 且 `success: true`，或遠端已經 404，才刪本地列並回 204。其他失敗回 502，本地列保留，`memory_mode=degraded`。`local-fallback` 不送 HTTP。
 
 ## Request identity / isolation
 

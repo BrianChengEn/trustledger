@@ -287,7 +287,7 @@ Prototype CI 不需要 vendor secrets。若真的需要 deploy secret：Reposito
 10. Backboard live memory（optional flag）。
 11. Security fixes、accessibility、copy、submission docs。
 
-每個 live integration 都是可單獨 rollback 的 PR。
+每個 live integration 都是可單獨 rollback 的 PR。Backboard memory 的真實呼叫不在 CI。要重跑時，在 `backend/` 設定 `BACKBOARD_LIVE_TEST=1` 後執行 `pytest -q tests/integration/test_backboard_live.py`。不要把 key 放進 workflow。
 
 ## 12. 最後 3 小時規則
 
