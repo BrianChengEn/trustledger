@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import httpx
 import yaml
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
@@ -131,7 +132,163 @@ def test_backboard_failure_and_success_keep_the_rule_contract(monkeypatch, tmp_p
         alerts = live.get("/api/v1/alerts").json()
         assert len(alerts) == 3
         assert {item["provider_mode"] for item in alerts} == {"rules+jev-live"}
-        assert live.get("/api/v1/health").json()["analysis_mode"] == "rules+jev-live"
+        health = live.get("/api/v1/health").json()
+        assert health["analysis_mode"] == "rules+jev-live"
+        assert health["memory_mode"] == "local-fallback"
+
+
+def _memory_client(tmp_path, monkeypatch, handler):
+    from app.core.config import Settings
+    from app.main import create_app
+    from app.services.ai.jev_client import JevCallError
+
+    async def no_jev(*_args, **_kwargs):
+        raise JevCallError("request_failed")
+
+    monkeypatch.setattr("app.services.ai.decision.classify", no_jev)
+    settings = Settings(_env_file=None, database_path=tmp_path / "memory.db",
+                        allow_memory_write=True, backboard_api_key="synthetic-test-key")
+    app = create_app(settings)
+    app.state.backboard_transport = httpx.MockTransport(handler)
+    return TestClient(app)
+
+
+def test_backboard_memory_success_retrieval_and_delete(tmp_path, monkeypatch):
+    remote = ["The demo user explicitly confirmed a streaming alert as normal. Recheck future evidence."]
+    posts = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content or b"null")
+        if request.method == "POST" and request.url.path == "/api/assistants":
+            text = request.content.decode()
+            assert "demo-user-001" not in text and "StreamWave" not in text
+            assert "synthetic-test-key" not in text
+            return httpx.Response(200, json={
+                "name": body["name"],
+                "assistant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "created_at": "2026-10-17T00:00:00Z",
+            })
+        if request.method == "POST" and request.url.path.endswith("/memories"):
+            posts.append(body)
+            assert set(body) == {"content"} and "StreamWave" not in body["content"]
+            remote[:] = [body["content"]]
+            return httpx.Response(201, json={"memory_id": "mem_remote_streaming", "content": body["content"]})
+        if request.method == "GET" and request.url.path.endswith("/memories"):
+            return httpx.Response(200, json={
+                "memories": [{"id": "mem_remote_streaming", "content": item} for item in remote],
+                "total_count": len(remote),
+            })
+        if request.method == "DELETE":
+            remote.clear()
+            return httpx.Response(200, json={"success": True, "message": "deleted"})
+        return httpx.Response(500, json={"detail": "unexpected"})
+
+    with _memory_client(tmp_path, monkeypatch, handler) as live:
+        assert live.get("/api/v1/health").json()["memory_mode"] == "local-fallback"
+        path = "/api/v1/alerts/alert_txn_syn_004/confirmations"
+        body = {"decision": "normal", "consent_to_memory": True}
+        saved = live.post(path, json=body)
+        assert saved.status_code == 200
+        assert saved.json()["memory_status"] == "written"
+        assert saved.json()["memory_id"] == "mem_remote_streaming"
+        again = live.post(path, json=body)
+        assert again.json()["memory_id"] == "mem_remote_streaming"
+        assert len(posts) == 1
+        memories = live.get("/api/v1/memories").json()
+        assert len(memories) == 1 and memories[0]["source"] == "backboard"
+        assert "StreamWave" not in memories[0]["summary"]
+        preview = live.get("/api/v1/privacy/preview/txn_syn_004").json()["safe_payload"]
+        assert preview["prior_user_confirmation"] == "normal"
+        assert live.get("/api/v1/health").json()["memory_mode"] == "backboard-live"
+        assert live.delete("/api/v1/memories/mem_remote_streaming").status_code == 204
+        assert live.get("/api/v1/memories").json() == []
+        cleared = live.get("/api/v1/privacy/preview/txn_syn_004").json()["safe_payload"]
+        assert cleared["prior_user_confirmation"] == "unknown"
+
+
+def test_backboard_failure_keeps_local_memory_and_label(tmp_path, monkeypatch):
+    from app.services.ai.memory_policy import memory_sentence
+    from app.adapters.synthetic import load_transactions
+
+    rows = load_transactions()
+    fitness = next(row for row in rows if row.id == "txn_syn_008")
+    existing = memory_sentence(fitness, "normal", True, True)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST" and request.url.path == "/api/assistants":
+            return httpx.Response(200, json={
+                "name": "TrustLedger preference memory",
+                "assistant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "created_at": "2026-10-17T00:00:00Z",
+            })
+        return httpx.Response(503, json={"detail": "secret-body"})
+
+    with _memory_client(tmp_path, monkeypatch, handler) as live:
+        live.app.state.store.confirm("demo-user-001", "alert_old", "normal", True, existing, "rid")
+        saved = live.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                          json={"decision": "normal", "consent_to_memory": True})
+        assert saved.status_code == 200
+        assert saved.json()["decision"] == "normal"
+        assert saved.json()["memory_status"] == "failed"
+        memories = live.get("/api/v1/memories").json()
+        assert len(memories) == 2
+        assert {item["source"] for item in memories} == {"local-fallback"}
+        assert existing in {item["summary"] for item in memories}
+        assert "secret-body" not in saved.text
+        preview = live.get("/api/v1/privacy/preview/txn_syn_004").json()["safe_payload"]
+        assert preview["prior_user_confirmation"] == "normal"
+        health = live.get("/api/v1/health").json()
+        assert health["memory_mode"] == "degraded"
+        refused = live.post("/api/v1/alerts/alert_txn_syn_005/confirmations",
+                            json={"decision": "normal", "consent_to_memory": False})
+        assert refused.json()["memory_status"] == "not-requested"
+
+
+def test_invalid_backboard_memory_is_not_labeled_remote(tmp_path, monkeypatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/assistants":
+            return httpx.Response(200, json={
+                "name": "TrustLedger preference memory",
+                "assistant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "created_at": "2026-10-17T00:00:00Z",
+            })
+        return httpx.Response(201, json={})
+
+    with _memory_client(tmp_path, monkeypatch, handler) as live:
+        saved = live.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                          json={"decision": "normal", "consent_to_memory": True})
+        assert saved.json()["memory_status"] == "failed"
+        memories = live.get("/api/v1/memories").json()
+        assert len(memories) == 1 and memories[0]["source"] == "local-fallback"
+        assert live.get("/api/v1/health").json()["memory_mode"] == "degraded"
+
+
+def test_remote_delete_failure_keeps_the_row(tmp_path, monkeypatch):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST" and request.url.path == "/api/assistants":
+            return httpx.Response(200, json={
+                "name": "TrustLedger preference memory",
+                "assistant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "created_at": "2026-10-17T00:00:00Z",
+            })
+        if request.method == "POST":
+            body = json.loads(request.content)
+            return httpx.Response(201, json={"memory_id": "mem_remote_streaming", "content": body["content"]})
+        if request.method == "GET":
+            return httpx.Response(200, json={"memories": [], "total_count": 0})
+        return httpx.Response(503, json={"detail": "secret-body"})
+
+    with _memory_client(tmp_path, monkeypatch, handler) as live:
+        saved = live.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                          json={"decision": "normal", "consent_to_memory": True})
+        assert saved.json()["memory_status"] == "written"
+        denied = live.delete("/api/v1/memories/mem_remote_streaming")
+        assert denied.status_code == 502
+        assert denied.json()["error"]["code"] == "memory_delete_failed"
+        assert "secret-body" not in denied.text
+        memories = live.get("/api/v1/memories").json()
+        assert len(memories) == 1 and memories[0]["source"] == "backboard"
+        assert live.get("/api/v1/health").json()["memory_mode"] == "degraded"
 
 
 def test_analysis_matches_preview_and_get_limit(client):

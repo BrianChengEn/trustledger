@@ -129,6 +129,11 @@ paths:
       responses:
         '204': { description: Deleted }
         '404': { $ref: '#/components/responses/NotFound' }
+        '502':
+          description: The remote memory was not deleted. The local row is unchanged.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
 components:
   parameters:
     TransactionId:

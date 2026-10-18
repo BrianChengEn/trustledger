@@ -113,20 +113,23 @@ The client sends:
 
 TypeSafe also documents `POST https://api.typesafe.ai/v1/systemone` with `Authorization: Bearer` and `TYPESAFE_API_KEY`. TrustLedger does not call that URL and does not install `typesafe-sdk`. Do not switch to it unless the team replaces this decision. `docs/.env.example` values `JEV_BASE_URL=https://jev-ai.org/api/v1` and `JEV_MODEL=jev-1.13` are still unread leftovers.
 
-## Backboard memory plan
+## Backboard memory
 
-Persistent Backboard memory is not implemented. The inference call must not be treated as a memory write.
+Persistent memory is explicit CRUD. The Jev request still omits `memory`, so classification does not write assistant memory.
 
-| Behavior | Required design | Current code |
-|---|---|---|
-| Isolation | One server-side assistant for `demo-user-001`. The browser cannot choose it. Do not share that assistant with another person | Not stored. No `assistant_id` is sent |
-| Consent | Write only when the decision is `normal`, consent is checked, and `ALLOW_MEMORY_WRITE=true` | SQLite uses those three gates |
-| Content | The existing category sentence only. No merchant, amount, id, or raw transaction | SQLite stores that sentence |
-| Retrieval | Read that assistant's memories and map them with `prior_confirmation`. On failure, keep using SQLite and do not claim `backboard-live` | SQLite summaries feed the next analysis |
-| Deletion | Delete the remote memory and the local row. If the remote delete fails, keep the local row and show a failure | Local delete only |
-| Failure | A failed remote write does not undo the confirmation. Leave `memory_status` as failed or skipped and keep `source=local-fallback` | Confirmation still commits locally |
+The local map is one `assistant_id` per demo owner, created with `POST /assistants` and reused. The browser cannot choose it. The create body is a fixed name and system prompt, with no owner id and no transaction text.
 
-`backboard_client.add_memory` still raises `NotImplementedError`. Do not point the UI at `backboard` until a delete and a read both succeed.
+| Behavior | What the code does |
+|---|---|
+| Isolation | SQLite table `assistants` stores the first id for that owner. Later reads and deletes use only that id |
+| Consent | Remote and local writes run only when the decision is `normal`, consent is checked, and `ALLOW_MEMORY_WRITE=true` |
+| Content | The category sentence only. `add_memory` rejects any other text before the request |
+| Retrieval | `GET /assistants/{assistant_id}/memories` merges approved remote sentences into `prior_confirmation`. Search is available to the adapter and is not used to decide the label, because a semantic miss would drop a known confirmation |
+| Deletion | A `backboard` row is deleted remotely first. HTTP 200 with `success: true`, or HTTP 404 when it is already gone, then deletes the local row. `success: false` or another failed call returns 502 and keeps the row |
+| Failure | The confirmation still commits. The sentence is stored once as `source=local-fallback` with `memory_status=failed`. It is not labeled `backboard` |
+| No key | No memory HTTP call. SQLite only, `source=local-fallback`, health `local-fallback` |
+
+Health reports `backboard-live` only after a memory call in this process returns a parsed success. A key by itself does not. A failed memory call sets `degraded`. Live memory is not verified until a real provider response succeeds.
 
 ## Nessie, when someone adds it
 
@@ -146,9 +149,9 @@ The browser holds no vendor key. Vendor keys, if later set, stay in `backend/.en
 | Synthetic load, 3 alerts, review, inspector | DONE | Shared | — | Keep it green | `check.sh` passes and the click path works |
 | SQLite memory affects the next analysis | DONE | Brian content, Benson store | — | Merged in PR #3 | Preview shows `normal` only for that category, then `unknown` after delete |
 | Jev through Backboard | IMPLEMENTED behind `BACKBOARD_API_KEY` | Brian | P1 | A real response must be seen before calling the demo live | Mocked tests cover success and failure. A missing key stays `rules-only` |
-| Backboard persistent memory | NOT STARTED | Brian | P1 | Consent, isolation, read, and delete as in the plan above | Local fallback remains the only memory write |
+| Backboard persistent memory | IMPLEMENTED behind `BACKBOARD_API_KEY` | Brian, with Benson on the route and store | P1 | A real memory response must be seen before calling the demo live | Mocked tests cover consent, isolation, read, delete, and SQLite fallback |
 | Nessie live read | NOT STARTED | Kenny | P1 | Read-only mapper plus synthetic fallback | CI passes with no key and makes no network call |
-| Health mode after a Jev attempt | DONE | Benson's route records Brian's result | `rules+jev-live` or `degraded` only after a call. Nessie and memory modes are unchanged |
+| Health mode after a provider attempt | DONE | Benson's route records Brian's result | — | `rules+jev-live`, `backboard-live`, or `degraded` only after a call | A key alone changes neither mode |
 | Frontend polish and small-screen pass | NOT STARTED | Ian | P1 | Use the current API | Demo path is usable without spoken help |
 | Deployment | NOT STARTED | Benson | P2 | No config exists | A URL and SHA are written down, with no secrets in the repo |
 | Authentication | NOT STARTED | Benson | P2 | Out of the local demo unless the team cuts scope elsewhere | Not required for the synthetic localhost demo |
@@ -156,4 +159,4 @@ The browser holds no vendor key. Vendor keys, if later set, stay in `backend/.en
 | CI on `main` | DONE | Benson | P0 | Re-run on each PR | The PR #3 merge run `39075769257` passed |
 | Branch protection | UNVERIFIED | Benson | P1 | Private-repo API returned HTTP 403 | Settings show required CI, or the team accepts the limit in writing |
 
-No task above is blocked on a missing repository path. Live work is blocked only by an empty key in `backend/.env` and by the stub functions. Do not put those keys in Git.
+No task above is blocked on a missing repository path. Live Jev and live Backboard memory still need a real provider response. Nessie is still a stub. Do not put keys in Git.
