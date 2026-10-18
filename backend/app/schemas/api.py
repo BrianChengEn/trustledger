@@ -126,6 +126,26 @@ class MemorySummary(StrictModel):
     source: Literal["backboard", "local-fallback"]
 
 
+class RelevantMemory(StrictModel):
+    """Read-only context for one later alert. It does not approve that alert."""
+
+    transaction_id: str
+    alert_id: str | None
+    category: str = Field(max_length=40)
+    alert_type: Literal["duplicate", "amount_anomaly", "subscription_change", "none"]
+    severity: Literal["low", "medium", "high"]
+    needs_human: bool
+    evidence: list[Annotated[str, Field(max_length=180)]] = Field(max_length=8)
+    memory_status: Literal["backboard-live", "local-fallback", "unavailable", "no-relevant-memory"]
+    memory_id: str | None = None
+    summary: str | None = Field(default=None, max_length=240)
+    relevance: Literal["same-category"] | None = None
+    retrieval: Literal["backboard-search", "category-filter"] | None = None
+    source: Literal["backboard", "local-fallback"] | None = None
+    still_requires_review: Literal[True] = True
+    request_id: str
+
+
 class Confirmation(StrictModel):
     alert_id: str
     decision: Literal["normal", "review"]

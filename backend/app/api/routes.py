@@ -9,11 +9,13 @@ from app.api.dependencies import Analyses, Explanations, Transactions
 from app.core.store import ConflictingConfirmation
 from app.schemas.api import (
     Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Explanation, Health,
-    MemorySummary, PrivacyPreview,
+    MemorySummary, PrivacyPreview, RelevantMemory,
 )
 from app.schemas.transaction import Transaction
 from app.services.ai.memory_policy import memory_sentence
 from app.services.ai.backboard_client import MemoryCallError
+from app.services.ai.memory_retrieval import find_relevant_memory
+from app.services.ai.privacy import CATEGORIES
 from app.services.ai.memory_sync import consented_summaries, remove_remote_memory, write_consented_memory
 from app.services.workspace import owner as workspace_owner, require_nessie, select_customer
 
@@ -125,6 +127,36 @@ def explain_transaction(transaction_id: Annotated[str, Path(min_length=1, max_le
     if analysis.model_dump_json() != before:
         raise HTTPException(500, "internal_error")
     return result
+
+
+@router.get("/transactions/{transaction_id}/relevant-memory", response_model=RelevantMemory)
+@customer_router.get("/transactions/{transaction_id}/relevant-memory", response_model=RelevantMemory)
+async def relevant_context(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
+                           request: Request, analyses: Analyses):
+    """Consented same-category context for this alert. Rules stay authoritative."""
+    analysis, _features = analyses.rules_view(transaction_id, request.state.request_id)
+    raw_category = analyses.transactions.get_transaction(transaction_id).merchant_category
+    category = raw_category if raw_category in CATEGORIES else "other"
+    async with vendor_http(request) as http:
+        found = await find_relevant_memory(
+            request.app.state.store, workspace_owner(request), category, api_key(request), http)
+    return RelevantMemory(
+        transaction_id=analysis.transaction_id,
+        alert_id=None if analysis.alert_type == "none" else "alert_" + analysis.transaction_id,
+        category=category,
+        alert_type=analysis.alert_type,
+        severity=analysis.severity,
+        needs_human=analysis.needs_human,
+        evidence=analysis.evidence,
+        memory_status=found.status,
+        memory_id=found.memory_id,
+        summary=found.summary,
+        relevance=None if found.summary is None else "same-category",
+        retrieval=found.retrieval,
+        source=found.source,
+        still_requires_review=True,
+        request_id=analysis.request_id,
+    )
 
 
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)

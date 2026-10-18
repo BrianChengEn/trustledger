@@ -546,6 +546,23 @@ class Store:
             """, (owner,)).fetchall()
         return [row["summary"] for row in rows]
 
+    def consented_memory_records(self, owner: str, *, timeout: float = 5) -> list[dict[str, str]]:
+        """Consented memory rows for this owner. Same join as the summary list, with ids."""
+        with self.connect(timeout=timeout) as db:
+            rows = db.execute("""
+                SELECT m.memory_id, m.summary, m.source FROM confirmations c JOIN memories m
+                  ON m.owner = c.owner AND m.memory_id = json_extract(
+                    CASE WHEN json_valid(c.result) THEN c.result ELSE '{}' END, '$.memory_id')
+                WHERE c.owner = ? AND c.decision = 'normal' AND c.consent = 1
+                  AND m.local_persisted = 1
+                ORDER BY m.created_at DESC
+            """, (owner,)).fetchall()
+        records = []
+        for row in rows:
+            source = row["source"] if row["source"] in {"backboard", "local-fallback"} else "local-fallback"
+            records.append({"memory_id": row["memory_id"], "summary": row["summary"], "source": source})
+        return records
+
     def delete_memory(self, owner, memory_id) -> bool:
         with self.lock, self.connect() as db:
             db.execute("BEGIN IMMEDIATE")

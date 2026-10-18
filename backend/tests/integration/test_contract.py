@@ -237,6 +237,7 @@ def test_all_admin_operation_contracts(contract, client):
         ('get', '/customers/{customer_code}/alerts', None),
         ('get', '/customers/{customer_code}/privacy/preview/{transaction_id}', None),
         ('post', '/customers/{customer_code}/transactions/{transaction_id}/explanation', {}),
+        ('get', '/customers/{customer_code}/transactions/{transaction_id}/relevant-memory', None),
         ('post', '/customers/{customer_code}/alerts/{alert_id}/confirmations',
          {'decision': 'normal', 'consent_to_memory': True}),
         ('get', '/customers/{customer_code}/memories', None),
