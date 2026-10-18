@@ -1,5 +1,4 @@
 .DS_Store
-*.[mM][dD]
 .env
 .env.*
 !.env.example
@@ -10,17 +9,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
-.vite/
 *.db
 *.db-*
 backend/data/
 coverage/
 artifacts/
 *.log
-evaluation/datasets/
-evaluation/**/*.jsonl
-evaluation/**/*.csv
-/datasets/*.csv
 .idea/
-
-/evaluation/runs/

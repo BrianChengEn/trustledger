@@ -19,8 +19,7 @@ flowchart LR
     RULES["Deterministic rules\nduplicate · amount · subscription"]:::app
     AGG["Alert aggregator\nevidence · confidence · mode"]:::app
     POLICY["Consent + memory policy\nfail closed"]:::private
-    SQLITE["SQLite local-fallback\nconfirmations and memory"]:::fallback
-    LOG["Response header X-Request-ID\nno body log"]:::private
+    LOG["PII-free telemetry\nrequest id · status · latency"]:::private
   end
 
   subgraph DataSources["Data sources"]
@@ -40,13 +39,11 @@ flowchart LR
   NES -. "optional live; timeout/degrade" .-> TX
   TX --> PRIV
   PRIV --> RULES --> AGG
-  PRIV -. "SafePayload as system_one.state" .-> BB
-  BB -. "llm_provider typesafe, jev-latest" .-> JEV
-  JEV -. "system_one.answers" .-> AGG
+  PRIV -. "safe-ai-payload-v1" .-> JEV
+  JEV -. "bounded answers + model version" .-> AGG
   AGG --> API --> FE
   FE -->|"normal/review + consent flag"| API
   API --> POLICY
-  POLICY --> SQLITE
-  POLICY -. "sanitized fact, client not wired" .-> BB
+  POLICY -. "sanitized abstract fact" .-> BB
   API --> LOG
 

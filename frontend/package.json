@@ -1,13 +1,13 @@
 {
   "name": "trustledger-frontend",
-  "version": "0.3.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run src",
+    "test": "vitest run",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {"react": "^19.0.0", "react-dom": "^19.0.0"},

@@ -1,7 +1,5 @@
 # TrustLedger 總體架構報告
 
-**目前實作：** 見倉庫根目錄 [ARCHITECTURE.md](../ARCHITECTURE.md)。本檔是目標設計。Jev、Backboard 與 Nessie 在執行中的程式仍是 stub；記憶體是 SQLite local-fallback，而且同意後的類別標籤會進入下一次分析。
-
 **版本：** Technica 2026 B2C MVP  
 **截止：** 2026-10-18 12:00 EDT  
 **資料政策：** 僅合成資料／Nessie sandbox mock data；零真實金融資料

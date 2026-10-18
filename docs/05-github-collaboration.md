@@ -1,74 +1,5 @@
 # GitHub 四人協作手冊
 
-## Official ownership (17 October 2026)
-
-English names below are the current agreement. The Chinese sections are the original handbook. If a branch name in those sections disagrees with this table, use this table.
-
-| Person | GitHub | Owns | New branch | Do not overwrite |
-|---|---|---|---|---|
-| Brian | `BrianChengEn` | `backend/app/services/ai/**`, `backend/tests/unit/ai/**` | `feat/ai-engine` | `feat/local-memory-feedback` (merged) |
-| Benson | `benson5112` | `backend/app/api/**`, `backend/app/core/**`, `backend/app/main.py`, `backend/app/schemas/api.py`, integration tests, `contracts/**`, `.github/**`, `scripts/**`, dependency locks | `feat/backend-integration` | `backend` (open work) |
-| Ian | `IanChou89` | `frontend/**` | `feat/frontend` | `ianthechou` |
-| Kenny | `mrkennylee` | `backend/app/adapters/**`, `backend/app/schemas/transaction.py`, `fixtures/**`, `backend/tests/unit/data/**` | `feat/nessie-data` | `mrkennylee` |
-
-Full responsibilities: [../TEAM_ROLES.md](../TEAM_ROLES.md).
-
-### Start a branch
-
-```bash
-git fetch origin
-git switch main
-git pull --ff-only
-git switch -c feat/ai-engine
-```
-
-Change the branch name to your row. If `git switch -c` says the branch exists, stop and ask the owner. Do not delete or force-push it.
-
-### Stay current
-
-```bash
-git fetch origin
-git switch main
-git pull --ff-only
-git switch your-feature
-git merge origin/main
-```
-
-Prefer merge if the feature branch is already on GitHub and someone else might have pulled it. Use rebase only on a branch you alone have pushed, then `git push --force-with-lease`. Never use a plain `--force`.
-
-### Pull requests
-
-Open a PR into `main`. Fill `.github/PULL_REQUEST_TEMPLATE.md`. `bash scripts/check.sh` must pass locally, and GitHub Actions must pass on the PR.
-
-Who reviews:
-
-| Change | Reviewer |
-|---|---|
-| `contracts/internal-api.openapi.yaml` or `backend/app/schemas/api.py` | Benson plus the owner whose fields changed. Breaking changes need Brian if the payload changes, Ian if the UI type changes, Kenny if `Transaction` changes |
-| `backend/app/api/routes.py` when it calls AI or loads transactions | Brian or Kenny for their function, Benson for the HTTP behavior |
-| `frontend/src/api.ts` | Benson |
-| Privacy copy or `safe_payload` display | Brian |
-| Shared `scripts/**`, lockfiles, or workflows | Benson. Do not edit locks on two branches at once |
-
-### Avoid conflicts
-
-- Work in your directories. Cross-owner edits belong in the PR description with a named reviewer.
-- If two people must edit one file, one branch owns the change and the other rebases after it merges. Do not both rewrite `routes.py` or the contract in parallel.
-- Integration order: Kenny's adapter and Brian's client land behind the existing synthetic and rules path. Benson flips the health mode only after a successful call. A failed vendor call must leave transactions, rules, and confirmations working.
-
-### Before merge
-
-- No `.env`, database, key, or raw provider body in the diff.
-- CI on `.github/workflows/ci.yml` is green. That workflow already exists. The later section that says to copy the example workflow is historical.
-- One teammate has reviewed.
-- Modes stay honest: `synthetic`, `rules-only`, `local-fallback` until a live call exists.
-
-Branch protection could not be read on this private plan (HTTP 403). Do not assume GitHub will block a direct push. Use PRs anyway, except for a docs-only update the team has explicitly allowed.
-
-### Credentials and a failed integration
-
-Keys live only in ignored `backend/.env`. CI must not contain vendor secrets. If a live PR breaks the demo, revert that PR and return health to the synthetic labels. If a key is committed, revoke it at the vendor first, then tell Benson. Deleting the latest commit is not enough after a push.
-
 ## 目標
 
 四個人可以平行開發，但任何時間 `main` 都能跑 synthetic vertical slice。協作的核心不是「大家都能改所有檔案」，而是清楚 owner、contract freeze、小 PR、早整合、零 secrets。
@@ -112,12 +43,10 @@ git fetch origin
 
 | 角色 | 建議 branch | 主要目錄 |
 |---|---|---|
-| Brian / AI | `feat/ai-engine` | `backend/app/services/ai/**` |
-| Ian / Frontend | `feat/frontend` | `frontend/**` |
-| Kenny / Data | `feat/nessie-data` | `backend/app/adapters/**`、`fixtures/**` |
-| Benson / Integration | `feat/backend-integration` | `backend/app/api/**`、`core/**`、`contracts/**` |
-
-既有遠端分支 `backend`、`ianthechou`、`mrkennylee`、`feat/local-memory-feedback` 不要覆蓋。上面的名稱只用於從最新 `main` 新開的工作。
+| AI | `feat/ai-privacy-memory` | `backend/app/services/ai/**` |
+| Frontend | `feat/frontend-dashboard` | `frontend/**` |
+| Data | `feat/data-nessie-adapter` | `backend/app/adapters/**`、`fixtures/**` |
+| Integration | `feat/api-vertical-slice` | `backend/app/api/**`、`core/**`、`contracts/**` |
 
 其他命名：`fix/...`、`docs/...`、`chore/...`。不要用 `brian-final-final2`。
 
@@ -191,8 +120,8 @@ Review 先看：secret/PII → contract → tests/fallback → code → style。
 
 ```bash
 git fetch origin
-git worktree add ../trustledger-ai -b feat/ai-engine origin/main
-git worktree add ../trustledger-api -b feat/backend-integration origin/main
+git worktree add ../trustledger-ai -b feat/ai-privacy-memory origin/main
+git worktree add ../trustledger-api -b feat/api-vertical-slice origin/main
 git worktree list
 ```
 
@@ -228,8 +157,6 @@ git rebase origin/main
 - `.env.example`：任何新增變數先審安全與 owner。
 
 ## 9. CI
-
-目前的檢查在 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)。push、pull request 與手動觸發都會跑。它用 lockfile 安裝，沒有 vendor secrets，也不呼叫 Nessie、Jev 或 Backboard。下面的複製步驟是 starter 時期的草稿，不要再覆蓋現有 workflow。
 
 CI 不應有 live vendor keys，也不應 call Nessie/Jev/Backboard。使用 mocks/contracts，避免 fork PR 或 log 洩漏。
 
@@ -287,7 +214,7 @@ Prototype CI 不需要 vendor secrets。若真的需要 deploy secret：Reposito
 10. Backboard live memory（optional flag）。
 11. Security fixes、accessibility、copy、submission docs。
 
-每個 live integration 都是可單獨 rollback 的 PR。Backboard memory 的真實呼叫不在 CI。要重跑時，在 `backend/` 設定 `BACKBOARD_LIVE_TEST=1` 後執行 `pytest -q tests/integration/test_backboard_live.py`。不要把 key 放進 workflow。
+每個 live integration 都是可單獨 rollback 的 PR。
 
 ## 12. 最後 3 小時規則
 

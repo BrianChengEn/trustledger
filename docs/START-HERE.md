@@ -1,8 +1,6 @@
 # 現在開始：文件與可執行專案的差別
 
-應用程式已經在這個 Git repository 裡。請先讀 [README.md](../README.md)、[ARCHITECTURE.md](../ARCHITECTURE.md)、[TEAM_ROLES.md](../TEAM_ROLES.md) 與 [TEAM-SETUP-60MIN.md](../TEAM-SETUP-60MIN.md)。
-
-下面從「前 15 分鐘」開始的段落保留原始文件包的安裝順序。其中「repo 尚未建立」與「還沒有 backend/app」已不適用：遠端是 `BrianChengEn/trustledger`，程式與測試都在 `main`。請用倉庫根目錄的說明啟動。
+這個 ZIP 是開發文件、API 契約、合成資料與協作範本。它沒有完整的 `backend/app`、`frontend/package.json`、`requirements.txt` 或測試實作。可以立即開始安裝工具與分工；應用程式啟動和 smoke tests 要等相應程式建立後執行。
 
 ## 前 15 分鐘：四人一起做
 
