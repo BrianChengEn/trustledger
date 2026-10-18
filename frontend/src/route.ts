@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 
 export type Route = (
-  | {view: 'today'} | {view: 'activity'} | {view: 'memory'} | {view: 'sources'}
+  | {view: 'today'} | {view: 'activity'; filter?: string} | {view: 'memory'} | {view: 'sources'}
   | {view: 'privacy'; tx?: string} | {view: 'case'; tx: string; from?: string}
 ) & {customer?: string};
 
@@ -15,7 +15,8 @@ export function parse(hash: string): Route {
   catch { return customer ? {view: 'today', customer} : {view: 'today'}; }
   let route: Route;
   switch (view) {
-    case 'activity': case 'memory': case 'sources': route = {view}; break;
+    case 'memory': case 'sources': route = {view}; break;
+    case 'activity': route = tx ? {view, filter: tx} : {view}; break;
     case 'privacy': route = {view, tx}; break;
     case 'case': route = tx ? {view, tx, from} : {view: 'today'}; break;
     default: route = {view: 'today'};
@@ -25,6 +26,7 @@ export function parse(hash: string): Route {
 export const href = (route: Route) =>
   '#/' + (route.customer && route.view !== 'sources' ? 'sources/' + encodeURIComponent(route.customer) + '/' : '')
   + route.view + ('tx' in route && route.tx ? '/' + encodeURIComponent(route.tx) : '')
+  + (route.view === 'activity' && route.filter ? '/' + encodeURIComponent(route.filter) : '')
   + (route.view === 'case' && route.from ? '/' + route.from : '');
 
 export function useRoute() {

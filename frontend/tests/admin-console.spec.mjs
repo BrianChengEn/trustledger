@@ -38,21 +38,13 @@ try {
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
     existsSync('/Applications/Google Chrome.app') ? {channel: 'chrome'} : {})});
-  const page = await browser.newPage({viewport: {width: 1440, height: 1000}});
+  const page = await browser.newPage({viewport: {width: 1440, height: 1000}, reducedMotion: 'reduce'});
   page.setDefaultTimeout(5000);
-  // The selected UI already overflows its unchanged filter group at 320px.
   async function assertResponsiveBaseline() {
     const layout = await page.evaluate(() => {
-      const overflowing = [...document.querySelectorAll('body *')].filter(element => {
-        const box = element.getBoundingClientRect();
-        return box.width > 0 && box.right > innerWidth + 1;
-      });
-      return {width: innerWidth, scroll: document.documentElement.scrollWidth,
-        inheritedFilterOnly: innerWidth === 320 && overflowing.length > 0 &&
-          overflowing.every(element => element.closest('.seg')),
-        elements: overflowing.map(element => ({tag: element.tagName, class: element.className}))};
+      return {width: innerWidth, scroll: document.documentElement.scrollWidth};
     });
-    assert(layout.scroll <= layout.width + 1 || layout.inheritedFilterOnly, JSON.stringify(layout));
+    assert(layout.scroll <= layout.width + 1, JSON.stringify(layout));
   }
   const errors = [];
   let queryCalls = 0;
@@ -117,12 +109,53 @@ try {
   await page.locator('#Q-RESULT pre').waitFor();
   await page.locator('#Q-TABLE').click();
   assert.equal(queryCalls,8);
+  const queryTable = page.locator('#Q-RESULT .tablewrap');
+  await queryTable.evaluate(element=>{
+    element.style.flex = 'none';
+    element.style.height = Math.floor(element.scrollHeight / 1.3)+'px';
+    element.parentElement.style.flex = 'none';
+  });
+  const queryPages = page.locator('#Q-RESULT').getByRole('group',{name:'Pages',exact:true});
+  await queryPages.getByRole('button',{name:'Next page',exact:true}).click();
+  await page.waitForFunction(()=>!document.querySelector('#Q-RESULT button[aria-label="Previous page"]').disabled);
+  await queryPages.getByRole('button',{name:'Previous page',exact:true}).click();
+  await queryTable.evaluate(element=>{
+    element.removeAttribute('style'); element.parentElement.removeAttribute('style');
+  });
   await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
   await page.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
   assert.equal(await page.locator('.account-context').count(),0);
   assert.equal(await page.locator('.inspect').count(),0);
   assert.deepEqual(await page.locator('.txtable th').allTextContents(),['Merchant','When','Check result','Amount']);
   assert.equal(await page.locator('.txtable tbody tr').count(),overview.transactions.length);
+  async function checkLedgerPages() {
+    const ledger = page.locator('.workspace').first();
+    const pages = ledger.getByRole('group',{name:'Pages',exact:true});
+    await pages.waitFor();
+    const next = pages.getByRole('button',{name:'Next page',exact:true});
+    for (let i=0;i<20 && !await next.isDisabled();i++) {
+      const before = await pages.innerText();
+      await next.click();
+      await page.waitForFunction(text=>{
+        const group = document.querySelector('.workspace .pager');
+        return group && group.innerText !== text;
+      },before);
+    }
+    assert(await next.isDisabled(),'all ledger pages must be reachable');
+    assert(await pages.getByRole('button',{name:'Previous page',exact:true}).isEnabled());
+    await page.waitForFunction(()=>{
+      const table = document.querySelector('.workspace .tablewrap');
+      const last = table.querySelector('tbody tr:last-child').getBoundingClientRect();
+      return last.bottom <= table.getBoundingClientRect().bottom + 1;
+    });
+    const before = await pages.innerText();
+    await pages.getByRole('button',{name:'Previous page',exact:true}).click();
+    await page.waitForFunction(text=>document.querySelector('.workspace .pager').innerText !== text,before);
+    await ledger.locator('.sortpick select').selectOption('largest');
+    await page.waitForFunction(()=>document.querySelector('.workspace .tablewrap').scrollTop === 0);
+    assert.equal(await ledger.locator('tbody tr').first().locator('td.amount').innerText(),'$849.00');
+  }
+  await checkLedgerPages();
   await page.locator('#NAV-ADMIN').click();
   assert((await page.locator('#Q-RESULT').innerText()).includes('transfers.by_account'));
   await page.locator('#Q-FUNC').selectOption('accounts.get');
@@ -242,6 +275,7 @@ try {
   await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
   await sourceMemoryEntry;
   await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
+  await page.waitForFunction(()=>!document.querySelector('button[aria-label="Refresh memories"]').disabled);
   let releaseRefresh, captureRefresh;
   const refreshHeld = new Promise(resolve=>{releaseRefresh=resolve;});
   const refreshCaptured = new Promise(resolve=>{captureRefresh=resolve;});
@@ -275,6 +309,14 @@ try {
   await page.locator('#C-SELECT').selectOption(customerCodes[0]);
   const workspace = page.locator('#V-CUSTOMERS .workspace');
   const customerNav = page.getByRole('navigation',{name:'Customer workspace',exact:true});
+  await workspace.getByRole('button',{name:/^Spending/}).getByText(/Nessie sandbox transactions/).waitFor();
+  await workspace.getByRole('button',{name:/^Subscriptions/}).click();
+  await workspace.getByRole('button',{name:/^Recurring/}).waitFor();
+  assert(page.url().endsWith('/sources/'+customerCodes[0]+'/activity/recurring'));
+  assert.equal(await workspace.getByRole('button',{name:/^Recurring/}).getAttribute('aria-pressed'),'true');
+  await customerNav.getByRole('link',{name:'Today',exact:true}).click();
+  await workspace.getByRole('button',{name:/^Spending/}).click();
+  assert(page.url().endsWith('/sources/'+customerCodes[0]+'/activity'));
   await customerNav.getByRole('link',{name:'Activity',exact:true}).click();
   await workspace.getByRole('heading',{name:'Every transaction.',exact:true}).waitFor();
   assert.equal(await workspace.locator('tbody tr').count(),overview.transactions.length);
@@ -372,11 +414,77 @@ try {
   await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
   await page.locator('.queuerow').first().waitFor();
   assert.equal(await page.locator('.queuerow').count(),3);
+  const widgets = page.getByRole('region',{name:'Widgets',exact:true});
+  await widgets.getByRole('button',{name:'Edit',exact:true}).click();
+  await widgets.getByRole('button',{name:'Remove Privacy',exact:true}).click();
+  await widgets.getByRole('button',{name:'Move Spending later',exact:true}).click();
+  await widgets.getByRole('button',{name:'Done',exact:true}).click();
+  await page.reload();
+  await page.locator('.queuerow').first().waitFor();
+  assert.equal(await widgets.getByRole('button',{name:/^Privacy/}).count(),0);
+  assert.equal(await widgets.locator('.wlabel').first().innerText(),'Memory');
+  await widgets.getByRole('button',{name:'Edit',exact:true}).click();
+  await widgets.getByRole('button',{name:'Reset',exact:true}).click();
+  await widgets.getByRole('button',{name:'Done',exact:true}).click();
+  await widgets.getByRole('button',{name:/^Privacy/}).waitFor();
+  for (const [name, theme] of [['Dark mode','dark'],['Light mode','light'],['Match my device',null]]) {
+    await page.getByRole('button',{name,exact:true}).click();
+    assert.equal(await page.locator('html').getAttribute('data-theme'),theme);
+    assert.equal(await page.getByRole('button',{name,exact:true}).getAttribute('aria-pressed'),'true');
+  }
+  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).hover();
+  await page.getByRole('button',{name:/Flagged only/}).click();
+  await page.waitForURL('**/#/activity/flagged');
+  await page.locator('.txtable tbody tr').nth(2).waitFor();
+  assert.equal(await page.locator('.txtable tbody tr').count(),3);
+  await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).hover();
+  await page.getByRole('button',{name:/Recurring charges/}).click();
+  await page.waitForURL('**/#/activity/recurring');
+  await page.getByRole('button',{name:/^Recurring/,pressed:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:/^Recurring/}).getAttribute('aria-pressed'),'true');
+  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
   await page.getByRole('button',{name:/Possible duplicate/}).click();
   await page.getByRole('heading',{name:'AI second opinion',exact:true}).waitFor();
   assert.equal(analysisCalls,1,'neither customer browsing nor synthetic navigation invokes inference');
+  await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+  await page.route('**/api/v1/workspace/refresh',async route=>{
+    const response = await route.fetch();
+    const snapshot = await response.json();
+    snapshot.transactions.push(
+      {...snapshot.transactions[0],id:'txn_widget_credit',kind:'transfer',direction:'credit',amount:10000},
+      {...snapshot.transactions[0],id:'txn_widget_unknown',kind:'transfer',direction:'unknown',amount:20000});
+    await route.fulfill({response,json:snapshot});
+  });
+  await page.reload();
+  await widgets.getByRole('button',{name:/^Spending/}).getByText(/20 synthetic transactions/).waitFor();
+  await widgets.getByRole('button',{name:/^Largest charge/}).getByText('$849.00',{exact:true}).waitFor();
+  await page.route('**/api/v1/workspace/refresh',async route=>{
+    const response = await route.fetch();
+    const snapshot = await response.json();
+    snapshot.transactions = Array.from({length:100},(_,index)=>({
+      ...snapshot.transactions[index % snapshot.transactions.length],id:'txn_page_'+index}));
+    await route.fulfill({response,json:snapshot});
+  });
+  await page.goto('http://127.0.0.1:5174/#/activity');
+  await page.reload();
+  await page.locator('.txtable tbody tr').nth(99).waitFor({state:'attached'});
+  await checkLedgerPages();
+  const phone = await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true,reducedMotion:'reduce'});
+  phone.on('pageerror',error=>errors.push(error.message));
+  await phone.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)
+    ? route.continue() : route.abort());
+  await phone.goto('http://127.0.0.1:5174/#/activity');
+  await phone.locator('.txtable tbody tr').nth(17).waitFor({state:'attached'});
+  assert.equal(await phone.locator('html').getAttribute('data-stage'),null);
+  assert(await phone.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
+  await phone.locator('.rowlink').last().click();
+  await phone.getByRole('heading',{name:'AI second opinion',exact:true}).waitFor();
+  await phone.getByRole('link',{name:'Inspect exactly what is shared',exact:true}).click();
+  await phone.locator('.payload > div').nth(7).waitFor();
+  await phone.screenshot({path:join(root,'artifacts/v031-phone.png'),fullPage:true});
+  await phone.close();
   assert.deepEqual(errors,[]);
-  console.log('PASS: new UI, eight safe queries/history, original ledger controls, scoped customers, consent/memory, cached failures, recorded-decision recovery, synthetic 18 rows/3 alerts and responsive checks (inherited 320px filter overflow only).');
+  console.log('PASS: updated UI, eight safe queries/history, scoped customer widgets, menu filters, persisted widget layout, themes, consent/memory, cached failures, recorded-decision recovery, synthetic 18 rows/3 alerts and responsive checks.');
 } finally {
   await browser?.close();
   for (const child of children) child.kill('SIGTERM');

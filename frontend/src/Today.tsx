@@ -2,6 +2,7 @@ import {labels, money} from './api';
 import {Icon, type IconName} from './icons';
 import {alertHints, byPriority, day} from './lib';
 import {Chip, PageHead, stagger} from './ui';
+import Widgets from './Widgets';
 import {useWorkspace} from './workspace';
 
 export const alertIcons: Record<string, IconName> = {
@@ -21,7 +22,7 @@ export default function Today() {
   const count = (s: string) => ordered.filter(a => a.status === s).length;
   const flaggedValue = open.reduce((n, a) => n + (tx(a.transaction_id)?.amount ?? 0), 0);
 
-  return <div className="page">
+  return <div className="page today">
     <PageHead eyebrow="Today" title={open.length ? `${open.length} ${open.length === 1 ? 'charge needs' : 'charges need'} your eyes.` : 'Nothing needs you right now.'}>
       {open.length
         ? `${money(flaggedValue)} across flagged charges. Rules found them; you decide what they mean. Nothing changes until you do.`
@@ -33,16 +34,15 @@ export default function Today() {
         <Chip tone="warn" icon="compass">Start here · {first.severity} priority</Chip>
         <h2 id="start-title">{labels[first.alert_type]}: {firstTx.merchant_display}, {money(firstTx.amount)}</h2>
         <p>{first.evidence[0]}</p>
-        <div className="actions">
-          <button className="primary" onClick={() => go({view: 'case', tx: first.transaction_id, from: 'today'})}>
-            Review this charge<Icon name="arrowRight" size={16}/></button>
-          <span className="quiet">Takes about a minute: evidence, optional AI second opinion, your call.</span>
-        </div>
       </div>
-      <div className="startamount" aria-hidden="true"><span>{day(firstTx.occurred_at)}</span><strong>{money(firstTx.amount)}</strong></div>
+      <div className="startside">
+        <div className="startamount" aria-hidden="true"><span>{day(firstTx.occurred_at)}</span><strong>{money(firstTx.amount)}</strong></div>
+        <button className="primary" onClick={() => go({view: 'case', tx: first.transaction_id, from: 'today'})}>
+          Review this charge<Icon name="arrowRight" size={16}/></button>
+      </div>
     </section>}
 
-    {!!ordered.length && <section className="panel" aria-labelledby="queue-title">
+    {!!ordered.length && <section className="panel queuepanel" aria-labelledby="queue-title">
       <div className="sectiontop">
         <h2 id="queue-title">{open.length ? 'Review queue' : 'Reviewed alerts'}</h2>
         <div className="progress" role="img" aria-label={`${open.length} open, ${count('normal')} marked normal, ${count('review')} marked for review`}>
@@ -66,20 +66,11 @@ export default function Today() {
           </li>;
         })}
       </ul>
-      {!open.length && <p className="quiet">Decisions are recorded. Rules will still check every future charge.</p>}
     </section>}
 
     {!ordered.length && <div className="empty">
       <Icon name="shieldCheck" size={28}/><p>No rule flagged any of your {transactions.length} transactions.</p></div>}
 
-    <section className="trio" aria-label="How TrustLedger protects you">
-      <button onClick={() => go({view: 'privacy', tx: first?.transaction_id})}>
-        <Icon name="lock" size={18}/><b>See what AI can see</b><span>Only 8 generalized fields ever leave this app.</span></button>
-      <button onClick={() => go({view: 'memory'})}>
-        <Icon name="hardDrive" size={18}/><b>{memories.length ? `${memories.length} saved ${memories.length === 1 ? 'preference' : 'preferences'}` : 'Nothing remembered'}</b>
-        <span>Memory exists only because you consented.</span></button>
-      <button onClick={() => go({view: 'activity'})}>
-        <Icon name="wallet" size={18}/><b>All {transactions.length} transactions</b><span>Browse, search and open any charge.</span></button>
-    </section>
+    <Widgets/>
   </div>;
 }

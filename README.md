@@ -10,7 +10,7 @@ This repository is a working synthetic demo. It is not a live bank connection an
 
 ## Current status
 
-The local v0.3.0 candidate integrates the UI from `main` after PR #13 with the existing synthetic/Nessie data work. Today, Activity, Case, Privacy and Memory share the same components in the main workspace and isolated Data sources/Admin customer reviews. Synthetic remains the default. Existing generators, 18 offline records, common account codes, legacy aliases and explicit Nessie setup are retained. Connected data actions still require fresh Nessie acquisition. On 17 October 2026, explicit Backboard memory CRUD was checked against the live API: create, store, retrieve, reuse, two-owner isolation, restart, and delete. System One classification on that same account returned HTTP 402 `Insufficient credits for System One`. Failed inference preserves the rule result and reports `degraded`. Do not buy credits or turn on auto-reload.
+The v0.3.1 update integrates Ian’s updated frontend (`ianthechou`, `9c40b01`) with the v0.3.0 synthetic/Nessie backend. It retains the new palette, fit-to-window frame, navigation menus, customizable widgets and Auto/Light/Dark themes. Today, Activity, Case, Privacy and Memory share the same components in the main workspace and isolated Data sources/Admin customer reviews. Synthetic remains the default. Existing generators, 18 offline records, common account codes, legacy aliases and explicit Nessie setup are retained. Connected data actions still require fresh Nessie acquisition. On 17 October 2026, explicit Backboard memory CRUD was checked against the live API: create, store, retrieve, reuse, two-owner isolation, restart, and delete. System One classification on that same account returned HTTP 402 `Insufficient credits for System One`. Failed inference preserves the rule result and reports `degraded`. Do not buy credits or turn on auto-reload.
 
 | Area | Status |
 |---|---|
@@ -158,4 +158,4 @@ GETs and confirmations never invoke fraud inference. Only an explicitly configur
 
 The starter application and the original design notes include material prepared with OpenAI Codex. Later memory-feedback work and this ownership documentation were prepared with Grok. Credit the tools the team actually uses in the Technica submission. Do not claim measured model accuracy, vendor cost, or compliance that this repository has not tested.
 
-The v0.2.0/v0.2.1 Nessie updates and v0.3.0 UI/data integration were implemented and checked with OpenAI Codex.
+The v0.2.0/v0.2.1 Nessie updates and v0.3.0/v0.3.1 UI/data integration were implemented with OpenAI Codex.

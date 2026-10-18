@@ -7,6 +7,15 @@ describe('customer navigation stays inside Data sources', () => {
     expect(parse(`#/sources/${customer}/activity`)).toEqual({view: 'activity', customer});
     expect(href({view: 'activity'})).toBe('#/activity');
   });
+  it('round-trips Activity shortcut filters in the current workspace', () => {
+    for (const filter of ['flagged', 'recurring']) {
+      expect(parse(`#/activity/${filter}`)).toEqual({view: 'activity', filter});
+      expect(href({view: 'activity', filter})).toBe(`#/activity/${filter}`);
+      expect(parse(`#/sources/${customer}/activity/${filter}`))
+        .toEqual({view: 'activity', filter, customer});
+      expect(href({view: 'activity', filter, customer})).toBe(`#/sources/${customer}/activity/${filter}`);
+    }
+  });
   it('keeps case and privacy links in their customer namespace', () => {
     expect(parse(href({view: 'case', tx: 'txn/a b', from: 'activity', customer})))
       .toEqual({view: 'case', tx: 'txn/a b', from: 'activity', customer});

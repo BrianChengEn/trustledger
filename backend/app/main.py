@@ -15,7 +15,7 @@ from app.core.transactions import ProviderError, TransactionNotFound
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    app = FastAPI(title="TrustLedger synthetic development API", version="0.3.0")
+    app = FastAPI(title="TrustLedger synthetic development API", version="0.3.1")
     app.state.settings = settings or Settings()
     app.state.store = Store(app.state.settings.database_path)
     load_transactions(app.state.store, app.state.settings.demo_user_id)

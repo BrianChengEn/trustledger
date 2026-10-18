@@ -19,7 +19,7 @@ export default function WorkspaceView({route}: {route: Route}) {
     }
     previousView.current = route.view;
   }, [route.view, refresh, loading, busy]);
-  return <div className="workspace">
+  return <div className="workspace" style={{display: 'contents'}}>
     {(error || notice) && <div className="banners">
       {error && <div className="banner error" role="alert"><Icon name="alertTriangle" size={18}/><span>{error}</span>
         <button onClick={() => void refresh()} disabled={loading || busy}>Retry</button>
@@ -32,7 +32,7 @@ export default function WorkspaceView({route}: {route: Route}) {
       : !ready && route.view === 'today'
       ? <p className="loading" role="status">{loading ? 'Loading your workspace…' : 'Rule checks unavailable. Retry before reviewing alerts.'}</p>
       : route.view === 'today' ? <Today/>
-      : route.view === 'activity' ? <Activity/>
+      : route.view === 'activity' ? <Activity key={route.filter ?? 'all'} initial={route.filter}/>
       : route.view === 'privacy' ? <PrivacyView txId={route.tx}/>
       : route.view === 'memory' ? <MemoryView/>
       : route.view === 'case' ? <Case key={route.tx} id={route.tx} from={route.from}/> : null}
