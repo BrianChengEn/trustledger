@@ -1,0 +1,190 @@
+BankSim 與 Sparkov 的公開基準比較
+
+比較等級只有三檔：
+
+- DIRECTLY COMPARABLE：同一份 BankSim、同一個時間切分、同一批測試交易
+- PARTIALLY COMPARABLE：同一份 BankSim，但切分、特徵或決策門檻不同
+- NOT DIRECTLY COMPARABLE：平衡抽樣、不同資料、或協議無法核對
+
+沒有出現在來源裡的指標就留空。不把 Accuracy 當成 Average Precision。
+不把隨機切分的分數說成我們贏過 Kaggle。
+
+我們自己的對照，DIRECTLY COMPARABLE
+
+來源：evaluation/research/v2/results/framework_v2.json
+這次實驗用公開筆記本常見的形式，在我們的切分上重做：
+Random Forest，log 金額加 BankSim 原始類別 one-hot，
+n_estimators 80，max_depth 12，min_samples_leaf 40，
+class_weight balanced_subsample，random_state 20261017。
+不用客戶識別，也不用商家識別。
+
+資料：BankSim，594,643 筆，詐欺 7,200，約 1.21%
+訓練 steps 0–119，測試 steps 150–179
+測試 111,306 筆，詐欺 1,200
+Average Precision 0.7987
+919 筆審核：真陽性 773，假陽性 146，精確率 0.841，召回率 0.644，F1 0.730
+F1 閾值工作點：真陽性 751，假陽性 112，精確率 0.870，召回率 0.626，F1 0.728，準確率 0.995
+ROC-AUC：這次沒有把它當選擇指標，JSON 未另存
+它贏過現行規則，沒有贏過同一分切上重現的 PR #14 HistGradientBoosting
+（Average Precision 0.8154，919 筆真陽性 786）。
+
+資料集本身
+
+來源：https://www.kaggle.com/datasets/ealaxi/banksim1
+也見：https://www.kaggle.com/datasets/ntnu-testimon/banksim1
+作者：Edgar Lopez-Rojas。論文為 Lopez-Rojas 與 Stefan Axelsson，
+EMSS 2014，BankSim: a bank payments simulator for fraud detection research。
+Kaggle ealaxi 頁面發布時間：2017-07-11。
+內容：180 steps，594,643 筆，587,443 筆正常，7,200 筆詐欺。
+小偷設定約為每步三張卡、每天約兩筆詐欺。
+這是資料說明，不是模型成績。
+
+1. yubi45，NOT DIRECTLY COMPARABLE
+
+來源：https://www.kaggle.com/code/yubi45/synthetic-data-from-a-financial-payment-system
+作者：yubi45
+資料：BankSim。日誌先把兩個類別都調成 587,443 筆。
+測試 support：合法 176,233，詐欺 176,233。不是自然的 1.2%。
+切分：類別平衡後的評估，不是時間切分。
+特徵與版本日期：日誌沒有完整列出。
+ROC-AUC：日誌摘錄沒有。
+PR-AUC：沒有。
+
+KNN，詐欺類別：精確率 0.98，召回率 1.00，F1 0.99，準確率 0.99
+Random Forest：精確率 0.97，召回率 0.99，F1 0.98，準確率 0.98
+混淆矩陣 [[170106, 6127], [1079, 175154]]
+XGBoost：精確率 0.99，召回率 1.00，F1 0.99，準確率 0.99
+混淆矩陣 [[174047, 2186], [706, 175527]]
+日誌裡的基準準確率註記是 98.7891894800746，那是全部猜合法的準確率。
+
+這些分數建立在一半是詐欺的測試集上。不能和我們的時間切分比較。
+
+2. Kartik Shenoy 的 BankSim 筆記本，指標不足
+
+來源：https://www.kaggle.com/code/kartik2112/fraud-detection-banksim
+作者：Kartik Shenoy / kartik2112
+頁面只確認標題與資料來源，沒有讀到精確率、召回率、F1、ROC-AUC 或 PR-AUC。
+不填任何成績。
+等級：NOT DIRECTLY COMPARABLE，直到協議與數字都讀得到。
+上面的 public_rf 是我們在自己的切分上重做的公開式基準，比引用這份空白頁有用。
+
+3. Turkay Avci / atavci，PARTIALLY COMPARABLE
+
+來源：https://github.com/atavci/fraud-detection-on-banksim-data
+筆記本：https://www.kaggle.com/code/turkayavci/fraud-detection-on-bank-payments/notebook
+腳本註記日期：2019-03-15
+資料：https://www.kaggle.com/ntnu-testimon/banksim1 ，檔名 bs140513_032310.csv
+作者在 README 寫的是未使用 SMOTE 的結果。
+
+切分：train_test_split，test_size 0.3，shuffle=True，stratify=y，random_state 42。
+測試 support：合法 176,233，詐欺 2,160。類別比例仍接近自然分布。
+特徵：刪除兩個郵遞區號後，其餘欄位都進入模型。
+customer、merchant、category、gender、age 被編成整數。step 與 amount 保留。
+也就是客戶識別和商家識別以數字特徵進入模型。
+ROC-AUC：腳本有畫圖，但沒有把數字印出來。不記錄。
+PR-AUC：沒有。
+
+KNN：精確率 0.83，召回率 0.61，F1 0.70
+混淆矩陣 [[175962, 271], [845, 1315]]
+XGBoost：精確率 0.89，召回率 0.76，F1 0.82
+混淆矩陣 [[176029, 204], [529, 1631]]
+腳本註解中的準確率是 0.9963059088641371
+Random Forest，n_estimators 100，max_depth 8，class_weight balanced：
+精確率 0.24，召回率 0.98，F1 0.82
+混淆矩陣 [[169552, 6681], [39, 2121]]
+Voting ensemble：精確率 0.73，召回率 0.81，F1 0.77
+混淆矩陣 [[175604, 629], [417, 1743]]
+
+同一份資料、測試集仍是自然稀有類別，所以不是完全不能看。
+但這是隨機切分，而且使用客戶與商家識別。
+我們的時間切分沒有把識別碼當特徵。
+不能說我們的 0.842 F1 贏過他們的 0.82。工作點和資訊都不一樣。
+他們的 balanced Random Forest 用預設決策門檻換到召回率 0.98，同時產生 6,681 件假陽性。
+那不是固定 919 筆審核的結果。
+
+4. gouldju1，NOT DIRECTLY COMPARABLE
+
+來源：https://github.com/gouldju1/Fraud-Detection-in-Python
+作者：Julia Gould，與 Baylee Adams、Kyle Shope。Michigan State University CSE 891。
+資料：README 寫 594,643 筆、7,200 件詐欺、10 個欄位，來自 BankSim。
+切分、測試筆數、準確率、ROC-AUC、PR-AUC：README 沒有。
+特徵處理：去掉引號、刪除只有一個值的郵遞區號、類別做成 dummy。
+
+README 表格裡的精確率與召回率：
+
+Naive Bayes 0.1957 / 0.9993
+Logistic Regression 0.8887 / 0.7236
+Neural Network 0.8721 / 0.7624
+Decision Tree 0.9027 / 0.7212
+Random Forest 0.8845 / 0.7462
+
+同一張表的 FP、FN 與這些比率對不上。
+例如召回率 0.9993 不可能同時有 11,695 件假陰性。
+所以只記錄精確率與召回率，不採用 FP、FN。
+
+5. Anomaly Transformer 論文，NOT DIRECTLY COMPARABLE
+
+來源：https://www.researchgate.net/publication/394486662_Big_Data_Analytics_Anomaly_Transformer_in_Financial_Fraud_Detection_in_BankSim_Datasets
+搜尋摘錄的發布標記：2025-08-15
+資料：BankSim。摘錄中的分類報告 support 是合法 117,460、詐欺 3,600，共 121,060 筆。
+切分方法沒有在摘錄裡核對完成。
+
+Table IV：
+ROC-AUC 0.7942
+PR-AUC 0.1096
+最佳 F1 0.1836
+該閾值精確率 0.1329
+該閾值召回率 0.2972
+
+Table V，詐欺類別：精確率 0.13，召回率 0.30，F1 0.18，support 3,600
+準確率 0.92
+
+同一篇摘錄還有另一張 KNN 準確率約 0.995 的表。
+那張表和 PR-AUC 0.1096 不是同一個工作點，不能混在一起。
+他們報告的 PR-AUC 遠低於我們的時間切分，但協議不同，不能宣稱我們勝過這篇論文。
+
+6. University of Canberra 論文表格，NOT DIRECTLY COMPARABLE
+
+來源：https://researchsystem.canberra.edu.au/ws/portalfiles/portal/117777741/Dong_Haokun.pdf
+搜尋摘錄把檔案標成 Dong Haokun，入口時間 2026-03-10。
+Table 4.5 標成 BankSim：
+
+Decision Tree：準確率 0.9925，精確率 0.6920，召回率 0.7348，F1 0.7128
+Random Forest：準確率 0.9955，精確率 0.9054，召回率 0.7209，F1 0.8027
+XGBoost：準確率 0.9955，精確率 0.9044，召回率 0.7189，F1 0.8010
+Autoencoder：準確率 0.9506，精確率 0.1727，召回率 0.7695，F1 0.2821
+Improved Autoencoder：準確率 0.9523，精確率 0.2054，召回率 0.9700，F1 0.3390
+
+Figure 4.42 的文字把 Improved Autoencoder 的 ROC-AUC 寫成 0.96。
+測試筆數與切分沒有在摘錄中核對。PR-AUC 沒有看到。
+不和我們的 Average Precision 直接比。
+
+7. 圖資料庫論文，NOT DIRECTLY COMPARABLE
+
+來源：https://pmc.ncbi.nlm.nih.gov/articles/PMC11016795/
+資料說明是 BankSim，594,643 筆、7,200 件詐欺。
+表上的準確率：Random Forest 99.971%，KNN 99.983%，XGBoost 99.998%。
+另一張分類表把類別 0 和類別 1 的精確率、召回率、F1 都寫成 0.99。
+自然 1.2% 的測試集很少同時讓兩個類別都是 0.99。
+摘錄沒有 PR-AUC，也沒有可核對的混淆矩陣筆數。
+這種準確率不能拿來和固定審核名額比較。
+
+排除，避免張冠李戴
+
+https://www.kaggle.com/code/rawdayassin/financial-fraud-detection
+資料集標籤是 paysim1，不是 BankSim。
+日誌的資料有 6,362,620 列，欄位是 step、type、nameOrig、oldbalanceOrg。
+不列入 BankSim 比較。
+
+Sparkov
+
+官方頁：https://www.kaggle.com/datasets/kartik2112/fraud-detection
+描述為 Brandon Harris 的 Sparkov 產生器，時間約 2019-01-01 到 2020-12-31。
+本地 /tmp/tl-eval-data/fraudTrain.csv 不符合這份描述，見 FINDINGS.txt。
+沒有用它計算成績。
+
+https://github.com/Vignesh-Hariharan/fraud-detection-pipeline
+是 Sparkov / kartik2112 的洩漏研究，不是 BankSim。
+它提醒兩件事：全資料聚合，以及用標籤算出的商家率，都會把分數灌高。
+等級：NOT DIRECTLY COMPARABLE。
+它支持我們對 v2_merchant 的解釋，但不是一個可以並排的百分比。
