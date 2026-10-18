@@ -1,0 +1,27 @@
+研究資料與示範資料分開
+
+BankSim、benchmark 分數、fraud 標籤只給離線評估。
+它們不取代 production rules，也不寫進 demo_transactions。
+
+示範與 API
+- fixtures/synthetic-transactions.json
+- backend 啟動時為 demo-user-001 寫入那 8 筆
+- 規則在 backend/app/core/rules.py
+- Gemini 與 Jev 只看 SafePayload
+- Backboard 記憶只存同意過的類別句子
+
+研究
+- 本機 CSV：/tmp/tl-eval-data/banks.csv
+- 驗證：backend/.venv/bin/python scripts/prepare_research_data.py --csv /tmp/tl-eval-data/banks.csv
+- 切分與重跑步驟：evaluation/research/benchmark/REPRODUCE.txt
+- 分數：evaluation/research/benchmark/**/*.npz
+- 研究模型檔：evaluation/research/v2/models/recommended.joblib
+  不要部署，不要讓 API import 它。
+
+研究腳本不應開啟 backend/data/trustledger-demo.db。
+prepare_research_data.py 拒絕倉庫內路徑，也不會建立 SQLite。
+dev library 的 seed 預設寫到 backend/data/dev-library.db，
+而且 ground_truth_fraud_labels 是 false。
+
+steps 150–179 已經在 PR #14 與 PR #15 看過。
+那是研究對照，不是這個應用程式的未看過 holdout，也不是 UI 的標籤。

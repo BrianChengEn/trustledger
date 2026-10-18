@@ -1,0 +1,678 @@
+{
+  "synthetic": true,
+  "live_provider_verified": false,
+  "disclaimer": "Synthetic fixtures for UI development. They are not recorded Gemini, Jev, Backboard, or Nessie responses.",
+  "baseline_transactions": [
+    {
+      "id": "txn_syn_001",
+      "occurred_at": "2026-10-16T09:15:00-04:00",
+      "amount": 6.45,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Campus Coffee",
+      "merchant_category": "dining",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_002",
+      "occurred_at": "2026-10-16T18:32:00-04:00",
+      "amount": 42.18,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Fresh Basket",
+      "merchant_category": "groceries",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_003",
+      "occurred_at": "2026-10-17T13:57:00-04:00",
+      "amount": 11.99,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "StreamWave",
+      "merchant_category": "streaming",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": true,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_004",
+      "occurred_at": "2026-10-17T14:03:00-04:00",
+      "amount": 11.99,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "StreamWave",
+      "merchant_category": "streaming",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": true,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_005",
+      "occurred_at": "2026-10-17T15:10:00-04:00",
+      "amount": 849.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Tech Harbor",
+      "merchant_category": "electronics",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_006",
+      "occurred_at": "2026-10-15T20:44:00-04:00",
+      "amount": 18.5,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Metro Ride",
+      "merchant_category": "transportation",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_007",
+      "occurred_at": "2026-09-17T08:00:00-04:00",
+      "amount": 24.99,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "FitFlow",
+      "merchant_category": "fitness_subscription",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": true,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_008",
+      "occurred_at": "2026-10-17T08:00:00-04:00",
+      "amount": 34.99,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "FitFlow",
+      "merchant_category": "fitness_subscription",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": true,
+      "kind": "purchase"
+    },
+    {
+      "id": "txn_syn_transfer_01",
+      "occurred_at": "2026-10-17T12:00:00-04:00",
+      "amount": 17.0,
+      "currency": "USD",
+      "direction": "credit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_02",
+      "occurred_at": "2026-10-16T12:00:00-04:00",
+      "amount": 24.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_03",
+      "occurred_at": "2026-10-15T12:00:00-04:00",
+      "amount": 31.0,
+      "currency": "USD",
+      "direction": "credit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_04",
+      "occurred_at": "2026-10-14T12:00:00-04:00",
+      "amount": 38.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_05",
+      "occurred_at": "2026-10-13T12:00:00-04:00",
+      "amount": 45.0,
+      "currency": "USD",
+      "direction": "credit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_06",
+      "occurred_at": "2026-10-12T12:00:00-04:00",
+      "amount": 52.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_07",
+      "occurred_at": "2026-10-11T12:00:00-04:00",
+      "amount": 59.0,
+      "currency": "USD",
+      "direction": "credit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_08",
+      "occurred_at": "2026-10-10T12:00:00-04:00",
+      "amount": 66.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_09",
+      "occurred_at": "2026-10-09T12:00:00-04:00",
+      "amount": 73.0,
+      "currency": "USD",
+      "direction": "credit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    },
+    {
+      "id": "txn_syn_transfer_10",
+      "occurred_at": "2026-10-08T12:00:00-04:00",
+      "amount": 80.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Transfer",
+      "merchant_category": "other",
+      "source": "synthetic",
+      "account_token": "acct_demo_a1",
+      "is_subscription": false,
+      "kind": "transfer"
+    }
+  ],
+  "transaction_detail": {
+    "id": "txn_syn_004",
+    "occurred_at": "2026-10-17T14:03:00-04:00",
+    "amount": 11.99,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "StreamWave",
+    "merchant_category": "streaming",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": true,
+    "kind": "purchase"
+  },
+  "dev_library_transactions": [
+    {
+      "id": "txn_dev_a_dining",
+      "occurred_at": "2026-10-10T11:05:00-04:00",
+      "amount": 8.5,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Campus Cafe",
+      "merchant_category": "dining",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": false
+    },
+    {
+      "id": "txn_dev_a_groceries",
+      "occurred_at": "2026-10-11T12:00:00-04:00",
+      "amount": 15.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Metro Market",
+      "merchant_category": "groceries",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": false
+    },
+    {
+      "id": "txn_dev_a_duplicate",
+      "occurred_at": "2026-10-11T18:00:00-04:00",
+      "amount": 15.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Metro Market",
+      "merchant_category": "groceries",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": false
+    },
+    {
+      "id": "txn_dev_a_large",
+      "occurred_at": "2026-10-12T15:00:00-04:00",
+      "amount": 420.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Tech Harbor",
+      "merchant_category": "electronics",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": false
+    },
+    {
+      "id": "txn_dev_a_sub_previous",
+      "occurred_at": "2026-09-12T08:00:00-04:00",
+      "amount": 20.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "FitFlow",
+      "merchant_category": "fitness_subscription",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": true
+    },
+    {
+      "id": "txn_dev_a_sub_increase",
+      "occurred_at": "2026-10-12T08:00:00-04:00",
+      "amount": 29.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "FitFlow",
+      "merchant_category": "fitness_subscription",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": true
+    },
+    {
+      "id": "txn_dev_a_recurring_previous",
+      "occurred_at": "2026-08-01T08:00:00-04:00",
+      "amount": 9.99,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "StreamWave",
+      "merchant_category": "streaming",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": true
+    },
+    {
+      "id": "txn_dev_a_recurring",
+      "occurred_at": "2026-09-01T08:00:00-04:00",
+      "amount": 9.99,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "StreamWave",
+      "merchant_category": "streaming",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": true
+    },
+    {
+      "id": "txn_dev_a_credit",
+      "occurred_at": "2026-10-13T09:30:00-04:00",
+      "amount": 12.0,
+      "currency": "USD",
+      "direction": "credit",
+      "merchant_display": "Campus Cafe",
+      "merchant_category": "dining",
+      "source": "synthetic",
+      "account_token": "acct_dev_a1",
+      "is_subscription": false
+    },
+    {
+      "id": "txn_dev_b_dining",
+      "occurred_at": "2026-10-13T19:10:00-04:00",
+      "amount": 22.4,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Fresh Basket",
+      "merchant_category": "groceries",
+      "source": "synthetic",
+      "account_token": "acct_dev_b1",
+      "is_subscription": false
+    },
+    {
+      "id": "txn_dev_b_large",
+      "occurred_at": "2026-10-14T07:30:00-04:00",
+      "amount": 300.0,
+      "currency": "USD",
+      "direction": "debit",
+      "merchant_display": "Metro Ride",
+      "merchant_category": "transportation",
+      "source": "synthetic",
+      "account_token": "acct_dev_b1",
+      "is_subscription": false
+    }
+  ],
+  "analyses": {
+    "rules_only": {
+      "transaction_id": "txn_syn_004",
+      "alert_type": "duplicate",
+      "severity": "medium",
+      "needs_human": true,
+      "confidence": 1.0,
+      "evidence": [
+        "Another charge to the same merchant for the same amount occurred within 24 hours."
+      ],
+      "provider_mode": "rules-only",
+      "model_version": null,
+      "request_id": "req_fixture_analysis"
+    },
+    "jev_shape": {
+      "transaction_id": "txn_syn_004",
+      "alert_type": "duplicate",
+      "severity": "medium",
+      "needs_human": true,
+      "confidence": 1.0,
+      "evidence": [
+        "Synthetic fixture shape. Not a recorded Jev response.",
+        "Another charge to the same merchant for the same amount occurred within 24 hours."
+      ],
+      "provider_mode": "rules+jev-live",
+      "model_version": null,
+      "request_id": "req_fixture_analysis"
+    }
+  },
+  "alerts": {
+    "duplicate_open": {
+      "transaction_id": "txn_syn_004",
+      "alert_id": "alert_txn_syn_004",
+      "alert_type": "duplicate",
+      "severity": "medium",
+      "needs_human": true,
+      "confidence": 1.0,
+      "evidence": [
+        "Another charge to the same merchant for the same amount occurred within 24 hours."
+      ],
+      "provider_mode": "rules-only",
+      "model_version": null,
+      "request_id": "req_fixture_alert",
+      "status": "open"
+    },
+    "amount_open": {
+      "transaction_id": "txn_syn_005",
+      "alert_id": "alert_txn_syn_005",
+      "alert_type": "amount_anomaly",
+      "severity": "high",
+      "needs_human": true,
+      "confidence": 1.0,
+      "evidence": [
+        "Amount exceeds the demo high-amount threshold; please check the purchase."
+      ],
+      "provider_mode": "rules-only",
+      "model_version": null,
+      "request_id": "req_fixture_alert",
+      "status": "open"
+    },
+    "subscription_open": {
+      "transaction_id": "txn_syn_008",
+      "alert_id": "alert_txn_syn_008",
+      "alert_type": "subscription_change",
+      "severity": "medium",
+      "needs_human": true,
+      "confidence": 1.0,
+      "evidence": [
+        "This recurring charge increased by more than 20 percent versus the previous charge."
+      ],
+      "provider_mode": "rules-only",
+      "model_version": null,
+      "request_id": "req_fixture_alert",
+      "status": "open"
+    },
+    "confirmed_normal": {
+      "transaction_id": "txn_syn_004",
+      "alert_id": "alert_txn_syn_004",
+      "alert_type": "duplicate",
+      "severity": "medium",
+      "needs_human": true,
+      "confidence": 1.0,
+      "evidence": [
+        "Another charge to the same merchant for the same amount occurred within 24 hours."
+      ],
+      "provider_mode": "rules-only",
+      "model_version": null,
+      "request_id": "req_fixture_alert",
+      "status": "normal"
+    }
+  },
+  "explanations": {
+    "template_shape": {
+      "transaction_id": "txn_syn_004",
+      "alert_type": "duplicate",
+      "severity": "medium",
+      "needs_human": true,
+      "why_flagged": "Synthetic fixture. Rules found a duplicate streaming charge.",
+      "supporting_evidence": "Synthetic fixture. Two streaming charges share an amount inside 24 hours.",
+      "what_it_means": "Synthetic fixture. A person still decides. This text is not a provider result.",
+      "what_to_check": "Synthetic fixture. Compare the two streaming charges in the demo list.",
+      "next_steps": [
+        "Synthetic fixture. Leave the alert for a person."
+      ],
+      "explanation_mode": "template",
+      "model_version": null,
+      "failure": null,
+      "safe_payload": {
+        "merchant_category": "streaming",
+        "amount_bucket": "10-25",
+        "currency": "USD",
+        "local_day_part": "afternoon",
+        "same_category_same_amount_24h_count": 2,
+        "is_subscription": true,
+        "subscription_delta_bucket": "none",
+        "prior_user_confirmation": "unknown"
+      },
+      "shared": {
+        "task": "explain_existing_alert",
+        "alert_type": "duplicate",
+        "severity": "medium",
+        "needs_human": true,
+        "reason_codes": [
+          "duplicate_rule_matched",
+          "human_review_required"
+        ],
+        "features": {
+          "merchant_category": "streaming",
+          "amount_bucket": "10-25",
+          "currency": "USD",
+          "local_day_part": "afternoon",
+          "same_category_same_amount_24h_count": 2,
+          "is_subscription": true,
+          "subscription_delta_bucket": "none",
+          "prior_user_confirmation": "unknown"
+        }
+      },
+      "sent_to_provider": false,
+      "from_cache": false
+    },
+    "fallback_shape": {
+      "transaction_id": "txn_syn_004",
+      "alert_type": "duplicate",
+      "severity": "medium",
+      "needs_human": true,
+      "why_flagged": "Synthetic fixture. The explanation provider did not answer.",
+      "supporting_evidence": "Synthetic fixture. Two streaming charges share an amount inside 24 hours.",
+      "what_it_means": "Synthetic fixture. A person still decides. This text is not a provider result.",
+      "what_to_check": "Synthetic fixture. Compare the two streaming charges in the demo list.",
+      "next_steps": [
+        "Synthetic fixture. Leave the alert for a person."
+      ],
+      "explanation_mode": "fallback",
+      "model_version": null,
+      "failure": "timeout",
+      "safe_payload": {
+        "merchant_category": "streaming",
+        "amount_bucket": "10-25",
+        "currency": "USD",
+        "local_day_part": "afternoon",
+        "same_category_same_amount_24h_count": 2,
+        "is_subscription": true,
+        "subscription_delta_bucket": "none",
+        "prior_user_confirmation": "unknown"
+      },
+      "shared": {
+        "task": "explain_existing_alert",
+        "alert_type": "duplicate",
+        "severity": "medium",
+        "needs_human": true,
+        "reason_codes": [
+          "duplicate_rule_matched",
+          "human_review_required"
+        ],
+        "features": {
+          "merchant_category": "streaming",
+          "amount_bucket": "10-25",
+          "currency": "USD",
+          "local_day_part": "afternoon",
+          "same_category_same_amount_24h_count": 2,
+          "is_subscription": true,
+          "subscription_delta_bucket": "none",
+          "prior_user_confirmation": "unknown"
+        }
+      },
+      "sent_to_provider": false,
+      "from_cache": false
+    },
+    "gemini_shape": {
+      "transaction_id": "txn_syn_004",
+      "alert_type": "duplicate",
+      "severity": "medium",
+      "needs_human": true,
+      "why_flagged": "Synthetic shape example. This text was not returned by Gemini.",
+      "supporting_evidence": "Synthetic fixture. Two streaming charges share an amount inside 24 hours.",
+      "what_it_means": "Synthetic fixture. A person still decides. This text is not a provider result.",
+      "what_to_check": "Synthetic fixture. Compare the two streaming charges in the demo list.",
+      "next_steps": [
+        "Synthetic fixture. Leave the alert for a person."
+      ],
+      "explanation_mode": "gemini-live",
+      "model_version": null,
+      "failure": null,
+      "safe_payload": {
+        "merchant_category": "streaming",
+        "amount_bucket": "10-25",
+        "currency": "USD",
+        "local_day_part": "afternoon",
+        "same_category_same_amount_24h_count": 2,
+        "is_subscription": true,
+        "subscription_delta_bucket": "none",
+        "prior_user_confirmation": "unknown"
+      },
+      "shared": {
+        "task": "explain_existing_alert",
+        "alert_type": "duplicate",
+        "severity": "medium",
+        "needs_human": true,
+        "reason_codes": [
+          "duplicate_rule_matched",
+          "human_review_required"
+        ],
+        "features": {
+          "merchant_category": "streaming",
+          "amount_bucket": "10-25",
+          "currency": "USD",
+          "local_day_part": "afternoon",
+          "same_category_same_amount_24h_count": 2,
+          "is_subscription": true,
+          "subscription_delta_bucket": "none",
+          "prior_user_confirmation": "unknown"
+        }
+      },
+      "sent_to_provider": false,
+      "from_cache": false
+    }
+  },
+  "confirmation": {
+    "alert_id": "alert_txn_syn_004",
+    "decision": "normal",
+    "memory_status": "not-requested",
+    "memory_id": null,
+    "request_id": "req_fixture_confirm"
+  },
+  "memory": {
+    "memory_id": "mem_fixture_dev_001",
+    "summary": "The demo user explicitly confirmed a streaming alert as normal. Recheck future evidence.",
+    "created_at": "2026-10-17T16:00:00-04:00",
+    "source": "local-fallback"
+  },
+  "privacy_preview": {
+    "transaction_id": "txn_syn_004",
+    "destination": "jev",
+    "schema_version": "safe-ai-payload-v1",
+    "inspection": [
+      {
+        "field": "merchant_display",
+        "action": "dropped",
+        "output": null,
+        "reason": "Raw merchant text is not sent."
+      },
+      {
+        "field": "amount",
+        "action": "bucketed",
+        "output": "10-25",
+        "reason": "Exact money value removed."
+      }
+    ],
+    "safe_payload": {
+      "merchant_category": "streaming",
+      "amount_bucket": "10-25",
+      "currency": "USD",
+      "local_day_part": "afternoon",
+      "same_category_same_amount_24h_count": 2,
+      "is_subscription": true,
+      "subscription_delta_bucket": "none",
+      "prior_user_confirmation": "unknown"
+    }
+  },
+  "error": {
+    "error": {
+      "code": "not_found",
+      "message": "Synthetic fixture error.",
+      "request_id": "req_fixture_error"
+    }
+  },
+  "empty_transactions": [],
+  "loading": {
+    "state": "loading"
+  }
+}
