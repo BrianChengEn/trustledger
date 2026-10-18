@@ -3,7 +3,12 @@ from app.schemas.transaction import Transaction
 from app.services.ai.privacy import prior_transactions, subscription_delta
 
 
-def analyze(tx: Transaction, history: list[Transaction], request_id: str) -> Analysis:
+def analyze(
+    tx: Transaction,
+    history: list[Transaction],
+    request_id: str,
+    prior_user_confirmation: str = "unknown",
+) -> Analysis:
     """Deterministic demo heuristics, not a fraud probability or financial decision."""
     prior = prior_transactions(tx, history)
     duplicate = any(h.merchant_display == tx.merchant_display and h.amount == tx.amount
@@ -20,6 +25,9 @@ def analyze(tx: Transaction, history: list[Transaction], request_id: str) -> Ana
     elif delta is not None and delta > .2 and tx.direction == "debit":
         kind, severity = "subscription_change", "medium"
         evidence = ["This recurring charge increased by more than 20 percent versus the previous charge."]
+    if prior_user_confirmation == "normal" and kind != "none":
+        evidence = [*evidence, "A prior consented confirmation marked this category as normal. "
+                    "This match still needs a person."]
     return Analysis(transaction_id=tx.id, alert_type=kind, severity=severity,
                     needs_human=kind != "none", confidence=1.0,
                     evidence=evidence, request_id=request_id)

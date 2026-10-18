@@ -92,15 +92,16 @@ privacy serializer, then invokes F4 `evaluate_fraud` once. The existing POST
 provider metadata, failure details, and numeric scores are not added to the API.
 
 `FRAUD_PROVIDER` defaults to `rules-only`; `mock-jev` explicitly selects the offline
-mock. Other settings fail validation. Tests can override `get_fraud_provider` without
-changing endpoints or the transaction provider. No API key enables live behavior.
+mock. `backboard-jev` explicitly selects Main's Backboard System One client and
+requires `BACKBOARD_API_KEY`; a key alone never enables it. Tests can override
+`get_fraud_provider` without changing endpoints or the transaction provider.
 
 Alerts and confirmations use the service's rules-derived alerts without provider
 assessment calls. Privacy preview continues to use the same serializer as analysis.
 Alert IDs/order and stored confirmation status are preserved. A failed POST provider
 attempt is marked `degraded`; subsequent rules-only GET results are labelled
 `rules-only`, not cached as if they repeated that failed provider attempt. Analysis
-has no persistence dependency and cannot automatically confirm or write memory.
+reads a request-local snapshot of eligible consented memory but never writes it.
 
 The default and mock paths have no network operations, sleeps, or retries against
 the frontend's 8-second timeout. An injected future REST implementation must enforce
@@ -135,12 +136,33 @@ are atomic, preventing an orphan memory when the status update fails. List/delet
 remain owner-scoped. Deleting a memory does not rewrite historical confirmations;
 replaying a confirmation cannot recreate the deleted memory.
 
-No safe matching key, relevance window, or conflict policy is documented for using
-past confirmations as new transaction context. `prior_user_confirmation` therefore
-remains `unknown`, including after consented memory writes and for other owners.
-The AI/Data owners must agree on those semantics before lookup is implemented.
+The approved Main integration uses sanitized category matching for prior context.
+Only existing owner-scoped memories linked to a successful normal confirmation with
+explicit consent are eligible. Missing, malformed, failed or deleted memory yields
+`unknown`; other owners never contribute. Matches add context and never skip risk
+analysis or mark a transaction safe. See `docs/main-integration-resolution.md`.
 
 The older integration document says `ALLOW_MEMORY_WRITE=false` by default; current
 Settings and the example environment use `true`. F6 preserves the current source
 default and all explicit consent gates. Resolving that policy discrepancy remains
-an owner decision. No real Backboard/Gemini integration is enabled.
+an owner decision. Backboard memory and Gemini remain unimplemented; explicit Backboard/Jev inference
+is separate from memory operations.
+
+
+## Approved Main integration
+
+`core/jev.py::BackboardJevProvider` implements F4's synchronous interface in the
+FastAPI worker thread, using Main's async `classify` with an isolated async client.
+A three-second total inference deadline covers connection, response and parsing;
+no automatic retries occur. HTTP failures map to typed F4 failures and degraded
+rules fallback. Missing credentials fail before any HTTP call. Health and alerts
+remain rules-only and never infer readiness from a previous analysis.
+
+Successful validated external calls set only `provider_mode=rules+jev-live` and
+`model_version`; all risk fields and evidence remain authoritative rules output.
+The internal assessment permits `needs_human=None` (unmapped), like nullable
+severity; the public Analysis boolean remains mandatory. Vendor choice confidence
+and needs_review scores are not thresholded or promoted to fraud probabilities.
+Live credentials/vendor behavior have not been verified: offline tests use mock
+transports. React still initiates no POST analysis itself, so live inference needs
+an explicit API call until the frontend owner adds an analysis action.

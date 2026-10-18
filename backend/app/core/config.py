@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
     app_env: str = "development"
     transaction_provider: Literal["synthetic"] = "synthetic"
-    fraud_provider: Literal["rules-only", "mock-jev"] = "rules-only"
+    fraud_provider: Literal["rules-only", "mock-jev", "backboard-jev"] = "rules-only"
     # A single local demo identity; this is not an authentication mechanism.
     demo_user_id: str = "demo-user-001"
     frontend_origin: str = "http://localhost:5173"

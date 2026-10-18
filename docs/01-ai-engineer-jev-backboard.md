@@ -1,5 +1,7 @@
 # 任務書 1 — AI Engineer（Jev + Backboard + Privacy）
 
+目前負責人是 Brian（`BrianChengEn`）。Jev 的選定路線是 Backboard System One，不是直接呼叫 TypeSafe API。執行狀態以 [../ARCHITECTURE.md](../ARCHITECTURE.md) 與 [../TEAM_ROLES.md](../TEAM_ROLES.md) 為準。
+
 ## 任務結果
 
 交付一個可被 FastAPI 呼叫、可單元測試、fail-closed 的 AI service layer：先將交易轉成 allowlisted features，再跑 deterministic rules；若 Jev 可用，加入 bounded decision；只有使用者明確確認與同意後，才把 sanitized fact 寫入 Backboard。
@@ -267,15 +269,19 @@ python -m pytest tests/unit/ai -q
 
 預期：所有測試通過；沒有 network；沒有真實 key。至少看到 privacy forbidden-field tests、rules cases、Jev response parser、Backboard write gate。
 
-### Jev authentication/readiness（不跑 decision）
+### Jev through Backboard（選定路線）
+
+不要呼叫 `https://api.typesafe.ai` 或 `https://jev-ai.org`。選定請求是：
 
 ```bash
 curl --fail-with-body --silent --show-error \
-  https://jev-ai.org/api/v1/models/ \
-  -H "Authorization: Bearer $JEV_API_KEY"
+  https://app.backboard.io/api/threads/messages \
+  -H "X-API-Key: $BACKBOARD_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data '{"content":"Classify the minimized features in system_one.state.","llm_provider":"typesafe","model_name":"jev-latest","stream":false,"system_one":{"state":{"merchant_category":"streaming","amount_bucket":"10-25","currency":"USD","local_day_part":"afternoon","same_category_same_amount_24h_count":2,"is_subscription":true,"subscription_delta_bucket":"none","prior_user_confirmation":"unknown"},"questions":{"pattern":{"type":"choice","instructions":"Which pattern matches state?","criteria":{"duplicate":"Repeated category and amount","amount_anomaly":"Highest amount bucket","subscription_change":"Subscription increased","none":"No listed pattern"}}}}}'
 ```
 
-預期：HTTP 200、model list 含 decision model。官方文件說 GET models 不執行模型且不收費。不要把輸出貼進公開 issue。
+文件：<https://docs.backboard.io/concepts/system-one>。不要把回應或 key 貼進公開 issue。直接的 TypeSafe API 只是未採用的選項。
 
 ### Backboard readiness
 
@@ -288,6 +294,8 @@ curl --fail-with-body --silent --show-error \
 預期：HTTP 200 與 assistant list。若無 assistant，由一位 owner 建立一個 `TrustLedger Demo User` assistant；避免四人各建一個造成 ID 混亂。
 
 ## 常見錯誤
+
+下表的 Jev 308、400、401 屬於未採用的直接 TypeSafe 路由。選定路線的失敗應維持 `rules-only` 或 `degraded`，不要改打 `api.typesafe.ai`。
 
 | 症狀 | 原因 | 修正 |
 |---|---|---|

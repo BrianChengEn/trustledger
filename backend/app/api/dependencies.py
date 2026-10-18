@@ -3,6 +3,8 @@ from typing import Annotated
 from fastapi import Depends, Request
 
 from app.core.analysis import AnalysisService
+from app.core.jev import BackboardJevProvider
+from app.core.memory import PriorConfirmations
 from app.core.fraud import FraudProvider, select_fraud_provider
 from app.core.transactions import (
     ProviderUnavailable, SyntheticTransactionProvider, TransactionProvider,
@@ -29,15 +31,24 @@ Transactions = Annotated[TransactionService, Depends(get_transaction_service)]
 
 
 def get_fraud_provider(request: Request) -> FraudProvider | None:
-    """Only local rules/mock modes; override for deterministic provider tests."""
-    return select_fraud_provider(request.app.state.settings.fraud_provider)
+    """A key alone never activates inference. Construction never calls the vendor."""
+    settings = request.app.state.settings
+    if settings.fraud_provider == "backboard-jev":
+        return BackboardJevProvider(settings.backboard_api_key)
+    return select_fraud_provider(settings.fraud_provider)
+
+
+def get_prior_confirmations(request: Request) -> PriorConfirmations:
+    state = request.app.state
+    return PriorConfirmations(lambda: state.store.consented_memory_summaries(state.settings.demo_user_id))
 
 
 def get_analysis_service(
     transactions: Transactions,
     provider: Annotated[FraudProvider | None, Depends(get_fraud_provider)],
+    memory: Annotated[PriorConfirmations, Depends(get_prior_confirmations)],
 ) -> AnalysisService:
-    return AnalysisService(transactions, provider)
+    return AnalysisService(transactions, provider, memory)
 
 
 Analyses = Annotated[AnalysisService, Depends(get_analysis_service)]

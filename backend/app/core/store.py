@@ -29,8 +29,8 @@ class Store:
             """)
 
     @contextmanager
-    def connect(self):
-        connection = sqlite3.connect(self.filename, timeout=5)
+    def connect(self, *, timeout: float = 5):
+        connection = sqlite3.connect(self.filename, timeout=timeout)
         connection.row_factory = sqlite3.Row
         try:
             with connection:
@@ -107,6 +107,20 @@ class Store:
                               (owner,)).fetchall()
         return [MemorySummary(memory_id=r["memory_id"], summary=r["summary"],
                               created_at=r["created_at"], source="local-fallback") for r in rows]
+
+    def consented_memory_summaries(self, owner: str) -> list[str]:
+        """Only extant memories linked to this owner's successful consented write."""
+        # Optional context must not consume the frontend deadline on lock contention.
+        with self.connect(timeout=0.1) as db:
+            rows = db.execute("""
+                SELECT m.summary FROM confirmations c JOIN memories m
+                  ON m.owner = c.owner AND m.memory_id = json_extract(
+                    CASE WHEN json_valid(c.result) THEN c.result ELSE '{}' END, '$.memory_id')
+                WHERE c.owner = ? AND c.decision = 'normal' AND c.consent = 1
+                  AND json_extract(CASE WHEN json_valid(c.result) THEN c.result ELSE '{}' END,
+                                   '$.memory_status') = 'written'
+            """, (owner,)).fetchall()
+        return [row["summary"] for row in rows]
 
     def delete_memory(self, owner, memory_id) -> bool:
         with self.lock, self.connect() as db:

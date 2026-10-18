@@ -30,8 +30,9 @@ The eight approved feature fields are `merchant_category`, `amount_bucket`, `cur
 `local_day_part`, `same_category_same_amount_24h_count`, `is_subscription`,
 `subscription_delta_bucket`, and `prior_user_confirmation`. Their constraints reuse F4:
 controlled categories; documented amount/day-part/delta/confirmation enums; USD;
-integer count 0–20; strict subscription boolean. Prior confirmation remains `unknown`
-under F6's unresolved matching policy.
+integer count 0–20; strict subscription boolean. Approved category matching may
+supply `normal` from eligible consented owner-scoped local memory; otherwise it is
+`unknown`. This context never overrides the authoritative risk assessment.
 
 The request is frozen and rejects unknown fields. Nested models are rebuilt and
 revalidated before provider invocation. There is no user prompt, transaction/account/

@@ -44,7 +44,7 @@ class FraudAssessment(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
     alert_type: Literal["duplicate", "amount_anomaly", "subscription_change", "none"]
     severity: Literal["low", "medium", "high"] | None
-    needs_human: bool
+    needs_human: bool | None  # None means the provider has no approved boolean mapping.
     evidence: list[Annotated[str, Field(max_length=180)]] = Field(max_length=8)
     metadata: ProviderMetadata
     numeric_score: float | None = Field(default=None, allow_inf_nan=False)
@@ -152,6 +152,11 @@ def evaluate_fraud(rules_analysis: Analysis, features: SafePayload,
         payload = validated_features(features)
         assessment = validated_assessment(provider.assess(payload))
         # Do not invent rules/model precedence or advertise mock results as live.
+        if assessment.metadata.mode == "external" and assessment.metadata.name == "jev":
+            # Provenance only: never replace rule severity, confidence, evidence or review.
+            baseline = baseline.model_copy(update={
+                "provider_mode": "rules+jev-live", "model_version": assessment.metadata.model_version,
+            })
         return FraudOutcome(baseline, "assessed", assessment=assessment)
     except FraudProviderError as exc:
         failure = exc.kind

@@ -31,7 +31,11 @@ def same_charge_count(tx: Transaction, history: list[Transaction]) -> int:
     ))
 
 
-def safe_payload(tx: Transaction, history: list[Transaction]) -> SafePayload:
+def safe_payload(
+    tx: Transaction,
+    history: list[Transaction],
+    prior_user_confirmation: str = "unknown",
+) -> SafePayload:
     amount_bucket = next((label for ceiling, label in [
         (10, "0-10"), (25, "10-25"), (50, "25-50"), (100, "50-100"), (250, "100-250")
     ] if tx.amount < ceiling), "250+")
@@ -48,11 +52,16 @@ def safe_payload(tx: Transaction, history: list[Transaction]) -> SafePayload:
         amount_bucket=amount_bucket, currency=tx.currency, local_day_part=day_part,
         same_category_same_amount_24h_count=same_charge_count(tx, history),
         is_subscription=tx.is_subscription, subscription_delta_bucket=delta_bucket,
+        prior_user_confirmation=prior_user_confirmation,
     )
 
 
-def privacy_preview(tx: Transaction, history: list[Transaction]) -> PrivacyPreview:
-    payload = safe_payload(tx, history)
+def privacy_preview(
+    tx: Transaction,
+    history: list[Transaction],
+    prior_user_confirmation: str = "unknown",
+) -> PrivacyPreview:
+    payload = safe_payload(tx, history, prior_user_confirmation)
     return PrivacyPreview(transaction_id=tx.id, safe_payload=payload, inspection=[
         FieldAction(field="id / account_token", action="dropped", reason="No identifiers in AI payload."),
         FieldAction(field="merchant_display", action="dropped", reason="Raw merchant text is not sent."),
@@ -62,6 +71,9 @@ def privacy_preview(tx: Transaction, history: list[Transaction]) -> PrivacyPrevi
                     reason="Exact money value removed."),
         FieldAction(field="occurred_at", action="bucketed", output=payload.local_day_part,
                     reason="Exact date and time removed."),
+        FieldAction(field="prior_user_confirmation", action="allowed",
+                    output=payload.prior_user_confirmation,
+                    reason="Consented category label only. No merchant, amount, or id."),
         FieldAction(field="unknown fields / PII / API keys", action="dropped",
-                    reason="Constructed from eight approved features only."),
+                    reason="Eight approved features only. A live call sends them as Backboard state."),
     ])

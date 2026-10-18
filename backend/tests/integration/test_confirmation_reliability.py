@@ -79,11 +79,12 @@ def test_sanitized_memory_and_owner_scoping(client):
 
 
 @pytest.mark.parametrize("decision,consent", [("normal", True), ("normal", False), ("review", True)])
-def test_prior_confirmation_remains_unknown_without_approved_matching(client, decision, consent):
+def test_prior_confirmation_uses_only_consented_normal_matching(client, decision, consent):
     response = client.post(PATH, json={"decision": decision, "consent_to_memory": consent})
     assert response.status_code == 200
     client.app.state.store.confirm("other-owner", "alert", "normal", True,
                                    "Other owner's sanitized summary", "rid")
+    expected = "normal" if decision == "normal" and consent else "unknown"
     seen = []
 
     class Spy(MockJevProvider):
@@ -94,6 +95,6 @@ def test_prior_confirmation_remains_unknown_without_approved_matching(client, de
     client.app.dependency_overrides[get_fraud_provider] = lambda: Spy()
     for tx_id in ["txn_syn_004", "txn_syn_003"]:
         preview = client.get("/api/v1/privacy/preview/" + tx_id)
-        assert preview.json()["safe_payload"]["prior_user_confirmation"] == "unknown"
+        assert preview.json()["safe_payload"]["prior_user_confirmation"] == expected
         assert client.post("/api/v1/analyses", json={"transaction_id": tx_id}).status_code == 200
-    assert seen == ["unknown", "unknown"]
+    assert seen == [expected, expected]

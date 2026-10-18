@@ -10,13 +10,13 @@ from app.schemas.api import (
 )
 from app.schemas.transaction import Transaction
 from app.services.ai.memory_policy import memory_sentence
-from app.services.ai.privacy import privacy_preview
 
 router = APIRouter(prefix="/api/v1")
 
 
 def alerts(request: Request, analyses: Analyses) -> list[Alert]:
     state = request.app.state
+    # GET and confirmation never invoke a fraud provider.
     result = analyses.alerts(request.state.request_id)
     for alert in result:
         alert.status = state.store.status(state.settings.demo_user_id, alert.alert_id)
@@ -25,6 +25,8 @@ def alerts(request: Request, analyses: Analyses) -> list[Alert]:
 
 @router.get("/health", response_model=Health)
 def health(request: Request, transactions: Transactions):
+    # Report current data readiness, not a previous request's cached AI outcome.
+    # Public analysis remains rules-authoritative; failures are request-specific.
     provider_health = transactions.health()
     return Health(status=provider_health.status, data_mode=provider_health.data_mode, analysis_mode="rules-only",
                   memory_mode="local-fallback" if request.app.state.settings.allow_memory_write else "off",
@@ -48,10 +50,8 @@ def list_alerts(request: Request, analyses: Analyses):
 
 @router.get("/privacy/preview/{transaction_id}", response_model=PrivacyPreview)
 def preview(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
-            transactions: Transactions):
-    history = transactions.history()
-    tx = transactions.get_transaction(transaction_id)
-    return privacy_preview(tx, history)
+            analyses: Analyses):
+    return analyses.preview(transaction_id)
 
 
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)

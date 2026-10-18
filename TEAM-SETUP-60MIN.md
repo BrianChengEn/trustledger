@@ -1,49 +1,58 @@
-# 四台 Mac · 60 分鐘協作設定
+# Setup for four Macs
 
-目標：每人都能 clone、安裝、跑前後端與測試，建立自己的分支，提交一個小 PR。這是環境與協作驗收；live providers 於後續分工接入。
+Official setup for the TrustLedger demo. Role details are in [TEAM_ROLES.md](TEAM_ROLES.md). Tool versions are in [TECH_STACK.md](TECH_STACK.md).
 
-如果尚未安裝 Homebrew 或 Xcode Command Line Tools，下載時間可能超過一小時，先平行安裝。有人卡住時先 pair 在能啟動的 Mac 上確認契約，不要全隊等同一台。
+The older Chinese checklist in this file is replaced by the steps below so branch names and owners stay in one place. Kenny's personal command list remains in [docs/pr/mrkennylee.md](docs/pr/mrkennylee.md) and [docs/pr/mrkennylee.zh-TW.md](docs/pr/mrkennylee.zh-TW.md).
 
-## 00–10 分鐘：帳號與共同基礎
+If Homebrew or Xcode Command Line Tools are missing, install them first. Do not block the other three people on one machine.
 
-- Repo owner：BrianChengEn；repo 為 `https://github.com/BrianChengEn/trustledger`。
-- 隊友帳號：benson5112、ianthechou89、mrkennylee；三人各自接受私人 repo 邀請。
-- 決定角色，將下列姓名空格換成實際 owner。不要假設 GitHub username 已代表角色。
+## Shared setup
 
-| 角色 | 同一時間只負責自己的主要範圍 | 自己填姓名 |
-|---|---|---|
-| AI | privacy / rules / Jev / Backboard | ____ |
-| Frontend | React / Vite UI | ____ |
-| Data | fixture / Nessie adapter | ____ |
-| Backend/Integrator | API / core / dependencies / CI | ____ |
+These steps are the same for Brian, Benson, Ian, and Kenny.
 
-每人檢查：
+### 1. Accounts and tools
+
+Repository: https://github.com/BrianChengEn/trustledger
+
+Collaborators already on the repo: `BrianChengEn` (admin), `benson5112`, `IanChou89`, `mrkennylee`.
 
 ```bash
 git --version
 brew --version
 ```
 
-Homebrew 尚未安裝時，先從 https://brew.sh/ 安裝並依提示設定 shell PATH。Git tools 缺少時跑 `xcode-select --install`，完成後重開 Terminal。
-
-## 10–25 分鐘：clone 與安裝
+If `brew` is missing, install it from https://brew.sh/ and reopen Terminal. If `git` is missing, run `xcode-select --install`, finish the system dialog, and reopen Terminal.
 
 ```bash
 brew install git gh
 gh auth login
 gh auth setup-git
+```
+
+Use your own GitHub account. Do not share a token.
+
+### 2. Clone and install
+
+```bash
 git clone https://github.com/BrianChengEn/trustledger.git
 cd trustledger
 bash scripts/bootstrap-mac.sh
 ```
 
-腳本會安裝 Node 22、Python 3.12，建立 `backend/.venv`、安裝後端及前端依賴，從安全範本建立 `.env`。它不建立／傳送 vendor keys，也不覆蓋既有 `.env`。
+`scripts/bootstrap-mac.sh` is macOS-only. It installs Node 22, Python 3.12, and GitHub CLI when Homebrew can, creates `backend/.venv`, installs `backend/requirements.lock.txt`, runs `npm ci` in `frontend/`, and copies the example env files only when the destination is missing. It does not write vendor keys.
 
-首次還沒有 dependency lock 時，由 Integrator 先成功安裝、提交 lock files，再讓另外三人同步。若想四人並行安裝，之後仍要以 Integrator 合併的 lock 重新同步一次。
+Check the toolchain:
 
-## 25–40 分鐘：每人啟動與檢查
+```bash
+bash scripts/doctor.sh
+git check-ignore -v backend/.env frontend/.env.local
+```
 
-在 repo 根目錄各開兩個 Terminal：
+`doctor.sh` requires Node `>=22.12` and Python 3.12, or Python 3.11 or newer if `python3.12` is absent. Bootstrap itself creates the virtualenv with `python3.12`.
+
+### 3. Run
+
+From the repository root, use two terminals:
 
 ```bash
 bash scripts/dev-backend.sh
@@ -53,59 +62,103 @@ bash scripts/dev-backend.sh
 bash scripts/dev-frontend.sh
 ```
 
-前端：http://127.0.0.1:5173 。後端：http://127.0.0.1:8000/docs 。第三個 Terminal：
+- App: http://127.0.0.1:5173
+- API docs: http://127.0.0.1:8000/docs
+
+With the backend up:
+
+```bash
+backend/.venv/bin/python scripts/smoke.py
+```
+
+Expect 8 synthetic transactions and 3 alerts. Health shows `synthetic`, `rules-only`, and `local-fallback`. Open **Possible duplicate**, read the evidence and Privacy Inspector, confirm normal with the memory box checked, open **Confirmed memory**, then delete that row.
+
+### 4. Test
 
 ```bash
 bash scripts/check.sh
-backend/.venv/bin/python scripts/smoke.py
-git check-ignore backend/.env frontend/.env.local
 ```
 
-預期畫面包含 8 筆交易、3 個警示。點 duplicate → inspect → normal + opt-in → memory list → delete。所有模式都要誠實顯示 synthetic/rules-only/local-fallback。
+Backend: Ruff and pytest. Frontend: `tsc --noEmit`, Vitest, Vite build. The script exits non-zero if `backend/.venv` is missing. Do not report a pass from a partial run.
 
-## 40–55 分鐘：第一個 PR
+### 5. Environment files
 
-各自只使用自己的角色分支；以下以 AI 為例，其他人改用 `feat/frontend`、`feat/data`、`feat/api`：
+| File | Who edits the real values | What belongs there |
+|---|---|---|
+| `backend/.env` | The person running a live call, on that machine only | Empty keys are correct for the synthetic demo |
+| `frontend/.env.local` | Ian, only if the API is not on the Vite proxy | `VITE_API_BASE_URL` empty for local demo |
+
+Loaded by the app from `backend/.env`: `APP_ENV`, `ALLOW_MEMORY_WRITE`, `DEMO_USER_ID`, `FRONTEND_ORIGIN`, `NESSIE_API_KEY`, `JEV_API_KEY`, `BACKBOARD_API_KEY`.
+
+`docs/.env.example` lists extra URLs (`NESSIE_BASE_URL`, `JEV_BASE_URL`, `JEV_MODEL`, `BACKBOARD_ASSISTANT_ID`, `DATABASE_URL`). The running settings object ignores them. Do not add a key there and expect a live call.
+
+Never put a real key in Git, chat, a screenshot, a prompt, or the frontend.
+
+## Role-specific setup
+
+Do this after the shared steps. None of it is required to run the synthetic demo.
+
+| Person | Extra local step | Not required for the demo |
+|---|---|---|
+| Brian | Put a Backboard key in `BACKBOARD_API_KEY`. Jev is called with that key. Do not add a TypeSafe bearer token for the selected route | Memory writes stay in SQLite. An empty key keeps analysis at `rules-only` |
+| Benson | Confirm `bash scripts/check.sh` and the Actions tab on your PR | No deploy target is configured |
+| Ian | Open http://127.0.0.1:5173 after both servers start | Playwright's browser is only needed for `node scripts/browser-smoke.mjs` |
+| Kenny | Create a Nessie sandbox key at [api.nessieisreal.com](http://api.nessieisreal.com/) and keep it in `backend/.env` | `nessie.py` still raises `NessieNotConfigured` after the key is present |
+
+Selected Jev call: Backboard `POST https://app.backboard.io/api/threads/messages` with header `X-API-Key`. See [ARCHITECTURE.md](ARCHITECTURE.md). The direct TypeSafe URL and `jev-ai.org` are not the selected route.
+
+## Branches
+
+Fetch first. Create a branch only when that name is not already on the remote. Do not `reset`, delete, or force-push someone else's branch.
 
 ```bash
 git switch main
 git pull --ff-only
-git switch -c feat/ai
+git switch -c feat/ai-engine
 ```
 
-每人先在自己的 owner 區域加入一個有意義的小改善或測試，再提交：
+Use `feat/backend-integration`, `feat/frontend`, or `feat/nessie-data` for the other roles. Existing remote names to leave alone:
+
+| Branch | State on 17 October 2026 |
+|---|---|
+| `backend` | Benson. One unmerged commit: shell line endings and `backend/README.md` |
+| `ianthechou` | No unique commits. Behind `main` |
+| `mrkennylee` | Guide already merged through PR #2 |
+| `feat/local-memory-feedback` | Memory feedback merged through PR #3 |
+
+Push and open a pull request:
 
 ```bash
 git status
-git add <你實際修改的檔案>
-git commit -m "chore(ai): verify local development setup"
-git push -u origin feat/ai
+git add path/to/file
+git commit -m "feat(ai): short outcome"
+git push -u origin feat/ai-engine
 gh pr create --base main --fill
 ```
 
-不要照字面執行 `<你實際修改的檔案>`；先確認沒把 `.env`、SQLite、`.venv` 或 node_modules 加入 staging。若 branch 已存在，`git switch feat/ai`，不要強制覆寫。
+Replace the path and the branch name. Do not stage `.env`, `backend/data/`, `.venv`, or `node_modules`.
 
-## 55–60 分鐘：共同驗收
+## Fixes
 
-- [ ] 四人看得到 repo，且使用各自 GitHub 帳號。
-- [ ] 每台 Mac 的前後端可啟動，ports 8000/5173 未衝突。
-- [ ] `check.sh` 通過；如果尚未通過，記錄實際錯誤與 owner。
-- [ ] health 回 `synthetic / rules-only / local-fallback`。
-- [ ] 第一個小 PR 已開，另一人 review，GitHub CI 結果可見。
-- [ ] 各角色的寫入範圍明確；共用依賴／契約只有 Integrator 管理。
-- [ ] `docs/index.html` 可離線閱讀；六個流程圖都可放大。
-
-## 問題速查
-
-| 問題 | 處理 |
+| What you see | What to do |
 |---|---|
-| `brew: command not found` | 依 Homebrew 安裝後提示設定 shellenv，重開 Terminal |
-| clone 404 | 接受邀請；`gh auth status` 檢查自己帳號；不要貼 token |
-| `npm: command not found` | 重跑 bootstrap 或將 `$(brew --prefix node@22)/bin` 加進 PATH |
-| Python 指到 3.10 | 使用 `python3.12`；bootstrap 不會用系統舊版建立 venv |
-| port 被占用 | 關閉自己舊的 dev server；不要直接亂殺其他程序 |
-| requirements／package 缺少 | 確認 clone 的是 starter repo 根目錄，而不是只有舊文件 ZIP |
-| download／registry 失敗 | 檢查 Wi-Fi／proxy；不要關閉 TLS 檢查 |
-| memory 重開還存在 | SQLite 正常持久化；使用 UI 刪除記憶，測試用獨立 DB |
-| 記憶未進 Backboard | starter 只實作 local-fallback，需 AI owner 接 live client |
-| CI 紅燈 | 先開最先失敗的 step；修正後 push 到同一 branch，不在四人機器各自改依賴 |
+| `brew: command not found` | Finish the Homebrew shell setup and open a new Terminal |
+| Clone returns 404 | Accept the repo invite. Run `gh auth status`. Do not paste a token into chat |
+| `npm: command not found` | Re-run bootstrap, or add `$(brew --prefix node@22)/bin` to `PATH` |
+| Python is 3.10 | Bootstrap uses `python3.12`. Do not point the venv at the older system Python |
+| Port 8000 or 5173 is in use | Stop the dev server you started. Do not kill unknown processes |
+| `requirements.txt` or `package.json` missing | Clone the repository root, not an old docs-only zip |
+| Download or TLS error | Check the network. Do not disable TLS verification |
+| Memory is still there after restart | Expected. SQLite is the local fallback. Delete it in the UI. Tests use a temporary database |
+| Memory did not appear in Backboard | Expected. The running path is local SQLite. Backboard is not called |
+| `check.sh` fails on Node | `doctor.sh` requires Node >= 22.12. CI uses Node 22. Fix the local Node before calling the suite green |
+| CI is red | Open the first failed job. Push the fix to the same branch. Do not each edit the lockfiles |
+
+## First-hour check
+
+- [ ] You can see the private repo with your own GitHub user.
+- [ ] Backend and frontend start on ports 8000 and 5173.
+- [ ] `bash scripts/check.sh` prints `PASS: backend tests/lint and frontend typecheck/tests/build.`
+- [ ] Health is `synthetic` / `rules-only` / `local-fallback`.
+- [ ] Your branch is one of the new names above, or an existing branch you already own.
+- [ ] `docs/index.html` opens offline. The six diagrams are listed in [docs/diagrams/index.md](docs/diagrams/index.md). For current behavior, read [ARCHITECTURE.md](ARCHITECTURE.md) when the snapshot disagrees.
