@@ -23,6 +23,13 @@ describe('customer navigation stays inside Data sources', () => {
       .toEqual({view: 'privacy', tx: 'txn/a b', customer});
     expect(href({view: 'sources', customer})).toBe('#/sources');
   });
+  it('round-trips the admin demo-data pages', () => {
+    expect(parse('#/admin')).toEqual({view: 'admin'});
+    expect(parse('#/admin/log')).toEqual({view: 'admin', tab: 'log'});
+    expect(href({view: 'admin'})).toBe('#/admin');
+    expect(href({view: 'admin', tab: 'log'})).toBe('#/admin/log');
+    expect(parse('#/admin/%')).toEqual({view: 'today'});
+  });
   it('recovers from malformed encoded links inside the same customer context', () => {
     expect(parse(`#/sources/${customer}/case/%`)).toEqual({view: 'today', customer});
     expect(parse('#/case/%')).toEqual({view: 'today'});

@@ -3,13 +3,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 
+from app.core.auth import require_admin_when_enforced
 from app.schemas.admin_nessie import (
     DeleteOutcome, DeleteRequest, Execution, HistoryItem, HistoryPage, QueryRequest, ResourceOption,
 )
 from app.services.nessie_console import execute_query, require_console_nessie
 from app.services.workspace import account_codes, collection, context
 
-router = APIRouter(prefix="/api/v1/admin/nessie", tags=["local-admin"])
+router = APIRouter(prefix="/api/v1/admin/nessie", tags=["local-admin"], dependencies=[Depends(require_admin_when_enforced)])
 HistoryId = Annotated[int, Path(gt=0)]
 
 

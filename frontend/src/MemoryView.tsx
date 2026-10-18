@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {labels} from './api';
 import {Icon} from './icons';
 import {memoryCategory, memoryModeCopy, memoryStore, prettyCategory} from './lib';
+import Pager from './Pager';
 import {Callout, Chip, PageHead, stagger} from './ui';
 import {useWorkspace} from './workspace';
 
@@ -26,7 +27,8 @@ export default function MemoryView() {
       <h2>Nothing is remembered yet.</h2>
       <p>When you mark an alert normal, you can choose to let TrustLedger remember that preference. Until you opt in, nothing is stored.</p>
       <button className="primary" onClick={() => go({view: 'today'})}>Review an alert<Icon name="arrowRight" size={16}/></button>
-    </div> : <ul className="memlist">
+    </div> : <>
+    <ul className="memlist">
       {memories.map((m, i) => {
         const store = memoryStore(m.source);
         const touched = affected(m.summary);
@@ -51,6 +53,8 @@ export default function MemoryView() {
           </div>
         </li>;
       })}
-    </ul>}
+    </ul>
+    <Pager/>
+    </>}
   </div>;
 }

@@ -56,7 +56,7 @@ function Customers({active}: {active: boolean}) {
     finally {setBusy(false);}
   }
   useEffect(()=>{void load();}, []);
-  return <section id="V-CUSTOMERS">
+  return <div className="paged"><section id="V-CUSTOMERS">
     <div className="panel"><label htmlFor="C-SELECT">選擇合成客戶</label>
       <select id="C-SELECT" value={customer} disabled={busy} onChange={event=>{
         go(event.target.value ? {view: 'today', customer: event.target.value} : {view: 'sources'});
@@ -69,7 +69,7 @@ function Customers({active}: {active: boolean}) {
     {customer&&<WorkspaceProvider key={customer} customerId={customer} active={active}>
       <CustomerReview route={route}/>
     </WorkspaceProvider>}
-  </section>;
+  </section><Pager/></div>;
 }
 
 export default function Admin({active = true}: {active?: boolean}) {

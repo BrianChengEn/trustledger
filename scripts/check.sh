@@ -9,4 +9,5 @@ if [[ ! -x "backend/$PYTHON" ]]; then echo 'Run bash scripts/bootstrap-mac.sh fi
 (cd backend && "$PYTHON" -m ruff check app tests && "$PYTHON" -m pytest -q)
 (cd frontend && npm run typecheck && npm test && npm run build)
 node frontend/tests/admin-console.spec.mjs
+node frontend/tests/auth-demo.spec.mjs
 echo 'PASS: backend tests/lint and frontend typecheck/tests/build.'

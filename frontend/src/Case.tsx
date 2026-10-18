@@ -5,13 +5,14 @@ import {alertHints, explanationModeCopy, fullDate, isPriorEvidence, memoryCatego
 import {usePreview} from './preview';
 import {alertIcons, statusText} from './Today';
 import {categoryIcon} from './Activity';
+import Pager from './Pager';
 import {Callout, Chip} from './ui';
 import {useWorkspace, type Run} from './workspace';
 
 function Step({n, title, tag, children}: {n: number; title: string; tag?: React.ReactNode; children: React.ReactNode}) {
   return <section className="step" aria-labelledby={'step-' + n}>
     <div className="stepnum" aria-hidden="true">{n}</div>
-    <div className="stepbody"><div className="steptop"><h2 id={'step-' + n}>{title}</h2>{tag}</div>{children}</div>
+    <div className="stepcol"><div className="stepbody"><div className="steptop"><h2 id={'step-' + n}>{title}</h2>{tag}</div>{children}</div><Pager/></div>
   </section>;
 }
 

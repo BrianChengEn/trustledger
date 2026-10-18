@@ -73,6 +73,7 @@ export interface SourcePage {
   customer_code: string|null;
 }
 const base = import.meta.env.VITE_API_BASE_URL || '';
+export const UNAUTHORIZED_EVENT = 'tl:unauthorized';
 /** Error carrying only the backend's safe error code (never an upstream body). */
 export class ApiError extends Error {
   constructor(message: string, readonly status: number, readonly code: string|null) {super(message);}
@@ -85,6 +86,8 @@ export async function request<T>(path: string, options?: RequestInit, timeoutMs 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const code: string|null = typeof body?.error?.code === 'string' ? body.error.code : null;
+    // A lost or expired session sends everything back to the sign-in page.
+    if (response.status === 401 && code === 'auth_required') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     throw new ApiError(code ? `Request failed: ${code}` : `API returned ${response.status}`, response.status, code);
   }
   return response.status === 204 ? undefined as T : response.json();
@@ -108,3 +111,24 @@ export interface Execution extends Omit<HistoryItem, 'history_id'> {
   write_status: 'saved'|'failed'; write_label: string|null;
 }
 export interface HistoryPage {items: HistoryItem[]; next_cursor: number|null}
+
+/** Demo sign-in. The session lives in an HttpOnly cookie, so the browser code never sees a token. */
+export type Role = 'user' | 'admin';
+export interface Session {
+  authenticated: boolean; role: Role | null; login_required: boolean; admin_available: boolean; demo_edit_enabled: boolean;
+}
+
+/** Admin editing of the synthetic demo transactions. */
+export interface DemoRow {
+  id: string; occurred_at: string; amount: number; merchant_display: string; merchant_category: string;
+  direction: 'debit' | 'credit' | 'unknown'; is_subscription: boolean; kind: 'purchase' | 'transfer' | 'deposit' | 'withdrawal';
+  origin: 'baseline' | 'admin'; edited_at: string | null; decided: boolean;
+}
+export interface DemoStatus {enabled: boolean; rows: number; cap: number}
+export interface DemoInput {
+  merchant: string; category: string; amount: number; occurred_at: string; direction: 'debit' | 'credit'; is_subscription: boolean;
+}
+export type Scenario = 'duplicate' | 'large_purchase' | 'price_hike';
+export interface ScenarioResult {scenario: Scenario; created: DemoRow[]}
+export interface ResetResult {restored: number; cleared_decisions: number; cleared_memories: number}
+export interface DemoLog {id: number; at: string; action: 'create' | 'update' | 'delete' | 'scenario' | 'reset'; tx_id: string | null; summary: string}

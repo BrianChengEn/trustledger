@@ -1,12 +1,13 @@
 from typing import Literal
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 
+from app.core.auth import require_admin_when_enforced
 from app.schemas.dataset import SourcePage
 from app.services.data_sources import source_page
 from app.services.workspace import refresh
 
-router = APIRouter(prefix='/api/v1/data-sources')
+router = APIRouter(prefix='/api/v1/data-sources', dependencies=[Depends(require_admin_when_enforced)])
 
 
 @router.get('/{source}/transactions', response_model=SourcePage)
