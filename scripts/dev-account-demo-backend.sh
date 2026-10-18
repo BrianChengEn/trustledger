@@ -21,11 +21,11 @@ PY
   )
 fi
 export DEMO_ACCOUNT_TOKEN
-export DATABASE_PATH="$PWD/backend/data/account-user-demo.db"
+export DATABASE_PATH="$PWD/backend/data/account-demo-test.db"
 export TRANSACTION_PROVIDER=account-demo FRAUD_PROVIDER=rules-only ALLOW_MEMORY_WRITE=true ALLOW_DEMO_EDIT=false
 export BACKBOARD_API_KEY='' GEMINI_API_KEY='' JEV_API_KEY='' NESSIE_API_KEY=''
-export BACKBOARD_LIVE_TEST=0 GEMINI_LIVE_TEST=0 BACKBOARD_LIVE_SEARCH_TEST=0
+export BACKBOARD_LIVE_TEST=0 GEMINI_LIVE_TEST=0 BACKBOARD_LIVE_SEARCH_TEST=0 NESSIE_LIVE_TEST=0
 export FRONTEND_ORIGIN=http://127.0.0.1:5174
-printf 'Local synthetic Nessie history: %s (100 records)\n' "$DEMO_ACCOUNT_TOKEN"
+printf 'Offline account-demo test history: %s (100 records)\n' "$DEMO_ACCOUNT_TOKEN"
 cd backend
 exec .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8002 --no-access-log
