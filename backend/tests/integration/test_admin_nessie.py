@@ -303,6 +303,8 @@ def test_browser_server_never_uses_ambient_ai_keys(monkeypatch, tmp_path):
     monkeypatch.setattr("app.services.ai.decision.classify", unexpected_provider)
     server = runpy.run_path(str(Path(__file__).parents[1] / "admin_console_server.py"))
     with TestClient(server["app"]) as browser:
+        # The browser-test server now requires a demo sign-in.
+        assert browser.post('/api/v1/auth/login', json={"role": "admin", "passcode": "browser-admin-pass"}).status_code == 200
         assert browser.post('/api/v1/workspace/refresh', json={}).status_code == 200
         response = browser.get("/api/v1/alerts")
         assert response.status_code == 200 and len(response.json()) == 3

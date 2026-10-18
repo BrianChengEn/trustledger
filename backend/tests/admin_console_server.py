@@ -58,7 +58,9 @@ def upstream(request):
 
 settings = Settings(_env_file=None, nessie_api_key="isolated-browser-test-key",
                     fraud_provider='rules-only',
-                    backboard_api_key="", jev_api_key="", gemini_api_key="", allow_memory_write=True)
+                    backboard_api_key="", jev_api_key="", gemini_api_key="", allow_memory_write=True,
+                    require_login=True, demo_user_passcode="browser-user-pass", demo_admin_passcode="browser-admin-pass",
+                    session_secret="browser-test-session-secret-0123456789abcdef", allow_demo_edit=True)
 app = create_app(settings)
 # Small synthetic BankSim-shaped input for the source browser, never the real research dataset.
 source_csv = settings.database_path.parent / 'browser-banksim.csv'

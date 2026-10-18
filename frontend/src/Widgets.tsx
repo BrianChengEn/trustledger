@@ -3,6 +3,7 @@ import {money, type Alert} from './api';
 import {cellsUsed, WIDGET_CELLS, WIDGETS, widgetStore, useWidgets} from './homeStore';
 import {Icon, type IconName} from './icons';
 import {dataModeCopy, day, memoryModeCopy} from './lib';
+import Pager from './Pager';
 import {stagger} from './ui';
 import {useWorkspace} from './workspace';
 
@@ -114,6 +115,7 @@ export default function Widgets() {
           <span className="icontile small"><Icon name={w.icon} size={15}/></span>
           <span className="menutext"><b>{w.name}</b><small>{fits ? w.blurb : 'Not enough room. Remove a widget first.'}</small></span>
           <span className="chip">{w.size === 2 ? 'Wide' : 'Small'}</span></button>; })}</div>
+      <Pager/>
     </div>}
   </section>;
 }

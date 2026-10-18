@@ -43,8 +43,8 @@ def test_all_public_operations(contract, client):
     }
     memory_id = None
     for path, operation in paths.items():
-        if "/admin/" in path or '/data-sources/' in path:
-            continue  # Scoped Admin/source contracts are exercised separately below.
+        if any(prefix in path for prefix in ("/admin/", "/auth/", "/data-sources/")):
+            continue  # Scoped Admin, session and source contracts are tested separately.
         method, spec = next(iter(operation.items()))
         url = path.replace("{transaction_id}", "txn_syn_004").replace(
             "{alert_id}", "alert_txn_syn_004").replace("{memory_id}", memory_id or "missing")
@@ -266,7 +266,7 @@ def test_all_admin_operation_contracts(contract, client):
         ('get', '/customers/{customer_code}/transactions/{transaction_id}/relevant-memories', None),
         ('get', '/customers/{customer_code}/memories/{memory_id}/deletion-verification', None),
     ]
-    expected = {(p, m) for p, item in contract["paths"].items() if "/admin/" in p for m in item}
+    expected = {(p, m) for p, item in contract["paths"].items() if p.startswith(prefix) for m in item}
     assert {(prefix + path, method) for method, path, _ in operations} == expected
     history_id = None
     customer_code = transaction_id = memory_id = ''

@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 
 export type Route = (
   | {view: 'today'} | {view: 'activity'; filter?: string} | {view: 'memory'} | {view: 'sources'}
+  | {view: 'admin'; tab?: string}
   | {view: 'privacy'; tx?: string} | {view: 'case'; tx: string; from?: string}
 ) & {customer?: string};
 
@@ -17,6 +18,7 @@ export function parse(hash: string): Route {
   switch (view) {
     case 'memory': case 'sources': route = {view}; break;
     case 'activity': route = tx ? {view, filter: tx} : {view}; break;
+    case 'admin': route = tx ? {view, tab: tx} : {view}; break;
     case 'privacy': route = {view, tx}; break;
     case 'case': route = tx ? {view, tx, from} : {view: 'today'}; break;
     default: route = {view: 'today'};
@@ -27,6 +29,7 @@ export const href = (route: Route) =>
   '#/' + (route.customer && route.view !== 'sources' ? 'sources/' + encodeURIComponent(route.customer) + '/' : '')
   + route.view + ('tx' in route && route.tx ? '/' + encodeURIComponent(route.tx) : '')
   + (route.view === 'activity' && route.filter ? '/' + encodeURIComponent(route.filter) : '')
+  + (route.view === 'admin' && route.tab ? '/' + encodeURIComponent(route.tab) : '')
   + (route.view === 'case' && route.from ? '/' + route.from : '');
 
 export function useRoute() {
