@@ -37,3 +37,12 @@ export default function Pager() {
     <button className="iconbtn" aria-label="Next page" disabled={state.page >= state.pages - 1} onClick={() => to(state.page + 1)}><Icon name="chevronDown" size={15}/></button>
   </div>;
 }
+
+/** Explicit page buttons for a list that shows a fixed number of items per page (nothing scrolls). */
+export function PageNav({page, pages, onPage}: {page: number; pages: number; onPage: (page: number) => void}) {
+  return <div className="pager" hidden={pages < 2} role="group" aria-label="Pages">
+    <button className="iconbtn" aria-label="Previous page" disabled={page === 0} onClick={() => onPage(page - 1)}><Icon name="chevronUp" size={15}/></button>
+    <span>{page + 1} / {pages}</span>
+    <button className="iconbtn" aria-label="Next page" disabled={page >= pages - 1} onClick={() => onPage(page + 1)}><Icon name="chevronDown" size={15}/></button>
+  </div>;
+}
