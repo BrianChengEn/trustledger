@@ -1,3 +1,15 @@
+> Runtime migration (2026-10-18): Normal runtime now defaults to `TRANSACTION_PROVIDER=nessie`.
+> Set backend-only `NESSIE_API_KEY` and `NESSIE_CUSTOMER_ID` to an authorized sandbox customer.
+> An existing confirmed baseline customer mapping is also supported. Missing selection returns
+> `workspace_not_linked`; missing credentials return `nessie_not_configured`; failed reads return
+> `nessie_unavailable`. No synthetic fallback is used. Each request refreshes required collections.
+> Synthetic and account-demo providers, including generated account browsing, require `APP_ENV=test`
+> and are retained for isolated tests. Historical demo instructions below describe the previous setup.
+> Never use the seeding CLI to configure this read-only integration. No remote writes are required.
+> Source diagnostics are available as `X-Transaction-Provider`, `X-Transaction-Upstream-Status`
+> and `X-Transaction-Fallback-Used` response headers and in the frontend development console.
+> Nessie is a banking simulator; live HTTP does not mean real customer bank data.
+
 # TrustLedger · Technica 2026
 
 TrustLedger is a B2C, privacy-first financial assistant. It reviews simulated banking transactions, explains patterns that need a person, and stores only an explicit, minimized memory of what that person confirmed.

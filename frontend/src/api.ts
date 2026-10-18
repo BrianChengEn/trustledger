@@ -85,6 +85,13 @@ export async function request<T>(path: string, options?: RequestInit, timeoutMs 
     ...options, headers: {'Content-Type': 'application/json', ...options?.headers},
     signal: AbortSignal.timeout(timeoutMs),
   });
+  if (import.meta.env.DEV && response.headers.has('X-Transaction-Provider')) {
+    console.debug('Transaction source', {
+      provider: response.headers.get('X-Transaction-Provider'),
+      upstream_status: response.headers.get('X-Transaction-Upstream-Status'),
+      fallback_used: response.headers.get('X-Transaction-Fallback-Used') === 'true',
+    });
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const code: string|null = typeof body?.error?.code === 'string' ? body.error.code : null;

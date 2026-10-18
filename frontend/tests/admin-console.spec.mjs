@@ -33,7 +33,7 @@ try {
     {API_PROXY_TARGET: 'http://127.0.0.1:8123'});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH: 'backend',
-      TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: 'http://127.0.0.1:5174'});
+      APP_ENV: 'test', TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: 'http://127.0.0.1:5174'});
   const connectedBackend = children.at(-1);
   await Promise.all([ready('http://127.0.0.1:5174', frontendLogs),
     ready('http://127.0.0.1:8123/api/v1/health', backendLogs)]);
@@ -484,7 +484,7 @@ try {
   await page.close();
   await new Promise(resolve=>{connectedBackend.once('exit',resolve);connectedBackend.kill('SIGTERM');});
   const syntheticLogs = start(resolve(root, 'backend/.venv/bin/python'),
-    ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'synthetic',
+    ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', APP_ENV: 'test', TRANSACTION_PROVIDER:'synthetic',
       DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
   const syntheticBackend = children.at(-1);
   await ready('http://127.0.0.1:8123/api/v1/health',syntheticLogs);
@@ -701,7 +701,7 @@ try {
   await new Promise(resolve=>{syntheticBackend.once('exit',resolve);syntheticBackend.kill('SIGTERM');});
   const userAccount = 'acct_' + '0'.repeat(32);
   const accountLogs = start(resolve(root, 'backend/.venv/bin/python'),
-    ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'account-demo',
+    ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', APP_ENV: 'test', TRANSACTION_PROVIDER:'account-demo',
       DEMO_ACCOUNT_TOKEN:userAccount, DATABASE_PATH:join(temp,'account-user.db'),
       FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
   await ready('http://127.0.0.1:8123/api/v1/health',accountLogs);

@@ -21,20 +21,23 @@ from app.core.transactions import ProviderError, TransactionNotFound
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    app = FastAPI(title="TrustLedger synthetic development API", version="0.3.1")
+    app = FastAPI(title="TrustLedger API", version="0.3.1")
     app.state.settings = settings or Settings()
     app.state.store = Store(app.state.settings.database_path)
     source_dir = app.state.settings.source_database_dir or app.state.settings.database_path.parent / 'sources'
     app.state.source_stores = {name: DatasetStore(source_dir / f'{name}.db', name)
                                for name in ('nessie', 'banksim')}
     app.state.account_stores = {}
-    load_transactions(app.state.store, app.state.settings.demo_user_id)
+    if app.state.settings.transaction_provider == 'synthetic':
+        load_transactions(app.state.store, app.state.settings.demo_user_id)
     app.state.nessie = NessieClient(app.state.settings.nessie_api_key.get_secret_value())
     app.state.explanation_cache = ExplanationCache()
     origins = list({app.state.settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"})
     # Last added is outermost: response headers -> request guard -> CORS -> routes.
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
-                       allow_methods=["GET", "POST", "PATCH", "DELETE"], allow_headers=["Content-Type"])
+                       allow_methods=["GET", "POST", "PATCH", "DELETE"], allow_headers=["Content-Type"],
+                       expose_headers=["X-Transaction-Provider", "X-Transaction-Upstream-Status",
+                                       "X-Transaction-Fallback-Used"])
     app.add_middleware(RequestGuardMiddleware, origins=origins)
     app.add_middleware(ResponseSecurityMiddleware)
 

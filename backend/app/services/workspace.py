@@ -42,6 +42,9 @@ def context(request: Request):
         remote = state.store.resolve_resource(root, scope, code)
         if remote is None:
             raise HTTPException(404, 'customer_not_found')
+    elif key and state.settings.nessie_customer_id.get_secret_value():
+        remote = state.settings.nessie_customer_id.get_secret_value()
+        code = state.store.alias_resources(root, scope, 'customer', [remote])[remote]
     elif key:
         with state.store.connect() as db:
             row = db.execute("SELECT r.remote_id FROM seed_records r JOIN seed_runs s ON s.id=r.run_id "
@@ -130,7 +133,7 @@ def collection(capture):
 def movements(rows, customer_owner, account, kind):
     result = []
     for row in rows:
-        value = row.get('purchase_date' if kind == 'purchases' else 'transaction_date')
+        value = (row.get('purchase_date') or row.get('transaction_date')) if kind == 'purchases' else row.get('transaction_date')
         if not isinstance(value, str):
             raise ValueError('Missing date')
         date_only = bool(re.fullmatch(r'\d{4}-\d{2}-\d{2}', value))
@@ -268,9 +271,15 @@ def refresh(request):
 
 
 def require_nessie(request: Request):
-    if not request.path_params.get('customer_code') and request.app.state.settings.transaction_provider != 'nessie':
+    connected = bool(request.path_params.get('customer_code')) or request.app.state.settings.transaction_provider == 'nessie'
+    request.state.transaction_provenance = {
+        'provider': 'nessie-live' if connected else 'synthetic-test',
+        'upstream_status': 'unavailable', 'fallback_used': 'false',
+    }
+    if not connected:
         return None
     view = refresh(request)
     if request.state.nessie_failed or view.data_mode == 'degraded':
         raise HTTPException(502, 'nessie_unavailable')
+    request.state.transaction_provenance['upstream_status'] = 'live'
     return view
