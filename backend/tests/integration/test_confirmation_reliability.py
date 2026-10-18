@@ -60,9 +60,12 @@ def test_invalid_confirmation_cannot_persist_or_write_memory(client, body):
 
 
 def test_sanitized_memory_and_owner_scoping(client):
-    tx = client.app.state.transactions[4]
+    tx = client.app.state.store.list_transactions(client.app.state.settings.demo_user_id)[4]
     tx.merchant_display = "PRIVATE PERSON key=synthetic-marker"
     tx.merchant_category = "private-category"
+    with client.app.state.store.connect() as db:
+        db.execute("UPDATE demo_transactions SET merchant_display=?,merchant_category=? WHERE owner=? AND id=?",
+                   (tx.merchant_display, tx.merchant_category, client.app.state.settings.demo_user_id, tx.id))
     response = client.post("/api/v1/alerts/alert_txn_syn_005/confirmations", json=BODY)
     assert response.status_code == 200 and response.json()["memory_status"] == "written"
     rows = client.get("/api/v1/memories").json()

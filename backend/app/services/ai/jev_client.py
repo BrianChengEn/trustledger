@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 import httpx
 
 from app.schemas.api import SafePayload
+from app.services.ai.policy import EXPECTED_JEV_MODEL
 
 MESSAGES_URL = "https://app.backboard.io/api/threads/messages"
 MODEL_NAME = "jev-latest"
@@ -40,6 +41,11 @@ QUESTIONS = {
             "false": "The minimized record looks routine",
         },
     },
+    "severity": {
+        "type": "score",
+        "instructions": "Score the urgency for human review without authorizing any action.",
+        "criteria": ["Low", "Medium", "High"],
+    },
 }
 
 
@@ -53,6 +59,7 @@ class JevClassification(BaseModel):
     needs_review: float = Field(ge=0, le=1)
     choice_confidence: float = Field(ge=0, le=1)
     model_version: str = Field(min_length=1, max_length=80)
+    severity_score: float = Field(default=0, ge=0, le=2)
 
 
 def request_body(payload: SafePayload) -> dict:
@@ -65,6 +72,7 @@ def request_body(payload: SafePayload) -> dict:
         "llm_provider": "typesafe",
         "model_name": MODEL_NAME,
         "stream": False,
+        "memory": "off",
         "system_one": {"state": state, "questions": QUESTIONS},
     }
 
@@ -72,10 +80,9 @@ def request_body(payload: SafePayload) -> dict:
 def _unit(value: object) -> float:
     if isinstance(value, bool) or not isinstance(value, int | float):
         raise JevCallError("invalid_response")
-    number = float(value)
-    if not 0 <= number <= 1:
+    if not 0 <= value <= 1:
         raise JevCallError("invalid_response")
-    return number
+    return float(value)
 
 
 def parse_response(data: object) -> JevClassification:
@@ -89,7 +96,8 @@ def parse_response(data: object) -> JevClassification:
         raise JevCallError("invalid_response")
     answers = system.get("answers")
     model = system.get("model")
-    if not isinstance(answers, dict) or not isinstance(model, str) or not model.strip():
+    if (not isinstance(answers, dict) or not isinstance(model, str)
+            or model.strip() != EXPECTED_JEV_MODEL):
         raise JevCallError("invalid_response")
     pattern = answers.get("pattern")
     review = answers.get("needs_review")
@@ -98,13 +106,21 @@ def parse_response(data: object) -> JevClassification:
     if pattern.get("type") != "choice" or review.get("type") != "noul":
         raise JevCallError("invalid_response")
     choice = pattern.get("choice")
-    if choice not in _PATTERNS:
+    if not isinstance(choice, str) or choice not in _PATTERNS:
+        raise JevCallError("invalid_response")
+    severity = answers.get("severity")
+    if (not isinstance(severity, dict) or severity.get("type") != "score"
+            or severity.get("legend") != {"0": "Low", "1": "Medium", "2": "High"}):
+        raise JevCallError("invalid_response")
+    score = severity.get("score")
+    if isinstance(score, bool) or not isinstance(score, int | float) or not 0 <= score <= 2:
         raise JevCallError("invalid_response")
     return JevClassification(
         pattern=choice,
         needs_review=_unit(review.get("noul")),
         choice_confidence=_unit(pattern.get("confidence")),
         model_version=model.strip(),
+        severity_score=float(score),
     )
 
 
@@ -126,6 +142,9 @@ async def classify(
             raise JevCallError("request_failed") from None
         if response.status_code != 200:
             raise JevCallError("request_failed")
+        content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+        if content_type != "application/json" and not content_type.endswith("+json"):
+            raise JevCallError("invalid_response")
         try:
             parsed = response.json()
         except ValueError:
@@ -134,5 +153,5 @@ async def classify(
 
     if client is not None:
         return await send(client)
-    async with httpx.AsyncClient(timeout=8.0) as http:
+    async with httpx.AsyncClient(timeout=5.0) as http:
         return await send(http)

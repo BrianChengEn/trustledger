@@ -7,6 +7,7 @@ from app.schemas.transaction import Transaction
 from app.services.ai.jev_client import JevCallError, classify
 from app.services.ai.privacy import safe_payload
 from app.services.ai.rules import analyze
+from app.services.ai.policy import REVIEW_LOW_PROBABILITY
 
 
 async def review(
@@ -29,7 +30,8 @@ async def review(
     except JevCallError:
         return ruled.model_copy(update={"provider_mode": "degraded"})
     note = (
-        f"Jev via Backboard: {result.pattern}, confidence {result.choice_confidence:.2f}. "
+        f"Jev via Backboard: {result.pattern}, confidence {result.choice_confidence:.0%}. "
+        f"Review urgency {result.severity_score:.2f}/2 (Low–High). "
         "The rule result is unchanged and is not a fraud decision."
     )
     evidence = [*ruled.evidence, note] if len(ruled.evidence) < 8 else list(ruled.evidence)
@@ -37,5 +39,5 @@ async def review(
         "provider_mode": "rules+jev-live",
         "model_version": result.model_version,
         "evidence": evidence,
-        "needs_human": ruled.needs_human or result.needs_review >= 0.5,
+        "needs_human": ruled.needs_human or result.needs_review >= REVIEW_LOW_PROBABILITY,
     })

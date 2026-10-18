@@ -2,11 +2,67 @@ import asyncio
 import json
 
 import httpx
+import pytest
 
 from app.adapters.synthetic import load_transactions
 from app.services.ai.decision import review
 from app.services.ai.jev_client import JevCallError, classify, parse_response, request_body
 from app.services.ai.privacy import safe_payload
+
+
+def severity(score=1.89):
+    return {"type": "score", "score": score, "legend": {"0": "Low", "1": "Medium", "2": "High"}}
+
+
+def test_fractional_score_and_invalid_score_boundary():
+    system = {"model": "jev-1.13.0", "answers": {
+        "pattern": {"type": "choice", "choice": "none", "confidence": 0.8},
+        "needs_review": {"type": "noul", "noul": 0.4}, "severity": severity()}}
+    assert parse_response({"system_one": system}).severity_score == 1.89
+    for value in (True, -1, 2.1, [], 10 ** 400):
+        system["answers"]["severity"] = severity(value)
+        with pytest.raises(JevCallError):
+            parse_response({"system_one": system})
+
+
+@pytest.mark.parametrize("field,value", [
+    ("choice", []), ("choice", {}), ("model", "x" * 81), ("model", "jev-2.0.0"), ("confidence", 10 ** 400),
+])
+def test_malformed_success_always_falls_back_to_rules(field, value):
+    rows, tx, _ = _rows()
+    system = {"model": "jev-1.13.0", "answers": {
+        "pattern": {"type": "choice", "choice": "duplicate", "confidence": 0.8},
+        "needs_review": {"type": "noul", "noul": 0.9}, "severity": severity()}}
+    if field == "model":
+        system[field] = value
+    else:
+        system["answers"]["pattern"][field] = value
+
+    async def run():
+        transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"system_one": system}))
+        async with httpx.AsyncClient(transport=transport) as client:
+            return await review(tx, rows, "req", "unknown", "synthetic-key", client=client)
+
+    result = asyncio.run(run())
+    assert result.provider_mode == "degraded"
+    assert result.alert_type == "duplicate" and result.needs_human
+    assert result.model_version is None
+
+
+def test_uncertain_model_answer_still_requires_a_person():
+    rows, _, _ = _rows()
+    tx = rows[0]
+
+    async def run():
+        transport = httpx.MockTransport(lambda _: httpx.Response(200, json={"system_one": {
+            "model": "jev-1.13.0", "answers": {
+                "pattern": {"type": "choice", "choice": "none", "confidence": 0.8},
+                "needs_review": {"type": "noul", "noul": 0.4}, "severity": severity()}}}))
+        async with httpx.AsyncClient(transport=transport) as client:
+            return await review(tx, rows, "req", "unknown", "synthetic-key",
+                                client=client, force_live=True)
+
+    assert asyncio.run(run()).needs_human is True
 
 
 def _rows():
@@ -29,7 +85,7 @@ def test_request_uses_backboard_system_one_and_drops_raw_fields():
     assert body["model_name"] == "jev-latest"
     assert body["stream"] is False
     assert "thread_id" not in body
-    assert "memory" not in body
+    assert body["memory"] == "off"
     assert set(body["system_one"]["state"]) == set(payload.model_dump())
     for forbidden in (nasty.id, nasty.account_token, nasty.merchant_display, "11.99", "StreamWave"):
         assert forbidden not in text
@@ -43,6 +99,7 @@ def test_parser_accepts_system_one_answers_and_rejects_unknown_choice():
             "answers": {
                 "pattern": {"type": "choice", "choice": "duplicate", "confidence": 0.82},
                 "needs_review": {"type": "noul", "noul": 0.91},
+                "severity": severity(),
             },
         },
     })
@@ -56,6 +113,7 @@ def test_parser_accepts_system_one_answers_and_rejects_unknown_choice():
                 "answers": {
                     "pattern": {"type": "choice", "choice": "fraud", "confidence": 0.99},
                     "needs_review": {"type": "noul", "noul": 0.5},
+                "severity": severity(),
                 },
             },
         })
@@ -103,6 +161,7 @@ def test_http_failure_stays_on_rules_and_success_is_labeled_live():
                     "answers": {
                         "pattern": {"type": "choice", "choice": "none", "confidence": 0.4},
                         "needs_review": {"type": "noul", "noul": 0.2},
+                "severity": severity(),
                     },
                 },
             })

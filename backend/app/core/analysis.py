@@ -3,8 +3,8 @@ from app.core.fraud import FraudProvider, evaluate_fraud
 from app.core.transactions import TransactionService
 from app.core.memory import PriorConfirmations
 from app.schemas.api import Alert, Analysis, PrivacyPreview
-from app.services.ai.privacy import safe_payload, privacy_preview
-from app.services.ai.rules import analyze
+from app.core.features import safe_payload, privacy_preview
+from app.core.rules import analyze
 
 
 class AnalysisService:

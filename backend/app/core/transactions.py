@@ -74,6 +74,33 @@ class SyntheticTransactionProvider:
         return AdapterHealth(status="ok", data_mode="synthetic")
 
 
+class SQLiteTransactionProvider:
+    """Read the initialized synthetic SQLite dataset without caching or fallback."""
+
+    def __init__(self, store, owner_id: str):
+        self.store = store
+        self.owner_id = owner_id
+
+    def list_transactions(self, user_context: UserContext, limit: int = 25) -> list[Transaction]:
+        if user_context.user_id != self.owner_id:
+            return []
+        rows = provider_call(self.store.list_transactions, self.owner_id)
+        return sorted([canonical(row) for row in rows], key=lambda tx: tx.occurred_at, reverse=True)[:limit]
+
+    def get_transaction(self, user_context: UserContext, transaction_id: str) -> Transaction | None:
+        if user_context.user_id != self.owner_id:
+            return None
+        rows = provider_call(self.store.list_transactions, self.owner_id)
+        return next((canonical(row) for row in rows if row.id == transaction_id), None)
+
+    def health(self) -> AdapterHealth:
+        try:
+            self.list_transactions(UserContext(self.owner_id), 1)
+            return AdapterHealth(status="ok", data_mode="synthetic")
+        except ProviderError:
+            return AdapterHealth(status="degraded", data_mode="degraded")
+
+
 def provider_call(method, *args):
     try:
         return method(*args)

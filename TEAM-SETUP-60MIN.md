@@ -100,7 +100,7 @@ Do this after the shared steps. None of it is required to run the synthetic demo
 
 | Person | Extra local step | Not required for the demo |
 |---|---|---|
-| Brian | Put a Backboard key in `BACKBOARD_API_KEY`. Jev is called with that key. Do not add a TypeSafe bearer token for the selected route | Memory writes stay in SQLite. An empty key keeps analysis at `rules-only` |
+| Brian | Put a Backboard key in `BACKBOARD_API_KEY` and set `ALLOW_MEMORY_WRITE=true` to store consented memory. Jev uses that same key. Do not add a TypeSafe bearer token | An empty key keeps memory in SQLite as `local-fallback` and analysis at `rules-only`. Do not buy System One credits |
 | Benson | Confirm `bash scripts/check.sh` and the Actions tab on your PR | No deploy target is configured |
 | Ian | Open http://127.0.0.1:5173 after both servers start | Playwright's browser is only needed for `node scripts/browser-smoke.mjs` |
 | Kenny | Create a Nessie sandbox key at [api.nessieisreal.com](http://api.nessieisreal.com/) and keep it in `backend/.env` | `nessie.py` still raises `NessieNotConfigured` after the key is present |
@@ -149,8 +149,8 @@ Replace the path and the branch name. Do not stage `.env`, `backend/data/`, `.ve
 | Port 8000 or 5173 is in use | Stop the dev server you started. Do not kill unknown processes |
 | `requirements.txt` or `package.json` missing | Clone the repository root, not an old docs-only zip |
 | Download or TLS error | Check the network. Do not disable TLS verification |
-| Memory is still there after restart | Expected. SQLite is the local fallback. Delete it in the UI. Tests use a temporary database |
-| Memory did not appear in Backboard | Expected. The running path is local SQLite. Backboard is not called |
+| Memory is still there after restart | Expected. Backboard keeps a `source=backboard` row, and SQLite keeps the local index. Delete it in the UI. Tests use a temporary database |
+| Memory did not appear in Backboard | Check `BACKBOARD_API_KEY`, `ALLOW_MEMORY_WRITE=true`, decision `normal`, and consent. An empty key is SQLite only. Repeating an old confirmation does not write again. `GET /api/v1/memories` shows `source` |
 | `check.sh` fails on Node | `doctor.sh` requires Node >= 22.12. CI uses Node 22. Fix the local Node before calling the suite green |
 | CI is red | Open the first failed job. Push the fix to the same branch. Do not each edit the lockfiles |
 

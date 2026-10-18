@@ -20,10 +20,21 @@ or `feat/local-memory-feedback`.
 - Jev is called through Backboard System One only with FRAUD_PROVIDER=backboard-jev
   and a BACKBOARD_API_KEY. A key alone never activates inference; only POST analyses
   may call it, at most once. Rules remain authoritative.
-  The direct TypeSafe API is not the selected route. Nessie and Backboard
-  memory remain extension points. A missing key or failed call stays rules-only
-  or degraded, and must not be labeled rules+jev-live.
+  The direct TypeSafe API is not the selected route. The Nessie dashboard adapter
+  remains an extension point. Backboard memory uses explicit consented CRUD;
+  inference memory stays off. Admin sandbox reads and the explicit SQLite baseline
+  CLI are implemented. A missing key uses rules-only/local-fallback; failed calls
+  are degraded and must not be labeled rules+jev-live or backboard-live.
+  `bash scripts/check.sh` must not call Backboard. The opt-in live memory test is
+  `BACKBOARD_LIVE_TEST=1` pytest `backend/tests/integration/test_backboard_live.py`.
 - Local memory must be labelled local-fallback; only write after normal confirmation + consent.
 - Run bash scripts/check.sh. Do not claim tests pass if dependencies could not be installed.
 - Never commit node_modules, .venv, .env, databases, or credentials.
 - Credit AI tools in the submission. This starter includes AI-generated code and documentation.
+
+## Update rules
+
+- Use `docs/00-*.md` through `docs/07-*.md` as the governing implementation constraints; keep the effective update designs under local `docs/vx.x.x/`. Preserve historical designs and user-authored notes.
+- Use `/Users/kenny/Desktop/project-development-workflow/SKILL.md` and its `rule.md` as the sole lifecycle router; preserve ownership, contract, safety and CI requirements above.
+- Runtime synthetic data uses structured SQLite; JSON files are offline compatibility fixtures only. Admin uses local resource codes and stores status/time metadata, never raw response bodies or browser-facing remote IDs. Content comparison is disabled.
+- Every PR excludes all newly added Markdown files. Honor the tracked ignore rule and never force-add local design documents. Check compatibility and the governing constraints before each update.

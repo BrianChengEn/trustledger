@@ -3,7 +3,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException
 
+from app.adapters.nessie import NessieClient
 from app.adapters.synthetic import load_transactions
+from app.api.admin_nessie import router as admin_router
 from app.api.routes import router
 from app.core.config import Settings
 from app.core.http import RequestGuardMiddleware, ResponseSecurityMiddleware, error_response
@@ -14,8 +16,9 @@ from app.core.transactions import ProviderError, TransactionNotFound
 def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="TrustLedger synthetic development API", version="0.1.0")
     app.state.settings = settings or Settings()
-    app.state.transactions = load_transactions()
     app.state.store = Store(app.state.settings.database_path)
+    load_transactions(app.state.store, app.state.settings.demo_user_id)
+    app.state.nessie = NessieClient(app.state.settings.nessie_api_key.get_secret_value())
     origins = list({app.state.settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"})
     # Last added is outermost: response headers -> request guard -> CORS -> routes.
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
@@ -26,8 +29,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException):
         # Exception details may contain upstream URLs, secrets or raw data.
-        code = {404: "not_found", 405: "method_not_allowed", 409: "confirmation_conflict"}.get(
+        code = {404: "not_found", 405: "method_not_allowed", 409: "confirmation_conflict",
+                502: "memory_delete_failed"}.get(
             exc.status_code, "request_failed")
+        admin_codes = {404: {"history_not_found", "resource_not_found"}, 503: {"nessie_not_configured"}}
+        if (request.url.path.startswith("/api/v1/admin/nessie") and isinstance(exc.detail, str)
+                and exc.detail in admin_codes.get(exc.status_code, set())):
+            code = exc.detail
         return error_response(request.scope, exc.status_code, code, "Request could not be completed.")
 
     @app.exception_handler(ProviderError)
@@ -44,6 +52,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return error_response(request.scope, 422, "invalid_request", "Request does not match the API contract.")
 
     app.include_router(router)
+    app.include_router(admin_router)
     return app
 
 

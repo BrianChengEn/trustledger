@@ -12,8 +12,8 @@ from app.core.config import Settings
 from app.core.fraud import FailureKind, MockJevProvider, evaluate_fraud
 from app.core.jev import BackboardJevProvider
 from app.main import create_app
-from app.services.ai.privacy import safe_payload
-from app.services.ai.rules import analyze
+from app.core.features import safe_payload
+from app.core.rules import analyze
 
 TX = "txn_syn_004"
 CONFIRM = f"/api/v1/alerts/alert_{TX}/confirmations"
@@ -25,6 +25,7 @@ def reply(pattern="none", review=0.01):
         "model": "jev-1.13.0", "answers": {
             "pattern": {"type": "choice", "choice": pattern, "confidence": 0.99},
             "needs_review": {"type": "noul", "noul": review},
+            "severity": {"type": "score", "score": 0, "legend": {"0": "Low", "1": "Medium", "2": "High"}},
         },
     }}
 
@@ -42,7 +43,7 @@ def test_explicit_activation_and_only_post_can_infer(tmp_path, monkeypatch, conf
     monkeypatch.setattr("app.core.jev.classify", classify)
     settings = Settings(_env_file=None, database_path=tmp_path / "activation.db",
                         backboard_api_key="synthetic-key",
-                        fraud_provider="backboard-jev" if configured else "rules-only")
+                        fraud_provider="backboard-jev" if configured else "rules-only", allow_memory_write=True)
     with TestClient(create_app(settings)) as client:
         assert client.get("/api/v1/health").json()["analysis_mode"] == "rules-only"
         assert client.get("/api/v1/transactions").status_code == 200
@@ -52,7 +53,7 @@ def test_explicit_activation_and_only_post_can_infer(tmp_path, monkeypatch, conf
         result = client.post("/api/v1/analyses", json={"transaction_id": TX}).json()
         assert len(calls) == int(configured)
         assert result["provider_mode"] == ("rules+jev-live" if configured else "rules-only")
-        rows = client.app.state.transactions
+        rows = client.app.state.store.list_transactions(client.app.state.settings.demo_user_id)
         baseline = analyze(next(t for t in rows if t.id == TX), rows, result["request_id"]).model_dump()
         for field in ("severity", "alert_type", "confidence", "needs_human", "evidence"):
             assert result[field] == baseline[field]
@@ -60,6 +61,8 @@ def test_explicit_activation_and_only_post_can_infer(tmp_path, monkeypatch, conf
             assert calls == [preview["safe_payload"]]
             assert len(calls[0]) == 8
             assert TX not in json.dumps(calls)
+        # Inference activation is independent of memory delivery. Use local placement here.
+        client.app.state.settings.backboard_api_key = SecretStr("")
         confirmation = client.post(CONFIRM, json=BODY).json()
         assert confirmation["memory_status"] == "written"
         assert client.get(f"/api/v1/privacy/preview/{TX}").json()["safe_payload"]["prior_user_confirmation"] == "normal"
@@ -75,7 +78,7 @@ def test_explicit_activation_and_only_post_can_infer(tmp_path, monkeypatch, conf
     ("connect", FailureKind.UNAVAILABLE), ("malformed", FailureKind.MALFORMED_OUTPUT),
     ("unhashable", FailureKind.MALFORMED_OUTPUT), ("bad-model", FailureKind.MALFORMED_OUTPUT),
     ("invalid-json", FailureKind.MALFORMED_OUTPUT),
-    (401, FailureKind.UNAUTHORIZED), (403, FailureKind.UNAVAILABLE),
+    (401, FailureKind.UNAUTHORIZED), (402, FailureKind.PAYMENT_REQUIRED), (403, FailureKind.UNAVAILABLE),
     (429, FailureKind.RATE_LIMITED), (503, FailureKind.SERVER_ERROR),
 ])
 def test_real_adapter_mock_transport_failures(client, monkeypatch, scenario, kind, caplog):
@@ -103,7 +106,7 @@ def test_real_adapter_mock_transport_failures(client, monkeypatch, scenario, kin
 
     monkeypatch.setattr("app.core.jev.INFERENCE_TIMEOUT", 0.02 if scenario == "timeout" else 3)
     provider = BackboardJevProvider(SecretStr("synthetic-key"), httpx.MockTransport(handler))
-    rows = client.app.state.transactions
+    rows = client.app.state.store.list_transactions(client.app.state.settings.demo_user_id)
     tx = next(t for t in rows if t.id == TX)
     baseline = analyze(tx, rows, "rid")
     outcome = evaluate_fraud(baseline, safe_payload(tx, rows), provider)
@@ -172,7 +175,7 @@ def test_other_owner_and_unlinked_memories_cannot_match(client):
     other = store.confirm("other-owner", "other-alert", "normal", True, sentence, "rid")
     # Even a sanitized memory with no successful consented confirmation is ineligible.
     with store.connect() as db:
-        db.execute("INSERT INTO memories VALUES (?,?,?,?)", ("orphan", owner, sentence, "2026-10-17T00:00:00Z"))
+        db.execute("INSERT INTO memories (memory_id,owner,summary,created_at) VALUES (?,?,?,?)", ("orphan", owner, sentence, "2026-10-17T00:00:00Z"))
     assert client.delete("/api/v1/memories/" + other.memory_id).status_code == 404
     assert client.get(f"/api/v1/privacy/preview/{TX}").json()["safe_payload"]["prior_user_confirmation"] == "unknown"
     # A corrupt cross-owner link cannot grant access to another owner's memory.
@@ -220,6 +223,11 @@ def test_malformed_memory_does_not_enter_provider(client, summary):
 
 def test_locked_optional_memory_falls_back_without_blocking_analysis(client):
     store = client.app.state.store
+    from app.api.dependencies import get_transaction_provider
+    from app.core.transactions import SyntheticTransactionProvider
+    provider = SyntheticTransactionProvider(store.list_transactions(client.app.state.settings.demo_user_id),
+                                            client.app.state.settings.demo_user_id)
+    client.app.dependency_overrides[get_transaction_provider] = lambda: provider
     # Separate connection holds an exclusive lock; optional context has a short wait.
     with store.connect() as db:
         db.execute("BEGIN EXCLUSIVE")

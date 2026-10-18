@@ -7,8 +7,8 @@ from jsonschema import Draft202012Validator
 
 from app.adapters.synthetic import load_transactions
 from app.core.fraud import MockJevProvider, MockScenario, evaluate_fraud
-from app.services.ai.privacy import privacy_preview
-from app.services.ai.rules import analyze
+from app.core.features import privacy_preview
+from app.core.rules import analyze
 
 
 @pytest.mark.parametrize("scenario", list(MockScenario))

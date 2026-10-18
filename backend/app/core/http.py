@@ -1,8 +1,9 @@
 """Local API request limits and response handling; never log request data."""
 import logging
 from uuid import uuid4
+from urllib.parse import urlsplit
 
-from starlette.datastructures import Headers, MutableHeaders
+from starlette.datastructures import Headers, MutableHeaders, URL
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -57,6 +58,8 @@ class RequestGuardMiddleware:
     def __init__(self, app: ASGIApp, origins: list[str]):
         self.app = app
         self.origins = origins
+        self.local_hosts = {"localhost", "127.0.0.1", "::1"}
+        self.admin_origins = {origin for origin in origins if urlsplit(origin).hostname in self.local_hosts}
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] != "http":
@@ -80,6 +83,15 @@ class RequestGuardMiddleware:
 
     async def handle(self, scope: Scope, receive: Receive, send: Send):
         headers = Headers(scope=scope)
+        if scope.get("path", "").startswith("/api/v1/admin/nessie"):
+            origin = headers.get("origin")
+            if URL(scope=scope).hostname not in self.local_hosts or (origin and origin not in self.admin_origins):
+                return await self.respond(scope, receive, send, 403, "local_access_only", "Local access is required.")
+            if scope["method"] in {"POST", "DELETE"} and (
+                origin not in self.admin_origins or
+                headers.get("content-type", "").split(";")[0].strip().lower() != "application/json"
+            ):
+                return await self.respond(scope, receive, send, 403, "local_json_required", "Local JSON access is required.")
         if scope["method"] in {"POST", "DELETE"}:
             origin = headers.get("origin")
             if origin and origin not in self.origins:

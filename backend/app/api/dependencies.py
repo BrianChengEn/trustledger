@@ -7,7 +7,7 @@ from app.core.jev import BackboardJevProvider
 from app.core.memory import PriorConfirmations
 from app.core.fraud import FraudProvider, select_fraud_provider
 from app.core.transactions import (
-    ProviderUnavailable, SyntheticTransactionProvider, TransactionProvider,
+    ProviderUnavailable, SQLiteTransactionProvider, TransactionProvider,
     TransactionService, UserContext,
 )
 
@@ -17,7 +17,7 @@ def get_transaction_provider(request: Request) -> TransactionProvider:
     state = request.app.state
     if state.settings.transaction_provider != "synthetic":
         raise ProviderUnavailable()
-    return SyntheticTransactionProvider(state.transactions, state.settings.demo_user_id)
+    return SQLiteTransactionProvider(state.store, state.settings.demo_user_id)
 
 
 def get_transaction_service(

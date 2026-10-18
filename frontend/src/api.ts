@@ -18,10 +18,10 @@ export interface Memory {memory_id: string; summary: string; source: string; cre
 export interface Health {status: string; data_mode: string; analysis_mode: string; memory_mode: string}
 export interface Confirmation {decision: string; memory_status: string; memory_id: string|null}
 const base = import.meta.env.VITE_API_BASE_URL || '';
-export async function request<T>(path: string, options?: RequestInit): Promise<T> {
+export async function request<T>(path: string, options?: RequestInit, timeoutMs = 8000): Promise<T> {
   const response = await fetch(base + '/api/v1' + path, {
     ...options, headers: {'Content-Type': 'application/json', ...options?.headers},
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -34,3 +34,17 @@ export const labels: Record<Analysis['alert_type'], string> = {
   subscription_change: 'Subscription increased', none: 'No rule triggered',
 };
 export const money = (amount: number) => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
+
+export type NessieQuery = 'customers.list'|'accounts.list'|'accounts.get'|'accounts.by_customer'|
+  'deposits.by_account'|'withdrawals.by_account';
+export interface ResourceOption {resource_id: string; kind: 'customer'|'account'}
+export interface HistoryItem {
+  history_id: number; source: 'nessie'|'synthetic'; query: NessieQuery;
+  requested_at: string; duration_ms: number; http_status: number|null;
+  transport_error: {type: string; message: string}|null;
+}
+export interface Execution extends Omit<HistoryItem, 'history_id'> {
+  history_id: number|null; response_body: unknown; body_format: 'json'|'none';
+  write_status: 'saved'|'failed'; write_label: string|null;
+}
+export interface HistoryPage {items: HistoryItem[]; next_cursor: number|null}

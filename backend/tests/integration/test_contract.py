@@ -35,7 +35,7 @@ def assert_error(contract, response, status, code):
     }
 
 
-def test_all_eight_operations(contract, client):
+def test_all_public_operations(contract, client):
     paths = contract["paths"]
     assert set(client.app.openapi()["paths"]) == set(paths)
     assert {(p, m) for p, item in client.app.openapi()["paths"].items() for m in item} == {
@@ -43,6 +43,8 @@ def test_all_eight_operations(contract, client):
     }
     memory_id = None
     for path, operation in paths.items():
+        if "/admin/" in path:
+            continue  # Admin request/response contracts are exercised below.
         method, spec = next(iter(operation.items()))
         url = path.replace("{transaction_id}", "txn_syn_004").replace(
             "{alert_id}", "alert_txn_syn_004").replace("{memory_id}", memory_id or "missing")
@@ -93,8 +95,13 @@ def test_analysis_id_bounds(contract, client, value, status):
 
 @pytest.mark.parametrize("limit,count", [(None, 25), ("1", 1), ("100", 100)])
 def test_limit_success(client, limit, count):
-    tx = client.app.state.transactions[0]
-    client.app.state.transactions = [tx.model_copy(update={"id": f"txn_{i}"}) for i in range(101)]
+    tx = client.app.state.store.list_transactions(client.app.state.settings.demo_user_id)[0]
+    store = client.app.state.store
+    owner = client.app.state.settings.demo_user_id
+    with store.connect() as db:
+        db.execute("DELETE FROM demo_transactions WHERE owner=?", (owner,))
+        db.execute("DELETE FROM demo_transaction_sets WHERE owner=?", (owner,))
+    store.initialize_transactions(owner, [tx.model_copy(update={"id": f"txn_{i}"}) for i in range(101)])
     response = client.get("/api/v1/transactions", params={} if limit is None else {"limit": limit})
     assert response.status_code == 200
     assert len(response.json()) == count
@@ -190,3 +197,37 @@ def test_response_extra_fields_rejected(client):
     response = client.post("/api/v1/analyses", json={"transaction_id": "txn_syn_004"})
     with pytest.raises(ValidationError):
         Analysis(**response.json(), private_marker="private")
+
+
+def test_all_admin_operation_contracts(contract, client):
+    import httpx
+    from app.adapters.nessie import NessieClient
+    from pydantic import SecretStr
+
+    client.base_url = "http://127.0.0.1"
+    client.headers["origin"] = "http://localhost:5173"
+    client.app.state.settings.nessie_api_key = SecretStr("synthetic-test")
+    client.app.state.nessie = NessieClient("synthetic-test", transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, json=[])))
+    prefix = "/api/v1/admin/nessie"
+    operations = [
+        ("post", "/query", {"query": "customers.list"}),
+        ("get", "/resources", None),
+        ("get", "/history", None),
+        ("get", "/history/{history_id}", None),
+        ("delete", "/history/{history_id}", {"confirm": True}),
+        ("delete", "/history", {"confirm": True}),
+    ]
+    expected = {(p, m) for p, item in contract["paths"].items() if "/admin/" in p for m in item}
+    assert {(prefix + path, method) for method, path, _ in operations} == expected
+    history_id = None
+    for method, path, body in operations:
+        kwargs = {"json": body} if body is not None else {}
+        url = prefix + path.replace("{history_id}", str(history_id))
+        response = client.request(method, url, **kwargs)
+        assert response.status_code == 200
+        schema = contract["paths"][prefix + path][method]["responses"]["200"]["content"]["application/json"]["schema"]
+        validate(contract, schema, response.json())
+        if path == "/query":
+            history_id = response.json()["history_id"]
+            assert history_id is not None

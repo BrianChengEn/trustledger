@@ -2,7 +2,7 @@
 
 ## Verified controls on main (17 October 2026)
 
-The list below is what the code does. Later sections include target controls for Jev, Backboard, and Nessie. Those three are not called.
+The list below is what the code does. Jev and Backboard memory are called only when `BACKBOARD_API_KEY` is set. Nessie is called only from the local Admin sandbox path or the explicit baseline CLI. Later sections still include target controls that are not all implemented.
 
 - No real customer banking data is in the fixture or the database schema. The demo is synthetic.
 - `backend/.env` is gitignored. Example files have empty keys. CI does not receive vendor secrets.
@@ -11,7 +11,7 @@ The list below is what the code does. Later sections include target controls for
 - The Privacy Inspector returns the object `privacy_preview` builds. The UI prints that JSON.
 - SQLite rows are scoped to server-side `demo-user-001`. The client cannot pass an owner id.
 - A memory sentence is stored only for decision `normal`, consent on, and `ALLOW_MEMORY_WRITE=true`. The sentence names a category, not a merchant or amount: `The demo user explicitly confirmed a {category} alert as normal. Recheck future evidence.`
-- Delete removes the local row. Nothing is sent to Backboard, so there is no remote copy to delete yet.
+- Delete of a `backboard` row calls Backboard first. HTTP 200 with `success: true`, or HTTP 404 when it is already gone, then removes the local row. Any other remote failure returns 502 and keeps the row. A `local-fallback` row makes no memory HTTP call.
 - Validation errors do not return the raw request body. The dev server starts with `--no-access-log`.
 - Application code does not log request bodies. There is also no structured logger yet. Do not add logs that include keys, merchant text, or raw provider payloads.
 

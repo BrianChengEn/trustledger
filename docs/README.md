@@ -100,5 +100,7 @@ git switch -c chore/<your-name>-bootstrap
 
 ## 重要限制
 
+Versioned implementation updates are maintained locally under `docs/vx.x.x/`, using guides 00–07 as constraints. The current local update is v0.1.0: structured SQLite runtime data, backend-only Nessie ID mappings, transient projected results and status/time-only history. Newly added Markdown design notes are excluded from PRs; the existing JSON files remain offline compatibility fixtures.
+
 這是黑客松 prototype，不是銀行產品、投資建議、詐欺判定系統或合規認證。不要使用真實金融資料，不要宣稱 PCI DSS、SOC 2、GLBA、CCPA/GDPR 或銀行安全合規已完成。正式上線前仍需法律/隱私評估、供應商 DPA 與 retention 審查、正式身分驗證/授權、滲透測試、監控與事件應變。
 

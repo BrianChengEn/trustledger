@@ -12,7 +12,7 @@ from app.core.fraud import MockJevProvider, MockScenario
 from app.core.transactions import SyntheticTransactionProvider
 from app.main import create_app
 from app.schemas.api import Analysis, SafePayload
-from app.services.ai.rules import analyze
+from app.core.rules import analyze
 
 
 class SpyFraudProvider(MockJevProvider):

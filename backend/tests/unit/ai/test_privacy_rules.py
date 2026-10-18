@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 
 import pytest
 
@@ -66,3 +67,15 @@ def test_empty_history_and_future_transactions():
     rows = load_transactions()
     assert analyze(rows[2], [], "test").alert_type == "none"
     assert analyze(rows[2], rows, "test").alert_type == "none"
+
+
+def test_rules_use_category_and_thirty_day_median():
+    tx = load_transactions()[4]
+    prior = tx.model_copy(update={"id": "prior", "amount": 100,
+                                 "occurred_at": tx.occurred_at - timedelta(days=1)})
+    high = tx.model_copy(update={"amount": 301})
+    assert analyze(high, [prior, high], "test").alert_type == "amount_anomaly"
+    below = high.model_copy(update={"amount": 300})
+    assert analyze(below, [prior, below], "test").alert_type == "none"
+    duplicate = prior.model_copy(update={"amount": 301, "merchant_display": "Other synthetic merchant"})
+    assert analyze(high, [duplicate, high], "test").alert_type == "duplicate"
