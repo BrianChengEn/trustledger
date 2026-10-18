@@ -1,0 +1,54 @@
+隊友怎麼拿到資料
+分支 data/team-foundation，基線是 origin/main de6787e。
+PR #18 與 PR #19 都已合併。PR #19 只放寬 memory listing 的 SQLite timeout。
+這次沒有改 store.py、rules.py 或那 18 筆基準交易。
+demo-user-001 現在是 18 筆：原本 8 筆購買加上 10 筆 transfer。
+txn_syn_001 到 txn_syn_008 都還在。
+
+Benson（資料庫）
+
+    cd ~/Projects/trustledger
+    backend/.venv/bin/python scripts/seed_dev_library.py
+
+預設寫入 backend/data/dev-library.db。這個檔被 gitignore。
+demo-user-001 不會被這個指令建立或修改。
+再跑一次是冪等的：同一個 owner 已存在就不會再插入。
+
+只在開發庫刪掉 dev-library-* owner：
+
+    backend/.venv/bin/python scripts/seed_dev_library.py --reset-dev-owners
+
+這個指令拒絕對 trustledger-demo.db 做 reset，除非同時加上
+--allow-demo-database。即使加上，也只刪 dev-library-* ，不刪 demo-user-001。
+
+案例在 fixtures/dev-library/transactions.json。
+user-a 有低額正常、24 小時重複、高額、訂閱漲價、同價定期訂閱、一筆 credit。
+user-b 的帳號 token 是 acct_dev_b1，和 user-a 分開。
+user-a 的重複警報會被標成 normal，而且 consent_to_memory 是 false，所以不會打 Backboard。
+user-b 的高額警報維持 open。
+
+Ian（前端）
+
+    cd frontend
+    npm test
+
+畫面範例：frontend/src/fixtures/examples.ts
+JSON：frontend/src/fixtures/examples.json
+型別沿用 frontend/src/api.ts。
+每筆外部 AI 範例都標成 synthetic，而且 live_provider_verified 是 false。
+Gemini 那筆的 why_flagged 以 "Synthetic shape example." 開頭，sent_to_provider 是 false。
+這些 fixture 沒有取代 api.ts 的 request()。
+
+Kenny（Nessie）
+
+閱讀 data/NESSIE_MAP.txt 與 data/examples/nessie-withdrawal.json。
+現有合成沙盒在 datasets/nessie/。
+不要從瀏覽器呼叫 Nessie。key 留在後端。
+load_transactions() 仍是未實作。這次沒有 live 成功呼叫可以引用。
+
+研究 CSV 不要 commit。
+BankSim 的下載與 checksum：
+
+    backend/.venv/bin/python scripts/prepare_research_data.py --csv /tmp/tl-eval-data/banks.csv
+
+Kaggle 登入憑證放在本機 Kaggle CLI 設定，不要進 git。

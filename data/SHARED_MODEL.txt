@@ -1,0 +1,45 @@
+TrustLedger 共用交易契約
+這次沒有新做一套 transaction schema。下面四層都指向已經存在的型別。
+
+A. 內部交易
+   backend/app/schemas/transaction.py 的 Transaction。
+   欄位：id, occurred_at, amount, currency, direction, merchant_display,
+   merchant_category, source, account_token, is_subscription, kind。
+   kind 預設是 purchase，也可以是 transfer、deposit、withdrawal。
+   direction 可以是 debit、credit 或 unknown。
+   currency 只能是 USD。source 只能是 synthetic 或 nessie。
+   account_token 必須符合 acct_ 開頭。
+   SQLite demo_transactions 目前的 CHECK 只接受 source=synthetic。
+   金額以美分整數儲存。
+
+B. 對外 API
+   backend/app/schemas/api.py 與 contracts/internal-api.openapi.yaml。
+   列表與明細回傳 Transaction。
+   分析回傳 Analysis。警報回傳 Alert，alert_id 是 alert_ 加上 transaction id。
+   確認回傳 Confirmation。錯誤回傳 ErrorEnvelope。
+   前端現有型別在 frontend/src/api.ts。新的畫面範例在
+   frontend/src/fixtures/examples.ts，JSON 由後端測試對 Pydantic 驗證。
+
+C. 給外部 AI 的隱私邊界
+   SafePayload 維持八個欄位，這次沒有改：
+   merchant_category, amount_bucket, currency, local_day_part,
+   same_category_same_amount_24h_count, is_subscription,
+   subscription_delta_bucket, prior_user_confirmation.
+   精確金額、商家名稱、帳號、交易 id 都不進這個 payload。
+   定義在 backend/app/schemas/api.py。組裝在 backend/app/services/ai/privacy.py
+   與 backend/app/core/features.py。
+
+D. 離線研究標籤
+   BankSim 的 fraud 欄與 benchmark npz 只存在研究目錄與本機 CSV。
+   它們不是 Transaction 的欄位，也不會被 seed 寫進示範資料庫。
+   fixtures/dev-library/transactions.json 的 ground_truth_fraud_labels 是 false。
+   expected_alert_type 只給測試對照現有規則，寫入資料庫前會拿掉。
+
+PR #18 合併後，demo-user-001 有原本 8 筆購買，加上 10 筆 synthetic transfer，
+一共 18 筆。txn_syn_001 到 txn_syn_008 都還在。
+額外案例在另一個開發庫，owner 是 dev-library-user-a 與 dev-library-user-b。
+預設 API 的 demo_user_id 仍是 demo-user-001。
+PR #18 與 PR #19 都已合併進 origin/main de6787e。
+PR #19 只放寬 memory listing 的資料庫 timeout，沒有改交易欄位。
+這次分支沒有改 transaction schema、store、rules、
+fixtures/synthetic-transactions.json 或前端 api.ts。

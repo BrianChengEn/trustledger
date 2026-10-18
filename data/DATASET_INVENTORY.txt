@@ -1,0 +1,57 @@
+TrustLedger 資料集清單
+基準：origin/main de6787e77f96f76020100f591317e06c69faca73
+PR #18 與 PR #19 都已合併。這份清單只記錄查過的檔案。
+沒有把原始研究 CSV 放進 git。
+
+已在 GitHub（origin/main，隊友 clone 就有）
+
+1. fixtures/synthetic-transactions.json
+   PR #18 合併後是 18 筆：原本 8 筆購買加上 10 筆 transfer。
+   demo-user-001 的基準。txn_syn_001 到 txn_syn_008 都還在。
+   docs/fixtures/synthetic-transactions.json 是同一個內容。
+   沒有真實個資。
+
+2. datasets/nessie/*.json
+   baseline、boundary、changed、empty、history、manifest、volume。
+   合成的 Nessie 沙盒形狀。姓名是 Synthetic### TestCustomer。
+   帳號是 9000… 的假號碼。不是 live API 回傳。
+
+3. evaluation/research/benchmark/**/*.npz
+   以及 evaluation/research/v2/models/recommended.joblib
+   這是離線研究分數與一個已合併的研究模型檔。
+   它們不是應用程式的交易表，這次沒有再新增模型檔。
+   不要把它們接上示範 API。
+
+不在 GitHub（只在這台機器）
+
+1. /tmp/tl-eval-data/banks.csv
+   BankSim。48,986,035 bytes。594,643 列，7,200 件詐欺。
+   欄位：step, customer, age, gender, zipcodeOri, merchant,
+   zipMerchant, category, amount, fraud。
+   customer / merchant 是 C… / M… 合成代碼，沒有人名。
+   sha256 e37006f76d993bfaec3a02d717b4f0bdc1ebfa5d36449e91fb7c07e225278377
+   來源與授權見 data/manifests/banksim.yaml。
+   git 歷史沒有這個 CSV。Git LFS 也沒有。
+
+2. /tmp/tl-eval-data/fraudTrain.csv
+   Sparkov / Kaggle kartik2112 的模擬信用卡檔，本地複本。
+   266,514,852 bytes。1,048,575 列，含表頭，剛好停在 Excel 列數上限。
+   欄位含姓名、街道、生日、卡號。卡號是科學記號，這份本地檔是截斷匯出。
+   研究基準沒有用它。見 data/manifests/sparkov-credit-card.yaml。
+   不進 git，也不進私下打包。
+
+3. /tmp/tl-eval-data/quick/quick_sample.jsonl
+   14,896 列。由 BankSim 轉成 TrustLedger Transaction 形狀，並另有 fraud 標籤。
+   這是研究衍生檔，不是示範資料庫。
+
+4. backend/data/trustledger-demo.db
+   本機 SQLite。gitignore。這台機器目前是 demo-user-001 的 18 筆，
+   version 是 synthetic-v2。不進 git，也不進私下打包。
+
+私下 ZIP 不進 git。本機檔在倉庫外面，只含未修改的 BankSim CSV、
+BankSim 衍生樣本、manifest 與檢查腳本。不含 fraudTrain、.env、
+示範資料庫或模型檔。
+
+git 歷史沒有任何 .csv、.parquet、.db、.jsonl。
+.gitignore 忽略 evaluation/datasets/、evaluation/**/*.csv、*.db、backend/data/。
+倉庫根目錄沒有全域 *.csv 規則。所以這次仍然不把研究 CSV 加進來。
