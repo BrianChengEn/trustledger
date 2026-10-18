@@ -170,11 +170,17 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
         {label: 'Safe payload', hint: 'The eight generalized fields, exactly', icon: 'layers', go: () => go({view: 'privacy', tx: priorityTx}), disabled: !priorityTx},
         {label: 'Your decision', hint: 'Mark a charge normal or review, with consent', icon: 'checkCircle', go: caseOf(firstOpen), disabled: !firstOpen},
       ]},
+      {heading: 'Learn', items: [
+        {label: 'Privacy Lab', hint: 'Step through what each AI service receives', icon: 'sparkles', go: () => go({view: 'privacy', lab: ''})},
+      ]},
     ]},
     memory: {eyebrow: 'MEMORY', title: 'What you’ve allowed it to remember.', blurb: 'Only category-level preferences you approve. Delete them anytime.', groups: [
       {heading: 'Saved preferences', items: [
         {label: 'Saved preferences', hint: `${memories.length} stored`, icon: 'hardDrive', go: () => go({view: 'memory'})},
         {label: 'Remove a memory', hint: 'Delete any stored preference', icon: 'trash', go: () => go({view: 'memory'})},
+      ]},
+      {heading: 'Learn', items: [
+        {label: 'Memory Lab', hint: 'How a charge becomes a memory and helps later', icon: 'sparkles', go: () => go({view: 'memory', lab: ''})},
       ]},
     ]},
   };

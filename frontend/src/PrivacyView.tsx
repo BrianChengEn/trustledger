@@ -6,7 +6,7 @@ import {usePreview} from './preview';
 import {Callout, PageHead} from './ui';
 import {useWorkspace} from './workspace';
 
-const actionMeta: Record<string, {icon: IconName; verb: string}> = {
+export const actionMeta: Record<string, {icon: IconName; verb: string}> = {
   dropped: {icon: 'eyeOff', verb: 'Removed'}, bucketed: {icon: 'layers', verb: 'Bucketed'},
   generalized: {icon: 'tag', verb: 'Generalized'}, tokenized: {icon: 'lock', verb: 'Tokenized'}, allowed: {icon: 'checkCircle', verb: 'Allowed'},
 };
@@ -16,7 +16,7 @@ const payloadKey: Record<string, string> = {
   prior_user_confirmation: 'prior_user_confirmation',
 };
 // Local side of each row: what the app holds. Labels describe local data; shared values come only from the backend.
-function localValue(field: string, tx: Movement): string {
+export function localValue(field: string, tx: Movement): string {
   switch (field) {
     case 'id / account_token': return `${tx.id} · ${tx.account_token}`;
     case 'merchant_display': return tx.merchant_display;
