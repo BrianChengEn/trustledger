@@ -1,7 +1,8 @@
 隊友怎麼拿到資料
-分支 data/team-foundation，基線是 origin/main de6787e。
-PR #18 與 PR #19 都已合併。PR #19 只放寬 memory listing 的 SQLite timeout。
-這次沒有改 store.py、rules.py 或那 18 筆基準交易。
+
+BankSim 原始欄位、step 與金額單位：data/BANKSIM_DICTIONARY.txt
+Kenny 設計統一資料庫前先讀那一份。不要把研究列寫進示範資料庫。
+
 demo-user-001 現在是 18 筆：原本 8 筆購買加上 10 筆 transfer。
 txn_syn_001 到 txn_syn_008 都還在。
 
@@ -39,9 +40,10 @@ JSON：frontend/src/fixtures/examples.json
 Gemini 那筆的 why_flagged 以 "Synthetic shape example." 開頭，sent_to_provider 是 false。
 這些 fixture 沒有取代 api.ts 的 request()。
 
-Kenny（Nessie）
+Kenny（Nessie 與 BankSim）
 
-閱讀 data/NESSIE_MAP.txt 與 data/examples/nessie-withdrawal.json。
+設計資料庫前先讀 data/BANKSIM_DICTIONARY.txt。
+Nessie 對照再讀 data/NESSIE_MAP.txt 與 data/examples/nessie-withdrawal.json。
 現有合成沙盒在 datasets/nessie/。
 不要從瀏覽器呼叫 Nessie。key 留在後端。
 load_transactions() 仍是未實作。這次沒有 live 成功呼叫可以引用。
