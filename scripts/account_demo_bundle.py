@@ -16,7 +16,9 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
 
-from app.adapters.account_demo import KINDS, SYNTHETIC_KINDS, VERSION, digest, kind_quotas  # noqa: E402
+from app.adapters.account_demo import (  # noqa: E402
+    KINDS, PROFILE_PATH, SYNTHETIC_KINDS, VERSION, digest, kind_quotas, research_kind_quotas,
+)
 from app.core.account_dataset import AccountDataset  # noqa: E402
 
 SOURCES = ('banksim', 'nessie')
@@ -56,7 +58,7 @@ def schema(db):
 def validate(directory):
     manifest = read_json(directory / 'manifest.json')
     version = manifest['inputs']['version']
-    if version not in ('account-demo-v1', VERSION):
+    if version not in ('account-demo-v1', 'account-demo-v2', VERSION):
         raise ValueError('Unsupported account generator version.')
     signature = hashlib.sha256(json.dumps(manifest['inputs'], sort_keys=True).encode()).hexdigest()
     for source in SOURCES:
@@ -86,8 +88,9 @@ def validate(directory):
             report = manifest['report'][source]
             if not accounts or len(accounts) != report['accounts']:
                 raise ValueError('Account count does not match the manifest.')
+            owner_prefix = f'{version}:{signature}' if version == VERSION else version
             if any(not re.fullmatch(r'acct_[0-9a-f]{32}', code)
-                   or owner != f'{version}:{source}:{code}' for code, owner in accounts):
+                   or owner != f'{owner_prefix}:{source}:{code}' for code, owner in accounts):
                 raise ValueError('Only generated local account identities may be shared.')
             counts = db.execute('SELECT a.owner,count(t.id) FROM accounts a LEFT JOIN transactions t '
                                 'ON t.owner=a.owner GROUP BY a.owner').fetchall()
@@ -103,7 +106,7 @@ def validate(directory):
                                   'WHERE t.source<>? OR t.account_token<>a.account_token OR '
                                   't.dataset_id<>? LIMIT 1', (source, dataset)).fetchone()):
                 raise ValueError('Account history or provenance is incomplete.')
-            if version == VERSION and source == 'banksim':
+            if version != 'account-demo-v1' and source == 'banksim':
                 coverage = db.execute('SELECT count(DISTINCT source_record_key),'
                                       'min(CAST(source_record_key AS INTEGER)),'
                                       'max(CAST(source_record_key AS INTEGER)) FROM transactions').fetchone()
@@ -117,7 +120,7 @@ def validate(directory):
                                       'o.source_dataset_id IS NOT t.dataset_id OR '
                                       'o.source_record_key IS NOT t.source_record_key LIMIT 1').fetchone()):
                     raise ValueError('BankSim requires every original row and one account per original user.')
-            if version == VERSION and source == 'nessie':
+            if version != 'account-demo-v1' and source == 'nessie':
                 if db.execute('SELECT 1 FROM account_origins o JOIN transactions t '
                               'ON t.owner=o.owner AND t.id=o.transaction_id JOIN accounts a ON a.owner=t.owner '
                               'WHERE o.source_owner IS NOT a.source_owner OR '
@@ -127,11 +130,25 @@ def validate(directory):
                 distribution = manifest['nessie_distribution']
                 observed = distribution['source_counts']
                 if (set(observed) != set(KINDS) or any(type(value) is not int or value < 0 for value in observed.values())
-                        or not sum(observed.values()) or kind_quotas(observed) != distribution['per_account_counts']):
-                    raise ValueError('Invalid source-derived Nessie type distribution.')
-                for _, owner in accounts:
+                        or not sum(observed.values())):
+                    raise ValueError('Invalid Nessie source inventory.')
+                if version == VERSION:
+                    profile, expected_counts = research_kind_quotas([code for code, _ in accounts], manifest['inputs']['seed'])
+                    totals = {kind: sum(counts[kind] for counts in expected_counts.values()) for kind in KINDS}
+                    if (manifest['inputs']['kind_profile_sha256'] != digest(PROFILE_PATH)
+                            or distribution['method'] != 'survey-weighted-largest-remainder-v1'
+                            or distribution['profile_id'] != profile['id']
+                            or distribution['per_account_counts'] != expected_counts
+                            or distribution['total_counts'] != totals):
+                        raise ValueError('Invalid research-calibrated Nessie type distribution.')
+                else:
+                    counts = kind_quotas(observed)
+                    if counts != distribution['per_account_counts']:
+                        raise ValueError('Invalid source-derived Nessie type distribution.')
+                    expected_counts = {code: counts for code, _ in accounts}
+                for code, owner in accounts:
                     actual = dict(db.execute('SELECT kind,count(*) FROM transactions WHERE owner=? GROUP BY kind', (owner,)))
-                    if actual != distribution['per_account_counts']:
+                    if actual != expected_counts[code]:
                         raise ValueError('Nessie account type counts do not match the approved distribution.')
     return manifest
 

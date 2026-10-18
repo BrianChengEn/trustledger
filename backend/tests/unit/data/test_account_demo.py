@@ -37,7 +37,7 @@ def test_banksim_keeps_every_original_transaction_with_its_own_customer(tmp_path
     assert seen == set(originals)
 
 
-def test_nessie_uses_source_probabilities_and_marks_missing_kind_templates(tmp_path):
+def test_nessie_uses_research_probabilities_and_marks_missing_kind_templates(tmp_path):
     from app.core.account_dataset import AccountDataset
     csv_path, nessie_path = inputs(tmp_path)
     original = DatasetStore(nessie_path, 'nessie')
@@ -49,16 +49,20 @@ def test_nessie_uses_source_probabilities_and_marks_missing_kind_templates(tmp_p
     target = tmp_path / 'v2'
     build_account_demo(csv_path, nessie_path, target, tmp_path / 'labels')
     store = AccountDataset(target / 'nessie.db', 'nessie')
-    expected = {'purchase': 1, 'transfer': 63, 'deposit': 18, 'withdrawal': 18}
+    observed_counts = []
     for digit in ('0', '1'):
         code = 'acct_' + digit * 32
         rows, total = store.account_page(code, limit=100)
-        assert total == 100 and dict(Counter(row.kind for row in rows)) == expected
+        assert total == 100
+        observed_counts.append(tuple(Counter(row.kind for row in rows)[kind]
+                                     for kind in ('purchase', 'transfer', 'deposit', 'withdrawal')))
         assert {row.account_token for row in rows} == {code}
+    assert sorted(observed_counts) == [(85, 6, 8, 1), (86, 5, 8, 1)]
     manifest = json.loads((target / 'manifest.json').read_text())
     assert manifest['nessie_distribution']['source_counts'] == {
         'purchase': 1, 'transfer': 180, 'deposit': 48, 'withdrawal': 48}
-    assert manifest['nessie_distribution']['per_account_counts'] == expected
+    assert manifest['nessie_distribution']['total_counts'] == {
+        'purchase': 171, 'transfer': 11, 'deposit': 16, 'withdrawal': 2}
     with store.connect() as db:
         for origin in db.execute('SELECT t.account_token,t.kind,o.source_dataset_id,o.source_owner '
                                  'FROM transactions t JOIN account_origins o '
@@ -143,7 +147,7 @@ def test_generated_accounts_keep_100_rows_provenance_and_separate_offline_labels
                 for owner, amount in db.execute('SELECT owner,min(amount_minor) FROM transactions GROUP BY owner'):
                     assert db.execute('SELECT count(DISTINCT amount_minor) FROM transactions WHERE owner=?',(owner,)).fetchone()[0] == 1
                 assert db.execute("SELECT count(*) FROM transactions WHERE currency='USD' AND occurred_date='2026-10-18' AND simulation_step IS NULL").fetchone()[0] == 200
-                assert dict(db.execute('SELECT kind,count(*) FROM transactions GROUP BY kind')) == {'purchase': 2, 'transfer': 194, 'deposit': 2, 'withdrawal': 2}
+                assert dict(db.execute('SELECT kind,count(*) FROM transactions GROUP BY kind')) == {'purchase': 171, 'transfer': 11, 'deposit': 16, 'withdrawal': 2}
 
 
 def test_allocation_rejects_invalid_source_and_never_publishes_partial_batch(tmp_path):

@@ -84,6 +84,21 @@ def packed(tmp_path):
     return source, archive, hashlib.sha256(archive.read_bytes()).hexdigest()
 
 
+@pytest.mark.parametrize('field', ['profile_id', 'method', 'per_account_counts', 'total_counts', 'kind_profile_sha256'])
+def test_pack_rejects_altered_research_calibration(tmp_path, field):
+    source = batch(tmp_path)
+    path = source / 'manifest.json'
+    manifest = json.loads(path.read_text())
+    if field == 'kind_profile_sha256':
+        manifest['inputs'][field] = '0' * 64
+    else:
+        manifest['nessie_distribution'][field] = 'invalid'
+    path.write_text(json.dumps(manifest))
+    result = cli('pack', '--source-dir', source, '--output', tmp_path / 'invalid.zip', '--code-ref', CODE_REF)
+    assert result.returncode != 0
+    assert not (tmp_path / 'invalid.zip').exists()
+
+
 def test_install_rejects_wrong_checksum_and_existing_destinations(tmp_path, packed):
     _, archive, checksum = packed
     target = tmp_path / 'existing'

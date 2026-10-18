@@ -14,10 +14,11 @@ from app.adapters.dataset_import import banksim_rows, local_token
 from app.core.account_dataset import AccountDataset
 from app.core.dataset_store import DatasetStore
 
-VERSION = 'account-demo-v2'
+VERSION = 'account-demo-v3'
 RATE = Fraction(7200, 594643)
 KINDS = ('purchase', 'transfer', 'deposit', 'withdrawal')
 SYNTHETIC_KINDS = 'nessie-synthetic-kinds-v1'
+PROFILE_PATH = Path(__file__).resolve().parents[3] / 'fixtures/dcpc2025-kind-profile.json'
 
 
 def digest(path):
@@ -37,6 +38,29 @@ def kind_quotas(counts):
     return result
 
 
+def research_kind_quotas(codes, seed):
+    profile = json.loads(PROFILE_PATH.read_text())
+    weights = {kind: Fraction(value) for kind, value in profile['weighted_counts'].items()}
+    if set(weights) != set(KINDS) or any(value <= 0 for value in weights.values()) or not codes:
+        raise ValueError('Invalid research type profile or account population.')
+    scale = sum(weights.values())
+    exact = {kind: 100 * len(codes) * weights[kind] / scale for kind in KINDS}
+    totals = {kind: int(value) for kind, value in exact.items()}
+    for kind in sorted(KINDS, key=lambda kind: (-(exact[kind] % 1), kind))[:100 * len(codes) - sum(totals.values())]:
+        totals[kind] += 1
+    base = {kind: int(100 * weights[kind] / scale) for kind in KINDS}
+    result = {code: dict(base) for code in codes}
+    order = random.Random(seed).sample(sorted(codes), len(codes))
+    slot = 0
+    for kind in sorted(KINDS, key=lambda kind: (-(100 * weights[kind] / scale % 1), kind)):
+        for _ in range(totals[kind] - base[kind] * len(codes)):
+            result[order[slot % len(codes)]][kind] += 1
+            slot += 1
+    if any(sum(counts.values()) != 100 for counts in result.values()):
+        raise ValueError('Research type allocation is incomplete.')
+    return profile, result
+
+
 def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=2026):
     csv_path, nessie_path = Path(csv_path).resolve(), Path(nessie_path).resolve()
     output_dir, labels_dir = Path(output_dir).resolve(), Path(labels_dir).resolve()
@@ -44,7 +68,8 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
             or any(path.is_relative_to(output_dir) or path.is_relative_to(labels_dir)
                    for path in (csv_path, nessie_path))):
         raise ValueError('Inputs, runtime output and offline labels must be separate.')
-    inputs = {'banksim': digest(csv_path), 'nessie': digest(nessie_path), 'seed': seed, 'version': VERSION}
+    inputs = {'banksim': digest(csv_path), 'nessie': digest(nessie_path), 'seed': seed, 'version': VERSION,
+              'kind_profile_sha256': digest(PROFILE_PATH)}
     signature = hashlib.sha256(json.dumps(inputs, sort_keys=True).encode()).hexdigest()
     if output_dir.exists():
         manifest = json.loads((output_dir / 'manifest.json').read_text())
@@ -87,7 +112,7 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
         if not groups or any(len({row.owner for row in rows}) != 1 for rows in groups.values()):
             raise ValueError('Nessie account ownership is missing or ambiguous.')
     source_counts = Counter(row.kind for rows in groups.values() for row in rows)
-    type_counts = kind_quotas(source_counts)
+    profile, account_type_counts = research_kind_quotas(sorted(groups), seed)
     synthetic_counts = {kind: sum(not any(row.kind == kind for row in rows) for rows in groups.values())
                         for kind in KINDS}
     output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -101,7 +126,7 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
                  if source == 'banksim' else sorted(groups))
         bindings = dict(zip(codes, sorted(customers))) if source == 'banksim' else {
             code: groups[code][0].owner for code in codes}
-        accounts = [(code, f'{VERSION}:{source}:{code}', f'{source.title()} account {i:04d}', bindings[code])
+        accounts = [(code, f'{VERSION}:{signature}:{source}:{code}', f'{source.title()} account {i:04d}', bindings[code])
                     for i, code in enumerate(codes, 1)]
         two = set(rng.sample(codes, quota(len(codes)) - len(codes))) if source == 'nessie' else set()
         generated = []
@@ -119,7 +144,7 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
                             'unknown' if kind == 'transfer' else 'debit',
                             'merchant_token': None, 'merchant_display': None, 'merchant_category': None,
                             'source_category': None, 'is_subscription': None})]
-                kinds = [kind for kind, count in type_counts.items() for _ in range(count)]
+                kinds = [kind for kind, count in account_type_counts[account[0]].items() for _ in range(count)]
                 rng.shuffle(kinds)
                 for slot, kind in enumerate(kinds):
                     positive = slot in positive_slots
@@ -167,12 +192,16 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
                     or positive_count != positives or db.execute('PRAGMA foreign_key_check').fetchall()):
                 raise ValueError('Allocation verification failed.')
         report[source] = {'accounts': len(accounts), 'transactions': written, 'fraud_samples': positive_count}
-    if digest(csv_path) != inputs['banksim'] or digest(nessie_path) != inputs['nessie']:
-        raise ValueError('Source changed during generation; no batch was published.')
+    if (digest(csv_path) != inputs['banksim'] or digest(nessie_path) != inputs['nessie']
+            or digest(PROFILE_PATH) != inputs['kind_profile_sha256']):
+        raise ValueError('Source or calibration changed during generation; no batch was published.')
     manifest = {'inputs': inputs, 'report': report,
-                'nessie_distribution': {'method': 'minimum-one-largest-remainder-v1',
+                'nessie_distribution': {'method': 'survey-weighted-largest-remainder-v1',
+                                        'profile_id': profile['id'],
                                         'source_counts': {kind: source_counts[kind] for kind in KINDS},
-                                        'per_account_counts': type_counts,
+                                        'total_counts': {kind: sum(counts[kind] for counts in account_type_counts.values())
+                                                         for kind in KINDS},
+                                        'per_account_counts': account_type_counts,
                                         'synthetic_template_counts': synthetic_counts},
                 'database_digests': {s: digest(stage / f'{s}.db') for s in report},
                 'label_digests': {s: digest(label_stage / f'{s}.jsonl') for s in report}}
