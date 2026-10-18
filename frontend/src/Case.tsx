@@ -6,6 +6,8 @@ import {usePreview} from './preview';
 import {alertIcons, statusText} from './Today';
 import {categoryIcon} from './Activity';
 import Pager from './Pager';
+import RelevantMemoryCard from './RelevantMemoryCard';
+import {useRelevantMemories} from './relevant';
 import {Callout, Chip} from './ui';
 import {useWorkspace, type Run} from './workspace';
 
@@ -81,7 +83,7 @@ function AiStep({tx, run, stale, fieldCount, onRun, enabled}: {
   const running = run?.state === 'running';
   return <>
     <p>Rules stay in charge. Jev adds a second opinion on a <b>generalized</b> version of this charge{fieldCount ? ` (${fieldCount} fields, no merchant name, no exact amount, no IDs)` : ''}.
-      It runs only when you ask, once per click. <a href={href({view: 'privacy', tx: tx.id})}>Inspect exactly what is shared</a></p>
+      It runs only when you ask, once per click. <a href={href({view: 'privacy', tx: tx.id})}>Inspect exactly what is shared</a> · <a href={href({view: 'privacy', lab: ''})}>See how privacy works</a></p>
     {run?.state === 'running' && <div className="airun" role="status"><span className="spinner" aria-hidden="true"/>
       <div><b>Analyzing {tx.merchant_display} · {money(tx.amount)}</b><p>Sending the generalized fields to Jev through Backboard. This can take a few seconds…</p></div></div>}
     {run?.state === 'failed' && <Callout tone="warn" icon="alertTriangle" title="Analysis request failed" role="alert">{run.message}</Callout>}
@@ -189,7 +191,9 @@ export default function Case({id, from}: {id: string; from?: string}) {
     <p>That transaction was not found.</p><button onClick={() => go({view: 'activity'})}>Back to Activity</button></div></div>
     : <p className="loading" role="status">Loading…</p>;
   const run = runs[tx.id];
-  const memory = memories.find(m => memoryCategory(m.summary) === tx.merchant_category);
+  // The facts note and the Relevant memory card follow the same fresh result; an error or unavailable result shows neither.
+  const relevant = useRelevantMemories(tx.id, !!alert);
+  const memory = relevant.view.kind === 'found' ? relevant.view.memories[0] : undefined;
   const backTo = from === 'activity' ? 'Activity' : 'Today';
   return <div className="page case">
     <header className="casehead">
@@ -211,7 +215,7 @@ export default function Case({id, from}: {id: string; from?: string}) {
           <p>{s.label}. Context only; it does not hide alerts. <a href={href({view: 'memory'})}>Manage in Memory</a></p></div></div>; })()}
     </aside>
     <div className="steps">
-      <Step n={1} title="Why it was flagged" tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
+      <Step n={1} title={alert ? 'Why it was flagged' : 'What was checked'} tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
         {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still ask for a plain-language explanation or run an AI second opinion.</p>}
         <ExplanationPanel key={revision} tx={tx}/>
       </Step>
@@ -219,9 +223,12 @@ export default function Case({id, from}: {id: string; from?: string}) {
         <AiStep tx={tx} run={ready ? run : undefined} stale={run?.state === 'done' && run.memoryKey !== memoryKey}
           enabled={ready} fieldCount={preview ? Object.keys(preview.safe_payload).length : null} onRun={() => void analyze(tx.id)}/>
       </Step>
-      <Step n={3} title="Your decision">
-        {ready && alert ? <Decision alert={alert} tx={tx} enabled={ready}/> : <p>{ready ? 'Nothing to decide: no alert exists for this charge.' : 'Refresh before making a decision.'}</p>}
-      </Step>
+      <div className="rightcol">
+        {ready && alert && <RelevantMemoryCard view={relevant.view} retry={relevant.retry} category={tx.merchant_category}/>}
+        <Step n={3} title="Your decision">
+          {ready && alert ? <Decision alert={alert} tx={tx} enabled={ready}/> : <p>{ready ? 'Nothing to decide: no alert exists for this charge.' : 'Refresh before making a decision.'}</p>}
+        </Step>
+      </div>
     </div>
   </div>;
 }

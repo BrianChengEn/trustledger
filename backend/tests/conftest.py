@@ -1,3 +1,9 @@
+import os
+
+# Isolated automated tests explicitly opt into fixtures. Runtime defaults remain live.
+os.environ['APP_ENV'] = 'test'
+os.environ['TRANSACTION_PROVIDER'] = 'synthetic'
+
 import pytest
 from fastapi.testclient import TestClient
 

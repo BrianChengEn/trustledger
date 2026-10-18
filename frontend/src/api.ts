@@ -31,6 +31,14 @@ export interface PrivacyPreview {
   safe_payload: Record<string, string|number|boolean>;
 }
 export interface Memory {memory_id: string; summary: string; source: string; created_at: string}
+/** Level 2: consented memories for this transaction's category. Context only; it never changes the alert. */
+export interface RelevantMemory extends Memory {verification: 'remote_verified' | 'local_only' | 'unverified'}
+export interface RelevantMemories {
+  memories: RelevantMemory[];
+  retrieval_mode: 'remote_verified' | 'local_fallback' | 'unavailable';
+  checked_at: string | null;
+  failure: string | null;
+}
 export interface SharedExplanation {
   task: 'explain_existing_alert';
   alert_type: Analysis['alert_type'];
@@ -85,6 +93,13 @@ export async function request<T>(path: string, options?: RequestInit, timeoutMs 
     ...options, headers: {'Content-Type': 'application/json', ...options?.headers},
     signal: AbortSignal.timeout(timeoutMs),
   });
+  if (import.meta.env.DEV && response.headers.has('X-Transaction-Provider')) {
+    console.debug('Transaction source', {
+      provider: response.headers.get('X-Transaction-Provider'),
+      upstream_status: response.headers.get('X-Transaction-Upstream-Status'),
+      fallback_used: response.headers.get('X-Transaction-Fallback-Used') === 'true',
+    });
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const code: string|null = typeof body?.error?.code === 'string' ? body.error.code : null;

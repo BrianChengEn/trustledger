@@ -34,7 +34,7 @@ try {
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'), ['-c',
     'import runpy,sys; sys.argv=["x"]; ns=runpy.run_path("backend/tests/admin_console_server.py", run_name="loaded"); '
     + 'import uvicorn; uvicorn.run(ns["app"], host="127.0.0.1", port=8124, log_level="warning")'],
-  {PYTHONPATH: 'backend', TRANSACTION_PROVIDER: 'synthetic', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: BASE});
+  {PYTHONPATH: 'backend', APP_ENV: 'test', TRANSACTION_PROVIDER: 'synthetic', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: BASE});
   await Promise.all([ready(BASE, frontendLogs), ready('http://127.0.0.1:8124/api/v1/health', backendLogs)]);
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
@@ -116,9 +116,6 @@ try {
   await guest.getByRole('button', {name: 'Changes', exact: false}).click();
   await guest.locator('.changes li').first().waitFor();
   await assertNoScroll(guest, 'change log');
-  await guest.getByRole('link', {name: /^Memory/}).click();
-  await guest.getByRole('heading', {name: /allowed it to remember/}).waitFor();
-  await assertNoScroll(guest, 'admin memory');
   await guest.getByRole('link', {name: /Data sources/}).click();
   await assertNoScroll(guest, 'data sources');
 

@@ -37,6 +37,9 @@ class ResponseSecurityMiddleware:
             if message["type"] == "http.response.start":
                 headers = MutableHeaders(scope=message)
                 headers["X-Request-ID"] = request_id
+                provenance = scope.get('state', {}).get('transaction_provenance', {})
+                for field, value in provenance.items():
+                    headers['X-Transaction-' + field.replace('_', '-')] = value
                 headers["Cache-Control"] = "no-store"
                 headers["X-Content-Type-Options"] = "nosniff"
                 # Explicit allowlist: no URL, path, query, headers, body or exception text.

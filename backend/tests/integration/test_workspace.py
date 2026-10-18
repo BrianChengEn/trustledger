@@ -20,6 +20,8 @@ def test_source_refresh_is_explicit_normalized_scoped_and_retains_failed_cache(w
     state = client.app.state
     # Explicit source selection also works while the product retains its synthetic default.
     state.settings.transaction_provider = 'synthetic'
+    from app.adapters.synthetic import load_transactions
+    load_transactions(state.store, state.settings.demo_user_id)
     with state.store.connect() as db:
         run = db.execute('INSERT INTO seed_runs(owner,dataset_sha256,api_base_url,credential_fingerprint,'
                          "state,created_at,updated_at) VALUES(?,?,?,?,'complete','now','now')",
@@ -207,7 +209,7 @@ def test_fixed_mapping_reuses_admin_state_and_survives_restart(workspace):
         assert restarted.get('/api/v1/transactions').status_code == 502
         owner = 'demo-user-001:nessie:' + hashlib.sha256(b'workspace-key').hexdigest() + ':' + customers[0]
         assert len(store.workspace_rows(owner)[1]) == 2
-        assert len(store.list_transactions('demo-user-001')) == 18
+        assert store.list_transactions('demo-user-001') == []
     assert behavior['calls'] == before
 
 

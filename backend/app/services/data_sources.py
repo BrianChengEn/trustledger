@@ -23,6 +23,8 @@ def synchronize_nessie(request):
 
 def account_store(request, source):
     state = request.app.state
+    if state.settings.app_env != 'test':
+        return None
     if source not in state.account_stores:
         directory = state.source_stores[source].filename.parent / 'account-demo'
         if not (directory / 'manifest.json').is_file():

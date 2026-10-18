@@ -58,7 +58,7 @@ def upstream(request):
     return httpx.Response(200, json=result)
 
 
-settings = Settings(_env_file=None, nessie_api_key="isolated-browser-test-key",
+settings = Settings(_env_file=None, app_env="test", nessie_api_key="isolated-browser-test-key",
                     fraud_provider='rules-only',
                     backboard_api_key="", jev_api_key="", gemini_api_key="", allow_memory_write=True,
                     require_login=True, demo_user_passcode="browser-user-pass", demo_admin_passcode="browser-admin-pass",
