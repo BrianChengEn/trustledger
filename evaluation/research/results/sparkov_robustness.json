@@ -1,0 +1,162 @@
+{
+  "dataset": "Sparkov fraudTrain export, truncated Excel file, customer id unusable",
+  "rows": 1048575,
+  "fraud": 6006,
+  "splits": {
+    "train_rows": 734002,
+    "validation_rows": 157286,
+    "test_rows": 157287,
+    "train_fraud": 4349,
+    "validation_fraud": 704,
+    "test_fraud": 953,
+    "test_unix_start": 1356335290,
+    "test_unix_end": 1362931730
+  },
+  "features": "log amount and category only; no customer, merchant, name, or card number",
+  "selected_by_validation_average_precision": "amount_category_hgb",
+  "validation_average_precision": {
+    "amount_score": 0.1556145487210121,
+    "threshold_250": 0.0922940023578401,
+    "amount_category_lr": 0.08982397825017496,
+    "amount_category_hgb": 0.6549483190422417,
+    "category_base_rate": 0.010877676133328282
+  },
+  "models": {
+    "amount_score": {
+      "validation_average_precision": 0.1556145487210121,
+      "test_average_precision": 0.19848725879164636,
+      "test_f1_threshold": {
+        "TP": 432,
+        "FP": 668,
+        "TN": 155666,
+        "FN": 521,
+        "precision": 0.3927272727272727,
+        "recall": 0.453305351521511,
+        "f1": 0.420847540185095,
+        "fpr": 0.004272902887407729,
+        "alerts": 1100
+      },
+      "test_matched_250_alert_count": {
+        "TP": 724,
+        "FP": 3952,
+        "TN": 152382,
+        "FN": 229,
+        "precision": 0.15483319076133448,
+        "recall": 0.7597061909758657,
+        "f1": 0.25723929650026645,
+        "fpr": 0.0252792098967595,
+        "alerts": 4676
+      },
+      "threshold": 715.15
+    },
+    "threshold_250": {
+      "validation_average_precision": 0.0922940023578401,
+      "test_average_precision": 0.11908367082568676,
+      "test_f1_threshold": {
+        "TP": 724,
+        "FP": 3952,
+        "TN": 152382,
+        "FN": 229,
+        "precision": 0.15483319076133448,
+        "recall": 0.7597061909758657,
+        "f1": 0.25723929650026645,
+        "fpr": 0.0252792098967595,
+        "alerts": 4676
+      },
+      "test_matched_250_alert_count": {
+        "TP": 724,
+        "FP": 3952,
+        "TN": 152382,
+        "FN": 229,
+        "precision": 0.15483319076133448,
+        "recall": 0.7597061909758657,
+        "f1": 0.25723929650026645,
+        "fpr": 0.0252792098967595,
+        "alerts": 4676
+      },
+      "threshold": 1.0
+    },
+    "amount_category_lr": {
+      "validation_average_precision": 0.08982397825017496,
+      "test_average_precision": 0.11933683037603925,
+      "test_f1_threshold": {
+        "TP": 344,
+        "FP": 1213,
+        "TN": 155121,
+        "FN": 609,
+        "precision": 0.22093770070648683,
+        "recall": 0.36096537250786986,
+        "f1": 0.27410358565737053,
+        "fpr": 0.007759028746146072,
+        "alerts": 1557
+      },
+      "test_matched_250_alert_count": {
+        "TP": 686,
+        "FP": 3990,
+        "TN": 152344,
+        "FN": 267,
+        "precision": 0.1467065868263473,
+        "recall": 0.7198321091290661,
+        "f1": 0.24373778646295965,
+        "fpr": 0.025522279222689882,
+        "alerts": 4676
+      },
+      "threshold": 0.8698467718078663
+    },
+    "amount_category_hgb": {
+      "validation_average_precision": 0.6549483190422417,
+      "test_average_precision": 0.7158019733903412,
+      "test_f1_threshold": {
+        "TP": 577,
+        "FP": 201,
+        "TN": 156133,
+        "FN": 376,
+        "precision": 0.7416452442159382,
+        "recall": 0.6054564533053515,
+        "f1": 0.6666666666666666,
+        "fpr": 0.0012857088029475355,
+        "alerts": 778
+      },
+      "test_matched_250_alert_count": {
+        "TP": 899,
+        "FP": 3777,
+        "TN": 152557,
+        "FN": 54,
+        "precision": 0.19225834046193327,
+        "recall": 0.9433368310598111,
+        "f1": 0.31941730325102147,
+        "fpr": 0.024159811685238015,
+        "alerts": 4676
+      },
+      "threshold": 0.993002238100288
+    },
+    "category_base_rate": {
+      "validation_average_precision": 0.010877676133328282,
+      "test_average_precision": 0.01466883288409359,
+      "test_f1_threshold": {
+        "TP": 215,
+        "FP": 11724,
+        "TN": 144610,
+        "FN": 738,
+        "precision": 0.018008208392662702,
+        "recall": 0.22560335781741866,
+        "f1": 0.03335401799565622,
+        "fpr": 0.07499328361073088,
+        "alerts": 11939
+      },
+      "test_matched_250_alert_count": {
+        "TP": 215,
+        "FP": 4461,
+        "TN": 151873,
+        "FN": 738,
+        "precision": 0.04597946963216424,
+        "recall": 0.22560335781741866,
+        "f1": 0.07639012257949902,
+        "fpr": 0.02853505955198485,
+        "alerts": 4676
+      },
+      "threshold": 0.017972015264401234
+    }
+  },
+  "caveat": "This file is not the official Kaggle Sparkov release. It checks whether the BankSim ranking result depends on one simulator."
+}
