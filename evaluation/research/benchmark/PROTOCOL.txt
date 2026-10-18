@@ -1,0 +1,136 @@
+TrustLedger BankSim 公開模型對照契約
+狀態：在計算任何新的 test 分數之前凍結。
+
+這份實驗比較的是模型，不是資料集規模。
+資料只用既有的 BankSim：/tmp/tl-eval-data/banks.csv。
+不要再找更多交易，不要訓練 Sparkov，不要呼叫 Gemini、Jev、Backboard 或 Nessie。
+
+1. 這不是未被看過的盲測
+
+steps 150–179 已經在 PR #14 和 PR #15 看過。
+這次是可重現的對照實驗。
+不可以把它寫成獨立、未接觸的 holdout。
+不可以依照先前或這次的 test 分數調整模型。
+
+2. 時間切分
+
+排序：step 由小到大，同一步驟保持原始檔案順序。
+TRAIN：steps 0–119，374,914 筆，4,800 件詐欺。
+SELECT：steps 120–134，53,722 筆，600 件詐欺。只用來確認，不用來挑選公開模型的超參數。
+CONFIRM：steps 135–149，54,701 筆，600 件詐欺。不能改寫勝者。
+TEST：steps 150–179，111,306 筆，1,200 件詐欺。
+
+人口數不符就停止。不要換一組隨機切分。
+
+3. 排名規則
+
+主排序鍵是 test 的 Average Precision（PR-AUC）。
+Accuracy 不拿來選模型。
+操作點固定為風險分數最高的 919 筆。
+平手順序沿用 evaluation/research/v2/run_framework.py 的 topk_pred：
+分數高的在前，分數相同則金額高的在前，再相同則列索引小的在前。
+二元分類器不要假造連續機率。0/1 分數就用這個平手規則，並在報告寫明 unique score 的數量。
+Average Precision 差距在 0.01 以內，先視為接近，再用顧客區塊與 step 區塊的成對 bootstrap 說明不確定性。
+Bootstrap 的平均數不用來重排榜單。榜單用完整 test 的點估計。
+
+4. 兩條軌道不要混寫
+
+Track A，特徵對齊：
+所有學習模型使用 contract.parity_parts。
+內容是 v2 enriched 數值特徵、類別 CDF、金額相對類別中位數，以及 native category one-hot。
+沒有 merchant fraud rate，沒有 age、gender、zip、原始 customer 或 merchant 字串。
+模型可以有自己的前處理，但不得另外加入身份或詐欺率。
+
+Track B，公開流程重現：
+atavci 使用 contract.atavci_matrix。
+0xSushmitha 使用 contract.sushmitha_matrix。
+這兩組都含有 customer 與 merchant 代碼。那是他們原本的特徵，只放在 Track B。
+代碼只在 TRAIN 出現過的值上編，沒看過的值是 -1。
+這避免了原始筆記本先對全資料編代碼的問題，所以標成 ADAPTED，不是逐字重現。
+
+TrustLedger 既有模型保持原來的特徵：
+prod_rules、pr14_mapped_hgb、v2_enriched_sqrt、v2_merchant。
+v2_enriched_sqrt 同時是 Track A 的對照。
+v2_merchant 是完整流程，不放進 Track A。
+
+5. 公開模型，超參數已凍結
+
+atavci，2019-03-15，Fraud_Detection_bank_sim.py：
+XGBoost：max_depth 6，learning_rate 0.05，n_estimators 400，
+objective 分別訓練 binary:hinge 與 binary:logistic。
+hinge 是原文。logistic 是預先聲明的排序改寫，因為 hinge 可能只輸出 0/1。
+兩者都報告。不要因為 test 分數捨棄其中一個。
+RandomForest：n_estimators 100，max_depth 8，class_weight balanced，random_state 42。
+Soft vote 原文是 KNN、RF、XGBoost，權重 1、4、1。
+KNN 的 n_neighbors 是 5、p 是 1。先用 20,000 筆做時間探測。
+若依 n^2 外推全訓練集超過 600 秒，或探測本身超過 60 秒，就不要跑完整 KNN。
+此時 ensemble 改為 (4 * RF 機率 + 1 * logistic XGB 機率) / 5，
+並標成 APPROXIMATION，寫明缺少 KNN。
+
+0xSushmitha：
+5 個 LightGBM，n_estimators 300，learning_rate 0.07，num_leaves 63，
+random_state 200 到 204。
+每個模型保留全部詐欺列，並抽樣正常列，使詐欺數 / 正常數 = 0.05。
+使用 contract.undersample_indices。它是 NumPy 抽樣，不是 imblearn 的同一個亂數流，標成 ADAPTED。
+測試分數用 5 個模型的機率平均。
+他們 README 的 step <= 600 在這份 steps 0–179 的檔案上不存在。
+不要把他們公布的 AUPRC 0.9578 寫成這次對照的結果。
+他們的 rolling window 含當前列；本契約的視窗不含當前列。
+
+n_jobs 用 4，避免平行訓練時把 8 個核心過度訂閱。
+不要把模型二進位檔提交進 git。
+分數存 float64 的 npz，指標存 json。
+
+6. v2_merchant 洩漏審計
+
+三種特徵都要訓練，都不要依 test 結果刪掉：
+
+original_frozen：
+PR #15 的 merchant_rate。訓練列的特徵含有該列自己的標籤，也含有訓練期間較晚的標籤。
+test 特徵只用 steps 0–119，不含 test 標籤。
+
+step_causal：
+訓練列只用更早的 step。同一個 step 的標籤彼此看不見。
+select、confirm、test 仍使用凍結的 0–119 聚合。
+這用來回答「訓練特徵洩漏會不會改變 test 分數」。
+
+expanding：
+每一列只用已經結束的較早 step。
+test 因此看得到 steps 120–149 的標籤。
+這是更多資訊，必須分開報告，不能取代 PR #15 的重現。
+
+BankSim 沒有延遲確認欄位。兩種修正都是假設，不是資料裡的事實。
+若 test 沒有沒看過的 merchant，就直接寫不能用這個切分證明新商家泛化。
+不要為了保留 0.958 而沿用有問題的分數。
+若 step_causal 的 test 成績和 original_frozen 不同，對外的 merchant 結論以 step_causal 為準，
+同時保留 original_frozen 作為 PR #15 的重現數字。
+
+7. 不確定性
+
+使用 contract.paired_block_bootstrap。
+顧客區塊與 step 區塊都做，n_boot 200，seed 20261017。
+每次重抽時，審查筆數依 919 / 111306 的比例縮放，不把 919 固定套在不同大小的樣本上。
+區間含 0 就不要宣稱兩者有清楚差異。
+顧客區塊沒有處理時間相依。step 區塊只有約 30 個步驟，區間會比較寬。
+
+8. 錯誤分析切點
+
+金額切片在看結果前固定為 [0,20)、[20,250)、>=250。
+250 對應現行規則的金額門檻。
+另外比較模型之間抓到的詐欺重疊：兩邊都抓到、只有 A、只有 B、兩邊都沒抓到。
+
+9. 執行與界線
+
+Python 只用 /tmp/tl-research-venv/bin/python。
+不要把 scikit-learn、xgboost、lightgbm 寫進 backend 的 requirements。
+不要修改 backend/app、frontend、contracts、evaluation/research/v2/run_framework.py，
+也不要改寫 framework_v2.json。
+不要部署模型，不要合併 main。
+研究輸出只放在 evaluation/research/benchmark/ 底下各自的子目錄。
+
+先前 PR #15 在 919 筆預算下的數字只是待驗證的舊結果：
+prod_rules AP 0.45007707926977253，TP 701，FP 218。
+pr14_mapped_hgb AP 0.8153928294023746，TP 786，FP 133。
+v2_enriched_sqrt AP 0.8852597833910728，TP 837，FP 82。
+v2_merchant AP 0.9584845166158367，TP 892，FP 27。
+這次必須重跑。重跑結果和舊數字不同時，以這次的重跑為準。

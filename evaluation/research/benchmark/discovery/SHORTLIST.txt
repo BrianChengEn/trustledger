@@ -1,0 +1,555 @@
+TrustLedger BankSim 公開模型短名單
+狀態：只記錄來源。不改 contract.py，不改 PROTOCOL.txt，不訓練模型。
+
+資料範圍：Kaggle ntnu-testimon/banksim1 與 ealaxi/banksim1 的
+bs140513_032310.csv。約 594,643 列、7,200 件詐欺、step 0–179。
+欄位是 step, customer, age, gender, zipcodeOri, merchant,
+zipMerchant, category, amount, fraud。
+step 是日序，不是小時 1–744。
+
+標籤意思：
+FAITHFUL：接到已凍結時間切分後，仍逐字沿用原流程。
+ADAPTED：架構與超參數沿用原文，但切分、代碼或視窗已改，避免原文洩漏。
+APPROXIMATION：契約允許的降級，例如拿掉 KNN 之後的加權。
+not reproducible：沒有可執行來源，或公布數字彼此矛盾，不能當基準。
+
+沒有任何一份公開實作是 FAITHFUL。
+可排名的只有兩份，而且接到本契約時都是 ADAPTED。
+
+
+排名
+
+1. atavci / turkayavci，2019-03-15。
+   標籤：ADAPTED。
+   若時間探測拿掉 KNN，ensemble 另標 APPROXIMATION。
+   原因：超參數寫死在腳本裡。自然盛行率的 30% holdout 上，
+   KNN、XGBoost、ensemble 的分類表與混淆矩陣一致。
+   Random Forest 的 f1 儲存格和混淆矩陣不一致，見下方，不拿來當分數。
+
+2. 0xSushmitha，2025-08-28。
+   標籤：ADAPTED。
+   原因：有可執行的 LightGBM 訓練碼，也有 AUPRC / AUROC 表。
+   README、CLI、model_comparison.py、threshold.json、特徵名稱彼此不一致。
+   公布的 AUPRC 是他們自己的協定，不是 steps 0–119 / 150–179。
+
+沒有第三名。aravind-sundaresan 是唯一架構不同、而且有執行輸出的接近候選，
+仍不入榜。理由在「接近但未入選」。
+
+
+1. atavci / turkayavci
+
+來源 URL：
+https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py
+原始檔：
+https://raw.githubusercontent.com/atavci/fraud-detection-on-banksim-data/master/Fraud_Detection_bank_sim.py
+倉庫頁（README 檔名是 Readme.md，不是 README.md）：
+https://github.com/atavci/fraud-detection-on-banksim-data
+Kaggle：
+https://www.kaggle.com/code/turkayavci/fraud-detection-on-bank-payments/notebook
+資料集連結（README 所寫）：
+https://www.kaggle.com/ntnu-testimon/banksim1
+
+作者：腳本標頭 @author atavci。Kaggle 帳號 turkayavci。
+日期：腳本建立時間 Fri Mar 15 14:57:46 2019。
+契約日期 ATAVCI_DATE = 2019-03-15 與此一致。
+Git 上改副檔名的 commit 是 83800cf0f5，2019-03-20T08:54:08Z，
+訊息 "Corrected file extension"。這不是模型日期。
+
+架構：KNeighborsClassifier、RandomForestClassifier、
+XGBClassifier(objective="binary:hinge")，再 VotingClassifier(voting="soft")。
+權重 [1, 4, 1]，順序是 KNN、RF、XGB。
+
+原始特徵：
+丟掉 zipcodeOri、zipMerchant。
+customer、age、gender、merchant、category 用 pandas category 再 .cat.codes。
+保留 step 與 amount。
+沒有金額標準化，沒有 one-hot，沒有圖特徵。
+
+前處理：
+讀 Data/synthetic-data-from-a-financial-payment-system/bs140513_032310.csv。
+代碼在整個 frame 上 fit，然後才切分。
+
+訓練程序：
+train_test_split(test_size=0.3, random_state=42, shuffle=True, stratify=y)。
+這是打亂的分層切分，不是時間切分。
+README 寫明這組數字是沒有 SMOTE 的結果。
+
+超參數（與腳本一致）：
+KNN：n_neighbors=5，p=1。
+RF：n_estimators=100，max_depth=8，random_state=42，verbose=1，
+class_weight="balanced"。
+XGB：max_depth=6，learning_rate=0.05，n_estimators=400，
+objective="binary:hinge"，booster="gbtree"，n_jobs=-1，nthread=None，
+gamma=0，min_child_weight=1，max_delta_step=0，subsample=1，
+colsample_bytree=1，colsample_bylevel=1，reg_alpha=0，reg_lambda=1，
+scale_pos_weight=1，base_score=0.5，random_state=42，verbosity=True。
+Soft vote 權重 [1, 4, 1]。
+腳本沒有 binary:logistic。logistic 是契約預先聲明的排序改寫。
+
+原始評估：
+自然盛行率的 30% holdout。
+詐欺 support 2160，非詐欺 support 176233，合計 178393。
+178393 是 round(0.3 * 594643)。
+分類報告與混淆矩陣印在 Readme.md。
+plot_roc_auc 只把 AUC 畫進圖例（格式 AUC = %0.2f），沒有印出數字。
+沒有印出的 AUC 不當成數字。
+
+公布指標（Readme.md，無 SMOTE）：
+
+KNN，class 1：precision 0.83，recall 0.61，f1 0.70，support 2160。
+class 0：1.00 / 1.00 / 1.00，support 176233。
+混淆矩陣 [[175962, 271], [845, 1315]]。
+與 precision、recall 一致。
+
+XGBoost，class 1：0.89 / 0.76 / 0.82，support 2160。
+class 0：1.00 / 1.00 / 1.00，support 176233。
+混淆矩陣 [[176029, 204], [529, 1631]]。
+與 precision、recall 一致。
+腳本註解寫 XGB accuracy 0.9963059088641371。
+(176029 + 1631) / 178393 與此相同。
+
+Random Forest，表上 class 1：precision 0.24，recall 0.98，f1-score 0.82，
+support 2160。
+class 0：precision 1.00，recall 0.96，f1 0.98，support 176233。
+混淆矩陣 [[169552, 6681], [39, 2121]]。
+由矩陣得 precision 2121/8802 ≈ 0.241，recall 2121/2160 ≈ 0.982。
+這兩格與表一致。調和平均約 0.39，與印出的 f1 0.82 不一致。
+短名單照表引用 0.82，不把 f1 改寫成計算值。
+這列分類報告不能單獨當 RF 的公布 f1。
+
+Ensemble，class 1：precision 0.73，recall 0.81，f1 0.77，support 2160。
+class 0：1.00 / 1.00 / 1.00，support 176233。
+混淆矩陣 [[175604, 629], [417, 1743]]。
+與 precision、recall 一致。
+
+可重現性限制：
+全資料 .cat.codes 再打亂切分，測試列的代碼看過未來列。
+hinge 可能只輸出 0/1，沒有連續分數，也沒有印出的 Average Precision。
+KNN 在 37 萬筆訓練列上可能太慢。契約已規定 20,000 筆時間探測；
+超過門檻就不要跑完整 KNN。
+Kaggle 筆記本頁這次只回傳標題，內文是客戶端渲染，沒有讀到 cell。
+
+接到已凍結契約：ADAPTED。
+契約用時間前綴、只在 TRAIN 上編代碼、沒看過的值是 -1。
+hinge 與 logistic 都要報告。
+若拿掉 KNN，ensemble 改成 (4 * RF 機率 + 1 * logistic XGB 機率) / 5，
+標成 APPROXIMATION。
+README 的 precision / recall 不是這次 test Average Precision。
+
+
+2. 0xSushmitha
+
+來源 URL：
+https://github.com/0xSushmitha/Fraud-detection-in-financial-Transactions
+README：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/README.md
+設定：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/src/banksim_fraud/config.py
+特徵：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/src/banksim_fraud/features.py
+模型：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/src/banksim_fraud/model.py
+CLI：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/src/banksim_fraud/cli.py
+比較腳本：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/tools/model_comparison.py
+公布表：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/models/model_scores.csv
+特徵清單：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/models/features.json
+門檻：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/models/threshold.json
+重要度：
+https://raw.githubusercontent.com/0xSushmitha/Fraud-detection-in-financial-Transactions/main/models/feature_importance_top10.csv
+樹：
+https://api.github.com/repos/0xSushmitha/Fraud-detection-in-financial-Transactions/git/trees/main?recursive=1
+資料集連結（README 所寫）：
+https://www.kaggle.com/datasets/ealaxi/banksim1/data
+
+作者：0xSushmitha。唯一 commit c2be9659，作者信箱
+sushmitha.bakthavatchalam@ucd.ie。
+日期：2025-08-28T14:50:54Z。訊息 "Adding the code base to git"。
+分支 main。tree sha c2be9659df88859616bc21a644cf7faa60e6bba8。
+
+架構：5 個 LightGBM 的機率平均。
+model.py 另有依 PR 曲線、在 precision 至少 0.90 時最大化 recall 的門檻。
+model_comparison.py 還比較加權 LightGBM、SMOTE LightGBM、加權 XGBoost，
+並用 Optuna。契約凍結的是 model.py 的固定 5 模型，不是 Optuna 搜索。
+
+原始特徵：
+features.py 去掉引號；zipcodeOri 與 zipMerchant 轉成 int 並保留。
+customer、merchant 在整個 frame 上做 category.cat.codes。
+age、gender、category 做 get_dummies(drop_first=True)。
+依 customer、step 排序。
+timestamp = 2025-01-01 再加 step 小時。
+time_since_last_txn 是同一 customer 的 timestamp diff。
+is_night_txn = hour 落在 0 到 5。
+"1h" 筆數、"24h" 金額和與 z-score 的 rolling 含當前列，沒有 shift(1)。
+pair_txn_count_sofar = groupby(customer, merchant).cumcount()，不含當前列。
+cust_txn_count_sofar 與 merch_txn_count_sofar 是 cumcount()+1，含當前列。
+feature_list 只丟掉 fraud。
+features.json 有 39 欄，含 zipcodeOri、zipMerchant、customer、merchant。
+
+前處理矛盾（已對過原始碼，不是只看 README）：
+README 說行為特徵用 .shift(1)，而且因為基數高所以不用原始 ID。
+features.py 沒有 shift(1)，rolling 含當前列，而且保留整數 customer / merchant。
+README 點名的 amount_zscore_24h、txn_count_24h、is_first_time_pair、
+unique_merchants_count，和 feature_importance_top10.csv 的欄名對不上。
+實際 gain 最高的是 amount 178103.7105455622、
+merch_txn_count_sofar 78155.86440195143、
+merchant 31554.980249270797、
+txn_amount_sum_24h 17034.829691387713、
+cust_txn_count_sofar 5659.749510072172、
+time_since_last_txn 4623.181664042175、
+step 4569.395490467548、
+customer 4102.963156230748、
+category_es_health 2468.514925032854、
+txn_count_1h 1374.5175686180592、
+Others 13171.448257096112。
+
+訓練程序，三套切分不要混：
+README 寫 out-of-time：step <= 600 訓練、step > 600 測試。
+canonical step 只有 0–179，切點 600 不存在。
+README 也把 step 寫成 "Hour of simulation (1–740)"。這不是這份檔案。
+model_comparison.py 用 step 分位數：
+test_cut = step.quantile(0.80)，val_cut = step.quantile(0.70)。
+train 是 step <= val_cut，val 是 (val_cut, test_cut]，test 是 step > test_cut。
+特徵在切分前就在全 frame 上工程化。
+cli.py 再另一套：engineer() 排序後，用最後 20% 的列當門檻驗證，
+不是全域 step 切點。
+Optuna n_trials=30。EU 比例搜索 {0.02, 0.05, 0.10}。
+調參種子 random_state=100+k。
+最終在 step <= test_cut 的 train+val 上用種子 200+k 重訓。
+最佳 Optuna 參數沒有存進倉庫。
+
+超參數：
+config.py：NUM_MODELS=5，UNDERSAMPLE_RATIO=0.05，
+註解寫 "# 1 fraud : 50 normal"，DEFAULT_THRESHOLD=0.306。
+model.py：每個 k = 0..4，
+RandomUnderSampler(sampling_strategy=ratio, random_state=200+k)，
+LGBMClassifier(n_estimators=300, learning_rate=0.07, num_leaves=63,
+random_state=200+k, verbose=-1)。
+預測是 5 個 booster.predict 的平均。
+imblearn 的 sampling_strategy=0.05 是重抽後的少數 / 多數 = 1/20，
+不是註解寫的 1:50。1:50 會是 0.02。
+model_comparison.py 的 LightGBM 搜索範圍是 n_estimators 300–1200、
+num_leaves 31–255、learning_rate 對數 0.02–0.1，
+feature_fraction 與 bagging_fraction 0.6–0.95，
+min_data_in_leaf 50–300。這些不是凍結值。
+
+原始評估：他們自己的分位數切分加上 Optuna，不是本契約的時間切分。
+門檻檔 threshold.json 是 {"threshold": 0.7371905536996954}，
+與 DEFAULT_THRESHOLD 0.306 不同。
+
+公布指標，只屬於他們的協定。
+model_scores.csv 全文：
+LGB-Weighted, 0.9468079521003078, 0.9990759976950868
+LGB-EU 0.02, 0.9566883976493394, 0.999268510934491
+LGB-EU 0.05, 0.9577828623757437, 0.9992777241964758
+LGB-EU 0.1, 0.9566379610448515, 0.99928699071431
+LGB-SMOTE 0.10, 0.955115788055477, 0.9992515622603487
+XGB-Weighted, 0.9422651505101224, 0.9987776684109733
+欄位是 Model, AUPRC, AUROC。
+README 四捨五入成 LGB-EU 0.05 的 0.9578 / 0.9993，
+其餘列也有對應的四捨五入。
+CSV 有三個 EU 比例。現行 model_comparison.py 只會 append 一個
+Optuna 選中的比例。CSV 不是現行腳本單次執行的完整產物。
+倉庫有 booster_0.txt 到 booster_4.txt。這次沒有下載。
+二進位檔不能證明 0.9578 來自凍結的 n_estimators=300。
+不要把 0.9578 寫成這次對照的結果。
+
+可重現性限制：
+README、CLI、比較腳本、門檻、特徵敘事不一致。
+全 frame 代碼與含當前列的 rolling 有洩漏。
+is_night 是把 step 當成小時之後的 (step % 24) 產物，不是時鐘。
+資料檔 data/bs140513_032310.csv，blob sha a114ec2e，大小 48391391。
+另有 SDV 的 synthetic_txns.csv，不是這次基準。
+
+接到已凍結契約：ADAPTED。
+代碼只在 TRAIN 前綴上 fit。視窗不含當前列。
+undersample 用 contract.undersample_indices，是 NumPy，不是 imblearn 亂數流。
+比例仍是 0.05。zip 不進矩陣，因為兩個 zip 都是單一值。
+is_night = (step % 24) <= 5 故意保留，標成他們的小時假象。
+5 個 LightGBM 用 model.py 的固定超參數與種子 200–204，不用未公布的 Optuna 參數。
+
+
+同一作者的變體，不另排名
+
+atavci 筆記本：
+https://raw.githubusercontent.com/atavci/fraud-detection-on-banksim-data/master/Fraud%20Detection%20on%20Bank%20Payments.ipynb
+模型與超參數和 .py 相同，但 SMOTE(random_state=42) 在切分之前
+fit 在整個 X, y 上，再做 0.3 分層切分。這是洩漏。
+README 說 SMOTE 結果 "looks more better"，沒有印出那組數字。
+Kaggle 頁只回傳標題 "Fraud Detection on Bank Payments | Kaggle"。
+不入選。契約凍結的是沒有 SMOTE 的 .py。
+
+
+接近但未入選：aravind-sundaresan
+
+來源：
+https://github.com/aravind-sundaresan/Graph-ML-Fraud-Detection
+https://raw.githubusercontent.com/aravind-sundaresan/Graph-ML-Fraud-Detection/master/README.md
+https://raw.githubusercontent.com/aravind-sundaresan/Graph-ML-Fraud-Detection/master/code/standard_fraud_detection.py
+https://raw.githubusercontent.com/aravind-sundaresan/Graph-ML-Fraud-Detection/master/code/graph_fraud_detection.py
+https://raw.githubusercontent.com/aravind-sundaresan/Graph-ML-Fraud-Detection/master/code/graphdb_creation.cyp
+https://raw.githubusercontent.com/aravind-sundaresan/Graph-ML-Fraud-Detection/master/code/fraud_detection.ipynb
+樹：
+https://api.github.com/repos/aravind-sundaresan/Graph-ML-Fraud-Detection/git/trees/master?recursive=1
+
+作者：aravind-sundaresan。commit 6825d212，2020-05-02。
+腳本約在 2020-05-01 加入。課程 CSE 573，Arizona State University，Spring 2020。
+倉庫內有 data/bs140513_032310.csv（sha 9a49db29，大小 48986035）
+與 data/bsNET140513_032310.csv（大小 32665953）。
+README 沒有公布指標。下面的數字來自筆記本已執行的輸出。
+
+內在模型：
+丟掉 step、customer、兩個 zip、fraud。
+age、gender、category、merchant 做 get_dummies。
+StandardScaler 與 PCA(0.95) 在全 frame 上 fit。
+筆記本輸出 PCA 形狀 (594643, 55)。
+StratifiedKFold(n_splits=5, shuffle=False)，沒有 random_state。
+RF：max_depth=20，n_estimators=150，沒有 random_state。
+SVC(gamma="auto")。
+LogisticRegression(solver="lbfgs", max_iter=5000)。
+.py 會 fit SMOTE，然後丟掉，模型練的是原不平衡 fold。
+筆記本另有切分後才 SMOTE 的 cell，而且 train_test_split 沒有種子。
+
+內在模型、自然盛行率、每 fold 約 118929 列、1440 件詐欺。
+第五折的 accuracy 那一行在摘錄裡被截斷。
+5-fold Logistic Regression，詐欺 precision / recall / f1：
+0.77/0.74/0.76，0.86/0.74/0.80，0.89/0.75/0.82，0.93/0.71/0.80，0.95/0.68/0.79。
+5-fold Random Forest：
+0.79/0.74/0.76，0.86/0.75/0.80，0.90/0.75/0.82，0.94/0.72/0.81，0.95/0.69/0.80。
+無種子 20% 切分、訓練集 SMOTE 之後：
+Logistic Regression 詐欺 0.30 / 0.98 / 0.45，support 1454。
+SMOTE 後類別計數 Counter({0: 469968, 1: 469968})。
+Random Forest 詐欺 0.34 / 0.97 / 0.50，support 1477。
+SMOTE 後 Counter({0: 469991, 1: 469991})。
+SVM 單次切分：0.87 / 0.69 / 0.77，support 1431。
+沒有印出 Average Precision 或 ROC AUC 數字。
+
+圖模型：
+需要活的 Neo4j，Graph(password="root")。
+用已棄用的 algo.pageRank 與 algo.beta.labelPropagation。
+特徵是 merchant / customer 的 degree、pagerank、community。
+圖在切分前用全圖計算。另丟掉 age 與 gender。
+連線 cell 的輸出是空的，後面的分類 cell 仍有舊輸出。
+5-fold Logistic Regression 詐欺約：
+0.81/0.79/0.80，0.87/0.80/0.84，0.90/0.79/0.84，0.93/0.75/0.83，0.95/0.72/0.82。
+第五折 accuracy 行被截斷。
+單次 20% Random Forest：0.90 / 0.80 / 0.85，support 1497。
+單次 20% SVM：0.90 / 0.77 / 0.83，support 1477。
+
+標籤：not reproducible，不入排名。
+原因：全資料 scaler / PCA、全圖結構特徵、.py 與筆記本的 SMOTE 不一致、
+沒有種子、圖路徑綁 Neo4j、沒有機率或 Average Precision。
+它仍是這次唯一夠具體、架構也不同的第三種實作。
+實作備忘放在最後一節，契約不收它。
+
+
+拒絕
+
+yubi45
+https://www.kaggle.com/code/yubi45/synthetic-data-from-a-financial-payment-system
+https://www.kaggle.com/code/yubi45/synthetic-data-from-a-financial-payment-system/log
+作者：Kaggle 使用者 yubi。log 相對時間寫 4y ago，沒有日曆日期。
+這次直接開啟 /log 只回傳標題。下列數字來自搜尋工具抽出的同一份 log。
+架構：log 可見 KNN 的分類報告。其餘模型沒有在抽出的片段裡。
+原始特徵：log 有 BankSim 欄位，594643 列。
+前處理：先印正常 587443、詐欺 7200，接著 fraud 計數變成
+0: 587443 與 1: 587443。這是切分前把兩類補成一樣多。
+訓練程序：從 log 看得到類別平衡後才評估。筆記本 cell 原始碼沒讀到。
+超參數：log 片段沒有印出。
+評估：測試 support 兩類都是 176233，合計 352466。
+公布指標：base accuracy 98.7891894800746。
+KNN class 0：1.00 / 0.98 / 0.99，support 176233。
+class 1：0.98 / 1.00 / 0.99，support 176233。
+accuracy 0.99，合計 352466。
+混淆矩陣在抽出的片段裡被截斷，不補數字。
+限制：平衡後的測試集不能和 1.2% 詐欺盛行率比較。
+標籤：not reproducible。不入選。
+
+kartik2112
+https://www.kaggle.com/code/kartik2112/fraud-detection-banksim
+這次只回傳 "Fraud Detection BankSim | Kaggle"。
+沒有讀到原始碼，也沒有讀到指標。
+標籤：not reproducible。不入選。
+
+gouldju1
+https://github.com/gouldju1/Fraud-Detection-in-Python
+作者：gouldju1，協作 Baylee Adams 與 Kyle Shope。
+CSE 891 Data Mining，Michigan State University。
+頁面顯示 master 有 3 個 commit；這次 HTML 的日期欄是空的，沒有另開 commits API。
+倉庫有 Fraud_Project.ipynb、README.md、fraudData.csv、Fraud_Decision_Tree.pdf。
+筆記本這次沒有打開。
+架構（只依 README）：Naive Bayes、Logistic Regression、Neural Network、
+Decision Tree、Random Forest。神經網路的層數與超參數不在 README。
+原始特徵：README 說 Kaggle 檔有 594,643 列、587,443 筆正常、7,200 筆詐欺、10 個特徵。
+前處理：去掉儲存格引號；類別欄轉型；amount 保留數值；
+丟掉兩個 ZIP；pandas.get_dummies。
+訓練程序與超參數：README 沒有寫切分、種子或模型參數。
+評估：一張 precision / recall / FP / FN 表。
+公布指標（README 原文）：
+Naive Bayes：precision 0.1957，recall 0.9993，FP 2，FN 11695。
+Logistic Regression：0.8887 / 0.7236，FP 796，FN 261。
+Neural Network：0.8721 / 0.7624，FP 684，FN 322。
+Decision Tree：0.9027 / 0.7212，FP 803，FN 224。
+Random Forest：0.8845 / 0.7462，FP 1096，FN 421。
+Naive Bayes 的 recall 0.9993 與 FN 11695 不能同時成立。
+FP 2 也不能對上 precision 0.1957。
+正文說 Naive Bayes 的 FP 最低，並把 Naive Bayes 與神經網路排最高。
+表上的 FP 與這段正文也不一致。
+限制：公布表自相矛盾。筆記本未讀，不能用它補上另一套數字。
+標籤：not reproducible。不入選。
+
+Dong Haokun
+搜尋結果指向 https://www.scribd.com/document/976838438/Dong-Haokun
+論文題名見於搜尋結果："An Enhanced Autoencoder for Anomaly Detection
+in Imbalanced Financial Fraud Data"。
+University of Canberra，Haokun Dong，2025 年 1 月。
+這次沒有打開全文，也不引用論文裡的分數。
+沒有找到可執行的公開程式庫。
+另一份 Cardiff 文件
+https://orca.cardiff.ac.uk/145696/1/Fraud%20Detection%20in%20a%20Financial%20Payment%20System.pdf
+只在搜尋結果裡出現，是不同寫作，這次沒有打開全文。
+標籤：not reproducible。不入選。
+
+RawdaYassin / rawdayassin
+個人頁 https://github.com/rawdayassin 這次只回傳 GitHub 殼層。
+使用者 API：
+https://api.github.com/users/rawdayassin/repos?per_page=100
+https://api.github.com/users/RawdaYassin/repos?per_page=100
+登入名是 RawdaYassin，id 129060285。公開倉庫清單裡，名稱像詐欺的只有
+https://github.com/RawdaYassin/Financial-Fraud-Detection-Tool
+倉庫建立與推送都在 2025-10-02。檔案只有 app.py、catboost.pkl、requirements.txt。
+https://raw.githubusercontent.com/RawdaYassin/Financial-Fraud-Detection-Tool/main/README.md
+回 404。
+app.py 是 Streamlit 評分器。輸入欄是 step, type, amount, oldbalanceOrg,
+newbalanceOrig, oldbalanceDest, newbalanceDest, nameDest。
+特徵含餘額差、nameDest 是否以 M 開頭、type 的
+CASH_IN / CASH_OUT / DEBIT / PAYMENT / TRANSFER。
+step 上限 744。沒有訓練迴圈，也沒有 BankSim 的 customer / category 欄。
+這是 PaySim 結構的推論程式，不是 BankSim 模型。
+其餘倉庫只依名稱排除，沒有當成 BankSim 候選。
+標籤：not reproducible（對 BankSim 而言）。不入選。
+
+Patil 等人，PMC 圖資料庫論文
+https://pmc.ncbi.nlm.nih.gov/articles/PMC11016795/
+DOI https://doi.org/10.1016/j.mex.2024.102683
+MethodsX，2024-04-04。作者 Ayushi Patil、Shreya Mahajan、Jinal Menpara、
+Shivali Wagle、Preksha Pareek、Ketan Kotecha。
+資料寫明 Kaggle ealaxi/banksim1，594,643 筆、7,200 件詐欺、180 steps。
+軟體只寫 Google Colab，沒有筆記本 URL。
+流程文字含 Neo4j、one-hot、標準化、SMOTE，再切分。
+沒有超參數。
+公布指標：
+Table 3：Random Forest 99.971%，KNN 99.983%，XGBoost 99.998%。
+Table 2：class 0 與 class 1 的 precision / recall / F1 都是 0.99。
+Table 1 只有執行時間。混淆矩陣是圖，沒有讀出儲存格。
+class 1 的 precision、recall、F1 都是 0.99，同時最高 accuracy 是 99.998%。
+在 1.2% 盛行率下，這組整數很像平衡後或洩漏後的評估。論文沒有給出可核對的 support。
+沒有程式碼。
+標籤：not reproducible。不入選。
+相關但未當候選：Neo4j 討論
+https://community.neo4j.com/t/banksim-fraud-detection-ml-comparison/41425
+只在搜尋結果出現，這次沒有打開全文。
+
+tyrawls
+https://www.kaggle.com/code/tyrawls/enhancing-fraud-detection-via-bank-data-analysis
+log：
+https://www.kaggle.com/code/tyrawls/enhancing-fraud-detection-via-bank-data-analysis/log
+作者 Ty Rawls。log 相對時間 2y ago。
+這次直接開啟頁面只回傳標題。數字來自搜尋工具抽出的 log。
+資料來源名稱是 "Fraud detection bank dataset 20K records binary"。
+Non-Fraud 15030 (73.4317%)，Fraud 5438 (26.5683%)。
+112 個特徵。train (16374, 112)，test (4094, 112)。
+測試 support 是 non-fraud 3011、fraud 1083。
+這不是 594,643 列的 BankSim。
+可見指標，僅說明它是另一份檔：
+Decision Tree，ccp_alpha 0.00027，test accuracy 0.9138。
+Logistic Regression test accuracy 先是 0.8828，max_iter=125 時是 0.8835。
+Random Forest，n_estimators=137，training accuracy 0.9999083913521436，
+同一段 test accuracy 是 0.9299。
+標籤：not reproducible（不是 BankSim）。不入選。
+
+Anomaly Transformer 的 BankSim 論文
+搜尋結果：
+https://www.researchgate.net/publication/394486662_Big_Data_Analytics_Anomaly_Transformer_in_Financial_Fraud_Detection_in_BankSim_Datasets
+這次沒有打開全文。搜尋片段裡的 Table IV 寫 ROC AUC 0.7942、PR-AUC 0.1096、
+best threshold 0.0204、best F1 0.1836、precision 0.1329。
+作者名在片段裡被截斷。沒有找到 BankSim 訓練碼。
+原始 Anomaly Transformer 倉庫
+https://github.com/thuml/Anomaly-Transformer
+是 Jiehui Xu 等人、ICLR 2022，資料是 SMD / MSL / SMAP / SWaT / PSM，
+這次沒有把它當成 BankSim 實作去讀程式。
+0.7942 不是本對照的數字。
+標籤：not reproducible。不入選。
+
+其他資料集，只確認它們不是這份 BankSim，不排名：
+IEEE-CIS、ULB creditcard.csv（約 284,807 列、492 件詐欺）、
+NeurIPS 2022 Bank Account Fraud、PaySim（約 6.3M，type 含 CASH_OUT / TRANSFER，
+step 常被當成小時）。
+López-Rojas 同時是 BankSim 與 PaySim 的作者，兩邊容易被寫成同一份資料。
+banking-project/banksim 是另一個銀行間模擬器，不是 bs140513_032310.csv。
+concept-inversion/kaggle-fraud-detection-BankSim 與
+Archita-1510/Fraud-Detection-on-Bank-Payment 只出現在搜尋結果。
+筆記本沒有打開，不引用指標，也不入選。
+
+
+與已凍結契約的差異
+
+已凍結的 atavci + 0xSushmitha 仍然是對的一組。
+這次沒有找到第三個又強、又可重現、架構又不同的公開實作。
+不要為了湊滿三個而把 aravind、yubi45、gouldju1 或 Patil 論文加進契約。
+contract.py 與 PROTOCOL.txt 維持不變。
+
+兩份入選接到契約時都不是 FAITHFUL：
+
+atavci：
+原文是全 frame .cat.codes，再做 shuffle、stratify、test_size 0.3、random_state 42。
+契約是 steps 0–119 的時間前綴，代碼只在 TRAIN 上 fit，沒看過的值是 -1。
+所以是 ADAPTED。
+原文 XGB 只有 binary:hinge。
+契約另外預先訓練 binary:logistic，因為 hinge 可能只有 0/1。
+兩者都要留，不能用 test 分數刪掉一個。
+KNN 仍是 n_neighbors=5、p=1。
+先用 20,000 筆做時間探測。探測超過 60 秒，或依 n^2 外推全訓練集超過 600 秒，
+就不要跑完整 KNN。
+那時 ensemble 是 (4 * RF 機率 + 1 * logistic XGB 機率) / 5，標 APPROXIMATION。
+README 的 0.83/0.61、0.89/0.76、0.73/0.81 是他們的 30% holdout。
+RF 印出的 f1 0.82 與混淆矩陣不一致，不能拿來核對契約分數。
+沒有可引用的原文 AUC。
+
+0xSushmitha：
+契約用 model.py 的 5 個 LightGBM，不是 Optuna 最佳參數。
+n_estimators 300，learning_rate 0.07，num_leaves 63，種子 200–204。
+抽樣比例 0.05，但是 NumPy 的 undersample_indices，不是 imblearn。
+視窗不含當前列；原文 rolling 含當前列。
+zip 不進矩陣。is_night 保留成 (step % 24) <= 5。
+他們的 AUPRC 0.9577828623757437（README 寫 0.9578）
+與 AUROC 0.9992777241964758 只標成「他們的分位數 / Optuna 協定」。
+step <= 600 在 steps 0–179 上不存在，不要照 README 切。
+DEFAULT_THRESHOLD 0.306 與 threshold.json 的 0.7371905536996954 都不要當成
+本契約的 919 筆審查預算。
+
+若以後要加第三個公開模型，唯一夠具體的候選是 aravind 的內在路徑，
+不是圖路徑。圖路徑要 Neo4j，而且全圖 PageRank 在切分前就算完。
+內在路徑要改寫後才可能變成 ADAPTED，現在不收進契約：
+
+- 資料仍是 bs140513_032310.csv。
+- 丟掉 step、customer、zipcodeOri、zipMerchant。
+- 保留 amount。
+- age、gender、category、merchant 用 one-hot。merchant 是高基數。
+- 不要在全 frame 上 fit StandardScaler 或 PCA。
+  若要重現他們的維度，PCA(0.95) 只能 fit 在 TRAIN，
+  他們的筆記本輸出是 55 個成分，那個 55 是全資料 fit 的結果，不能先寫死。
+- RandomForestClassifier(max_depth=20, n_estimators=150)。
+  原文沒有 random_state。要重跑就得另外聲明種子，並標成 ADAPTED。
+- 他們的 .py 用 StratifiedKFold(n_splits=5, shuffle=False)，
+  而且 SMOTE 被 fit 之後丟掉。
+  筆記本的 20% SMOTE 切分沒有種子。
+  兩套不要合成一個模型。
+- 沒有 class_weight，沒有 Average Precision。
+- 接到 steps 0–119 / 150–179 之後，這就不再是他們的 5-fold 數字。
+
+這段只是實作備忘。這次短名單不把它排進去，也不修改已凍結契約。
