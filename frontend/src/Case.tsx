@@ -3,6 +3,7 @@ import {labels, money, request, type Explanation, type Alert, type Transaction} 
 import {Icon} from './icons';
 import {alertHints, explanationModeCopy, fullDate, isPriorEvidence, memoryCategory, memorySentence, memoryStore, outcomeCopy, prettyCategory} from './lib';
 import {usePreview} from './preview';
+import RelevantMemory from './RelevantMemory';
 import {alertIcons, statusText} from './Today';
 import {categoryIcon} from './Activity';
 import {Callout, Chip} from './ui';
@@ -180,7 +181,7 @@ function Decision({alert, tx, enabled}: {alert: Alert; tx: Transaction; enabled:
 
 /** The case file: one transaction explained in depth, with evidence, optional AI and the human decision. */
 export default function Case({id, from}: {id: string; from?: string}) {
-  const {transactions, alerts, runs, analyze, memoryKey, memories, loaded, ready, revision, go, href} = useWorkspace();
+  const {transactions, alerts, runs, analyze, memoryKey, loaded, ready, revision, go} = useWorkspace();
   const tx = transactions.find(t => t.id === id);
   const alert = alerts.find(a => a.transaction_id === id);
   const {preview} = usePreview(tx?.id, memoryKey);
@@ -188,7 +189,6 @@ export default function Case({id, from}: {id: string; from?: string}) {
     <p>That transaction was not found.</p><button onClick={() => go({view: 'activity'})}>Back to Activity</button></div></div>
     : <p className="loading" role="status">Loading…</p>;
   const run = runs[tx.id];
-  const memory = memories.find(m => memoryCategory(m.summary) === tx.merchant_category);
   const backTo = from === 'activity' ? 'Activity' : 'Today';
   return <div className="page case">
     <header className="casehead">
@@ -205,13 +205,11 @@ export default function Case({id, from}: {id: string; from?: string}) {
         <div><dt>Data source</dt><dd>{tx.source === 'synthetic' ? 'Synthetic fixture' : 'Capital One Nessie sandbox'}</dd></div>
         <div><dt>Reference</dt><dd className="mono">{tx.id}</dd></div>
       </dl>
-      {memory && (() => { const s = memoryStore(memory.source); return <div className="memnote">
-        <Icon name="hardDrive" size={16}/><div><b>You told TrustLedger this category is normal</b>
-          <p>{s.label}. Context only; it does not hide alerts. <a href={href({view: 'memory'})}>Manage in Memory</a></p></div></div>; })()}
     </aside>
     <div className="steps">
       <Step n={1} title="Why it was flagged" tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
         {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still ask for a plain-language explanation or run an AI second opinion.</p>}
+        {ready && alert && <RelevantMemory transactionId={tx.id}/>}
         <ExplanationPanel key={revision} tx={tx}/>
       </Step>
       <Step n={2} title="AI second opinion" tag={<Chip tone="ai" icon="sparkles">Optional</Chip>}>

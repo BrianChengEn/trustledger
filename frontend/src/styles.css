@@ -491,3 +491,9 @@ pre.json { margin: 0; padding: 12px; border-radius: 12px; background: var(--code
 .explain dd { margin: 0; }
 .explain details { display: grid; gap: 8px; }
 .explain summary { cursor: pointer; font-weight: 600; }
+
+.relmem { display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--line); }
+.relmem.tone-good { background: var(--good-soft); border-color: transparent; } .relmem.tone-warn { background: var(--warn-soft); border-color: transparent; }
+.relmem h3 { font-size: .9rem; display: flex; align-items: center; gap: 7px; }
+.relmem blockquote { padding: 8px 12px; border-left: 3px solid var(--brand); background: var(--surface); border-radius: 0 8px 8px 0; font-size: .92rem; }
+.stillreview { display: flex; gap: 8px; align-items: center; font-weight: 600; color: var(--warn); }

@@ -95,3 +95,13 @@ export interface Execution extends Omit<HistoryItem, 'history_id'> {
   write_status: 'saved'|'failed'; write_label: string|null;
 }
 export interface HistoryPage {items: HistoryItem[]; next_cursor: number|null}
+
+/** GET /transactions/{id}/relevant-memory. Read-only context; the alert fields are a copy and never change. */
+export interface RelevantMemoryResult {
+  transaction_id: string; alert_id: string | null; category: string;
+  alert_type: Analysis['alert_type']; severity: Analysis['severity']; needs_human: boolean; evidence: string[];
+  memory_status: 'backboard-live' | 'local-fallback' | 'unavailable' | 'no-relevant-memory';
+  memory_id: string | null; summary: string | null; relevance: 'same-category' | null;
+  retrieval: 'backboard-search' | 'category-filter' | null; source: 'backboard' | 'local-fallback' | null;
+  still_requires_review: true; request_id: string;
+}

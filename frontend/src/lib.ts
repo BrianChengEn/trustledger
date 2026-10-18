@@ -1,4 +1,4 @@
-import type {Alert, Confirmation, Explanation, Health, Memory, Transaction} from './api';
+import type {Alert, Confirmation, Explanation, Health, Memory, RelevantMemoryResult, Transaction} from './api';
 
 export const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
 export const time = (iso: string) => new Date(iso).toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'});
@@ -85,4 +85,20 @@ export function explanationModeCopy(mode: Explanation['explanation_mode'], fromC
     title: 'Rules explanation', tone: 'neutral',
     detail: 'Gemini was not called. This text is written from the rules and the privacy-safe summary.',
   };
+}
+
+export interface RelevantMemoryCopy {title: string; chip: string; detail: string; tone: Tone; hasMemory: boolean}
+/** Wording for each relevant-memory state. Never claims a live Backboard search unless the backend says so. */
+export function relevantMemoryCopy(r: Pick<RelevantMemoryResult, 'memory_status' | 'retrieval' | 'summary'>): RelevantMemoryCopy {
+  switch (r.memory_status) {
+    case 'backboard-live': return {hasMemory: !!r.summary, tone: 'good', title: 'Relevant memory found',
+      chip: r.retrieval === 'backboard-search' ? 'Backboard · live search' : 'Backboard memory',
+      detail: r.retrieval === 'backboard-search' ? 'Retrieved from Backboard by a live search for this category.' : 'Stored with Backboard.'};
+    case 'local-fallback': return {hasMemory: !!r.summary, tone: 'neutral', title: 'Relevant memory found (local)',
+      chip: 'Local fallback', detail: 'Found in this app’s local records. This was not a live Backboard search.'};
+    case 'no-relevant-memory': return {hasMemory: false, tone: 'neutral', title: 'No relevant memory found.', chip: 'Checked',
+      detail: 'Nothing you consented to matches this category. This is a genuine empty result, not an outage.'};
+    default: return {hasMemory: false, tone: 'warn', title: 'Memory unavailable', chip: 'Unavailable',
+      detail: 'Memory could not be checked right now, which is not the same as having none. The alert and its evidence are unaffected.'};
+  }
 }
