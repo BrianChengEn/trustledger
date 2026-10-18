@@ -104,6 +104,25 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Explanation' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/{transaction_id}/relevant-memory:
+    get:
+      operationId: relevantMemory
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: >-
+            Consented same-category memory for this transaction.
+            memory_status is backboard-live, local-fallback, unavailable,
+            or no-relevant-memory. The alert fields are a read-only copy.
+            still_requires_review is always true. Deleting one memory uses
+            DELETE /api/v1/memories/{memory_id}; this route has no cache.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RelevantMemory' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/alerts/{alert_id}/confirmations:
     post:
       operationId: confirmAlert
@@ -1241,6 +1260,26 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Explanation' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/admin/nessie/customers/{customer_code}/transactions/{transaction_id}/relevant-memory:
+    get:
+      operationId: relevantCustomerMemory
+      parameters:
+        - name: customer_code
+          in: path
+          required: true
+          schema: { type: string, pattern: '^customer_[0-9a-f]{32}$' }
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: >-
+            Customer-scoped consented same-category memory.
+            Same body as the public relevant-memory route.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RelevantMemory' }
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   parameters:
     TransactionId:
@@ -1453,6 +1492,32 @@ components:
         decision: { type: string, enum: [normal, review] }
         memory_status: { type: string, enum: [not-requested, written, pending, skipped, failed] }
         memory_id: { type: [string, 'null'] }
+        request_id: { type: string }
+    RelevantMemory:
+      type: object
+      additionalProperties: false
+      required: [transaction_id, alert_id, category, alert_type, severity, needs_human, evidence,
+        memory_status, memory_id, summary, relevance, retrieval, source, still_requires_review, request_id]
+      properties:
+        transaction_id: { type: string }
+        alert_id: { type: [string, 'null'] }
+        category: { type: string, maxLength: 40 }
+        alert_type: { type: string, enum: [duplicate, amount_anomaly, subscription_change, none] }
+        severity: { type: string, enum: [low, medium, high] }
+        needs_human: { type: boolean }
+        evidence:
+          type: array
+          maxItems: 8
+          items: { type: string, maxLength: 180 }
+        memory_status:
+          type: string
+          enum: [backboard-live, local-fallback, unavailable, no-relevant-memory]
+        memory_id: { type: [string, 'null'] }
+        summary: { type: [string, 'null'], maxLength: 240 }
+        relevance: { type: [string, 'null'], enum: [same-category, null] }
+        retrieval: { type: [string, 'null'], enum: [backboard-search, category-filter, null] }
+        source: { type: [string, 'null'], enum: [backboard, local-fallback, null] }
+        still_requires_review: { type: boolean, const: true }
         request_id: { type: string }
     MemorySummary:
       type: object

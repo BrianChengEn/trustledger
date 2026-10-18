@@ -23,6 +23,13 @@ def approved_memory(summary: str) -> bool:
     return category in CATEGORIES
 
 
+def category_of(summary: str) -> str | None:
+    """Return the category embedded in an approved sentence, or None."""
+    if not approved_memory(summary):
+        return None
+    return summary[len(_PREFIX):-len(_TAIL)]
+
+
 def prior_confirmation(category: str, summaries: list[str]) -> Literal["normal", "review", "unknown"]:
     """Map a consented category sentence to a safe label. Review and opt-out write nothing."""
     label = category if category in CATEGORIES else "other"
