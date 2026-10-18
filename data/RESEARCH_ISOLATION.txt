@@ -2,10 +2,12 @@
 
 BankSim、benchmark 分數、fraud 標籤只給離線評估。
 它們不取代 production rules，也不寫進 demo_transactions。
+欄位與 step 語意見 data/BANKSIM_DICTIONARY.txt。
+fraud 標籤與營運交易分開，推論不讀 ground truth。
 
 示範與 API
 - fixtures/synthetic-transactions.json
-- backend 啟動時為 demo-user-001 寫入那 8 筆
+- backend 啟動時為 demo-user-001 寫入那 18 筆合成交易
 - 規則在 backend/app/core/rules.py
 - Gemini 與 Jev 只看 SafePayload
 - Backboard 記憶只存同意過的類別句子
