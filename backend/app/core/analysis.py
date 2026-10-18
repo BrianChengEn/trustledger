@@ -2,7 +2,7 @@
 from app.core.fraud import FraudProvider, evaluate_fraud
 from app.core.transactions import TransactionService
 from app.core.memory import PriorConfirmations
-from app.schemas.api import Alert, Analysis, PrivacyPreview
+from app.schemas.api import Alert, Analysis, PrivacyPreview, SafePayload
 from app.core.features import safe_payload, privacy_preview
 from app.core.rules import analyze
 
@@ -40,6 +40,14 @@ class AnalysisService:
             if analysis.alert_type != "none":
                 result.append(Alert(**analysis.model_dump(), alert_id="alert_" + transaction.id))
         return result
+
+    def rules_view(self, transaction_id: str, request_id: str) -> tuple[Analysis, SafePayload]:
+        """Rules-only explanation basis. This does not call a fraud provider."""
+        history = self.transactions.history()
+        transaction = self.transactions.get_transaction(transaction_id)
+        prior = self.memory.for_category(transaction.merchant_category)
+        return (analyze(transaction, history, request_id, prior),
+                safe_payload(transaction, history, prior))
 
     def preview(self, transaction_id: str) -> PrivacyPreview:
         history = self.transactions.history()

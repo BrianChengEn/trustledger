@@ -145,8 +145,18 @@ analysis or mark a transaction safe. See `docs/main-integration-resolution.md`.
 The older integration document says `ALLOW_MEMORY_WRITE=false` by default; current
 Settings and the example environment use `true`. F6 preserves the current source
 default and all explicit consent gates. Resolving that policy discrepancy remains
-an owner decision. Backboard memory and Gemini remain unimplemented; explicit Backboard/Jev inference
-is separate from memory operations.
+an owner decision. Explicit Backboard/Jev inference is separate from memory operations.
+
+
+## Gemini explanation
+
+`POST /api/v1/transactions/{transaction_id}/explanation` explains the current rules
+alert. It does not call Jev and does not change `alert_type`, severity, `needs_human`,
+evidence, confidence, or `provider_mode`. Gemini receives the eight-field safe payload
+plus closed reason codes, never the raw transaction. `explanation_mode` is `gemini-live`
+only after a validated reply, `template` when `GEMINI_API_KEY` is empty, and `fallback`
+when a call fails. A missing key does not stop the API. `google-genai==2.31.0` is the
+pinned SDK. The default model is `gemini-3.5-flash-lite`.
 
 
 ## Approved Main integration

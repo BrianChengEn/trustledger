@@ -5,10 +5,10 @@ from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 from contextlib import asynccontextmanager
 import httpx
 
-from app.api.dependencies import Analyses, Transactions
+from app.api.dependencies import Analyses, Explanations, Transactions
 from app.core.store import ConflictingConfirmation
 from app.schemas.api import (
-    Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Health,
+    Alert, Analysis, AnalyzeRequest, Confirmation, ConfirmationRequest, Explanation, Health,
     MemorySummary, PrivacyPreview,
 )
 from app.schemas.transaction import Transaction
@@ -17,6 +17,20 @@ from app.services.ai.backboard_client import MemoryCallError
 from app.services.ai.memory_sync import consented_summaries, remove_remote_memory, write_consented_memory
 
 router = APIRouter(prefix="/api/v1")
+
+
+def private_markers(tx: Transaction) -> tuple[str, ...]:
+    """Local denylist for model output. These values are not placed in the Gemini document."""
+    amount = tx.amount
+    markers = [
+        tx.id, tx.account_token, tx.merchant_display, tx.occurred_at.isoformat(),
+        str(amount), f"{amount:.2f}", f"{amount:.1f}", f"{amount:g}",
+    ]
+    unique: list[str] = []
+    for marker in markers:
+        if len(marker) >= 3 and marker not in unique:
+            unique.append(marker)
+    return tuple(unique)
 
 
 def api_key(request: Request) -> str:
@@ -89,6 +103,19 @@ def list_alerts(request: Request, analyses: Analyses):
 def preview(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
             analyses: Analyses):
     return analyses.preview(transaction_id)
+
+
+@router.post("/transactions/{transaction_id}/explanation", response_model=Explanation)
+def explain_transaction(transaction_id: Annotated[str, Path(min_length=1, max_length=80)],
+                        request: Request, analyses: Analyses, explanations: Explanations):
+    """User-triggered explanation. Rules stay authoritative; Gemini is not called by analysis."""
+    analysis, features = analyses.rules_view(transaction_id, request.state.request_id)
+    before = analysis.model_dump_json()
+    transaction = analyses.transactions.get_transaction(transaction_id)
+    result = explanations.explain(analysis, features, private_markers(transaction))
+    if analysis.model_dump_json() != before:
+        raise HTTPException(500, "internal_error")
+    return result
 
 
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)

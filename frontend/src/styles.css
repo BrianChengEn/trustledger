@@ -155,6 +155,12 @@ td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: m
 .evidence li .icon { margin-top: 3px; color: var(--muted); } .evidence li.prior { background: var(--good-soft); } .evidence li.prior .icon { color: var(--good); }
 .airun { display: flex; gap: 14px; align-items: center; padding: 14px; background: var(--ai-soft); border-radius: 12px; } .airun p { color: var(--muted); font-size: .9rem; }
 .result { display: grid; gap: 10px; } .ruleline { display: flex; gap: 8px; font-size: .92rem; } .ruleline .icon { margin-top: 3px; color: var(--muted); flex: none; }
+.explain { display: grid; gap: 10px; margin-top: 14px; }
+.explain dl { display: grid; gap: 8px; }
+.explain dt { font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.explain dd { margin: 0; }
+.explain details { display: grid; gap: 8px; }
+.explain summary { cursor: pointer; font-weight: 600; }
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .choice { flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px; text-align: left; border-radius: 12px; border-width: 2px; }
 .choice span { font-weight: 400; color: var(--muted); font-size: .88rem; } .choice .icon { color: var(--brand); }

@@ -80,7 +80,7 @@ export default function PrivacyView({txId}: {txId?: string}) {
     <PageHead eyebrow="Privacy Inspector" title="What AI actually sees.">
       Your transactions are never sent to AI as they are. Pick a charge to see the real, generalized request the backend would build.</PageHead>
     <Callout icon="lock" title="Viewing this page sends nothing.">
-      AI is only called when you press “Analyze with Jev” on a case, and then only with the payload below.</Callout>
+      Jev runs only when you press Analyze with Jev. An explanation runs only when you press Explain this alert. Neither call receives the raw transaction.</Callout>
     <div className="pick">
       <label htmlFor="priv-tx">Transaction</label>
       <select id="priv-tx" value={id ?? ''} onChange={e => go({view: 'privacy', tx: e.target.value})}>

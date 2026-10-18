@@ -76,6 +76,22 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/PrivacyPreview' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/{transaction_id}/explanation:
+    post:
+      operationId: explainTransaction
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '200':
+          description: >-
+            Plain-language explanation of the current rules alert.
+            Gemini is called only when configured and does not change the alert.
+            explanation_mode distinguishes a live Gemini reply, a rules template,
+            and a rules fallback after a failed Gemini call.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Explanation' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/alerts/{alert_id}/confirmations:
     post:
       operationId: confirmAlert
@@ -591,6 +607,90 @@ components:
             is_subscription: { type: boolean }
             subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
             prior_user_confirmation: { type: string, enum: [normal, review, unknown] }
+    SharedExplanation:
+      type: object
+      additionalProperties: false
+      required: [task, alert_type, severity, needs_human, reason_codes, features]
+      properties:
+        task: { type: string, enum: [explain_existing_alert] }
+        alert_type: { type: string, enum: [duplicate, amount_anomaly, subscription_change, none] }
+        severity: { type: string, enum: [low, medium, high] }
+        needs_human: { type: boolean }
+        reason_codes:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            enum:
+              - duplicate_rule_matched
+              - same_category_same_amount_within_24h
+              - amount_anomaly_rule_matched
+              - amount_bucket_at_or_above_demo_threshold
+              - subscription_rule_matched
+              - subscription_increase_over_20_percent
+              - no_demo_rule_matched
+              - human_review_required
+              - human_review_not_required
+              - prior_category_confirmation_normal
+              - prior_category_confirmation_review
+              - recurring_subscription
+              - subscription_delta_over_20_percent
+              - subscription_delta_up_to_20_percent
+              - subscription_delta_none
+              - subscription_delta_unknown
+        features:
+          type: object
+          additionalProperties: false
+          required: [merchant_category, amount_bucket, currency, local_day_part, same_category_same_amount_24h_count, is_subscription, subscription_delta_bucket, prior_user_confirmation]
+          properties:
+            merchant_category: { type: string }
+            amount_bucket: { type: string, enum: ['0-10', '10-25', '25-50', '50-100', '100-250', '250+'] }
+            currency: { type: string, enum: [USD] }
+            local_day_part: { type: string, enum: [morning, afternoon, evening, overnight] }
+            same_category_same_amount_24h_count: { type: integer, minimum: 0, maximum: 20 }
+            is_subscription: { type: boolean }
+            subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
+            prior_user_confirmation: { type: string, enum: [normal, review, unknown] }
+    Explanation:
+      type: object
+      additionalProperties: false
+      required: [transaction_id, alert_type, severity, needs_human, why_flagged, supporting_evidence, what_it_means, what_to_check, next_steps, explanation_mode, model_version, failure, safe_payload, shared, sent_to_provider, from_cache]
+      properties:
+        transaction_id: { type: string }
+        alert_type: { type: string, enum: [duplicate, amount_anomaly, subscription_change, none] }
+        severity: { type: string, enum: [low, medium, high] }
+        needs_human: { type: boolean }
+        why_flagged: { type: string, minLength: 1, maxLength: 500 }
+        supporting_evidence: { type: string, minLength: 1, maxLength: 500 }
+        what_it_means: { type: string, minLength: 1, maxLength: 500 }
+        what_to_check: { type: string, minLength: 1, maxLength: 500 }
+        next_steps:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items: { type: string, minLength: 1, maxLength: 180 }
+        explanation_mode: { type: string, enum: [gemini-live, template, fallback] }
+        model_version: { type: [string, 'null'] }
+        failure:
+          type: [string, 'null']
+          enum: [timeout, unavailable, quota, rate_limited, invalid_output, provider_error, invalid_input, null]
+        safe_payload:
+          type: object
+          additionalProperties: false
+          required: [merchant_category, amount_bucket, currency, local_day_part, same_category_same_amount_24h_count, is_subscription, subscription_delta_bucket, prior_user_confirmation]
+          properties:
+            merchant_category: { type: string }
+            amount_bucket: { type: string, enum: ['0-10', '10-25', '25-50', '50-100', '100-250', '250+'] }
+            currency: { type: string, enum: [USD] }
+            local_day_part: { type: string, enum: [morning, afternoon, evening, overnight] }
+            same_category_same_amount_24h_count: { type: integer, minimum: 0, maximum: 20 }
+            is_subscription: { type: boolean }
+            subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
+            prior_user_confirmation: { type: string, enum: [normal, review, unknown] }
+        shared: { $ref: '#/components/schemas/SharedExplanation' }
+        sent_to_provider: { type: boolean }
+        from_cache: { type: boolean }
     Confirmation:
       type: object
       additionalProperties: false
