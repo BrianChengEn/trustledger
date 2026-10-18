@@ -263,6 +263,8 @@ def test_all_admin_operation_contracts(contract, client):
          {'decision': 'normal', 'consent_to_memory': True}),
         ('get', '/customers/{customer_code}/memories', None),
         ('delete', '/customers/{customer_code}/memories/{memory_id}', None),
+        ('get', '/customers/{customer_code}/transactions/{transaction_id}/relevant-memories', None),
+        ('get', '/customers/{customer_code}/memories/{memory_id}/deletion-verification', None),
     ]
     expected = {(p, m) for p, item in contract["paths"].items() if p.startswith(prefix) for m in item}
     assert {(prefix + path, method) for method, path, _ in operations} == expected
