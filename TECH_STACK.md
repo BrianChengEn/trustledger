@@ -87,7 +87,7 @@ The rules engine sets `confidence=1.0` when a deterministic rule matches. That n
 |---|---|---|---|---|---|
 | Backboard System One, selected Jev route | `httpx` async `POST /threads/messages` | `BACKBOARD_API_KEY` | [System One](https://docs.backboard.io/concepts/system-one). `llm_provider=typesafe`, `model_name=jev-latest`, `stream=false` | Brian | IMPLEMENTED. Live only when the key is set and the response parses |
 | Direct TypeSafe API | Not called | `JEV_API_KEY` is loaded and unused. Official SDK name is `TYPESAFE_API_KEY` | `POST https://api.typesafe.ai/v1/systemone` | Brian | Optional route, not selected |
-| Backboard memory | `backboard_client.add_memory` still raises `NotImplementedError` | `BACKBOARD_ASSISTANT_ID` is not read | [Memory](https://docs.backboard.io/concepts/memory). Default `memory=off` when the parameter is omitted | Brian | MOCK / STUB for memory. Inference does not pass `memory` |
+| Backboard memory | `httpx` async CRUD under `/assistants/{assistant_id}/memories`. One stored assistant per demo owner | `BACKBOARD_API_KEY`. `BACKBOARD_ASSISTANT_ID` is not read | [Memory](https://docs.backboard.io/concepts/memory), [SDK memory](https://docs.backboard.io/sdk/memory). Manual add, list, get, search, and delete. Inference still omits `memory` | Brian | IMPLEMENTED. Mocked in CI. Live only after a real memory response. No key stays `local-fallback` |
 
 `docs/.env.example` sets `JEV_BASE_URL=https://jev-ai.org/api/v1`. The running client does not read or request that host.
 
@@ -108,7 +108,7 @@ There is no Nessie SDK in Python or JavaScript dependencies. A third-party JavaS
 
 | Store | Purpose | Where | Owner | Key | Status |
 |---|---|---|---|---|---|
-| SQLite file `backend/data/trustledger-demo.db` | Confirmations and memory sentences for `demo-user-001` | `backend/app/core/store.py` | Benson | No | LOCAL FALLBACK |
+| SQLite file `backend/data/trustledger-demo.db` | Confirmations, memory sentences, and the owner-to-assistant map for `demo-user-001` | `backend/app/core/store.py` | Benson | No | LOCAL FALLBACK. Remote rows are labeled `backboard` only after a parsed write |
 | JSON fixture | Source transactions | `fixtures/synthetic-transactions.json` | Kenny | No | IMPLEMENTED |
 
 `backend/data/` and `*.db` are gitignored. Tests use a temporary database. `DATABASE_URL` in `docs/.env.example` is not read. The setting that exists is `database_path`.

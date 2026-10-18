@@ -19,12 +19,12 @@ Verified on `main` at `5be26c1` (merge of PR #3), plus the documentation in this
 | Consented memory affects the next analysis | Implemented on `main` |
 | Jev through Backboard | Implemented. Live only when `BACKBOARD_API_KEY` is set and the response parses |
 | Direct TypeSafe API | Not selected and not called |
-| Backboard persistent memory | Not implemented. SQLite remains the memory store |
+| Backboard persistent memory | Implemented behind `BACKBOARD_API_KEY`. No key uses SQLite. Live memory is not verified until a real provider response succeeds |
 | Capital One Nessie | Stub. Synthetic fixture is the data source |
 | GitHub Actions CI | Passing on the PR #3 merge to `main` |
 | Production auth, hosting, deployment | Not started |
 
-Health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMORY_WRITE=true`. Those labels stay honest until a live client exists. Filling an API key does not turn a stub on.
+Health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMORY_WRITE=true` and no live call has succeeded. Filling an API key does not by itself report `rules+jev-live` or `backboard-live`.
 
 ## Documentation
 
