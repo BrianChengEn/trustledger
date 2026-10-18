@@ -211,6 +211,3 @@ function Shell() {
 }
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><WorkspaceProvider><Shell/></WorkspaceProvider></React.StrictMode>);
-// Any change to what is on screen (data loads, a list grows, a widget is added) triggers a fit check.
-new MutationObserver(scheduleFit).observe(document.getElementById('root')!, {childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden']});
-scheduleFit();
