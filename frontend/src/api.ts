@@ -59,6 +59,19 @@ export interface Explanation {
 }
 export interface Health {status: string; data_mode: string; analysis_mode: string; memory_mode: string}
 export interface Confirmation {decision: string; memory_status: string; memory_id: string|null}
+export type DataSource = 'nessie'|'banksim';
+export interface SourceTransaction {
+  id: string; source: DataSource; amount_minor: number; currency: string|null;
+  kind: string; direction: string; account_token: string|null;
+  merchant_display: string|null; merchant_category: string|null; source_category: string|null;
+  merchant_code: string|null; occurred_at: string|null; occurred_date: string|null;
+  simulation_step: number|null; is_subscription: boolean|null; settlement_status: string|null;
+}
+export interface SourcePage {
+  source: DataSource; items: SourceTransaction[]; total: number; next_offset: number|null;
+  data_mode: 'research'|'cached'|'degraded'|'not-imported'; last_synced_at: string|null;
+  customer_code: string|null;
+}
 const base = import.meta.env.VITE_API_BASE_URL || '';
 /** Error carrying only the backend's safe error code (never an upstream body). */
 export class ApiError extends Error {

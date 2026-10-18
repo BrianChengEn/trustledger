@@ -22,6 +22,7 @@ steps: 180
 step_min: 0
 step_max: 179
 step_meaning: one simulated day, not a timestamp. No verified time of day inside a step.
+simulation_step_unit: day
 currency: EUR
 currency_note: The CSV has no currency column. EMSS 2014 states that the prices are in euro. Do not convert to USD.
 dictionary: data/BANKSIM_DICTIONARY.txt

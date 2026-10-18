@@ -21,7 +21,8 @@ def context(request: Request):
     root = state.settings.demo_user_id
     key = state.settings.nessie_api_key.get_secret_value()
     code = request.path_params.get('customer_code')
-    connected = bool(code) or state.settings.transaction_provider == 'nessie'
+    connected = (bool(code) or state.settings.transaction_provider == 'nessie'
+                 or request.path_params.get('source') == 'nessie')
     if connected and not key:
         raise HTTPException(503, 'nessie_not_configured')
     if not connected:
@@ -222,6 +223,8 @@ def refresh(request):
             for kind in ('purchases', 'transfers', 'deposits', 'withdrawals'):
                 acquire(f'/accounts/{account}/{kind}', token('acct_', ctx['owner'], account), kind,
                         lambda body: movements(body, ctx['owner'], account, kind))
+    from app.services.data_sources import synchronize_nessie
+    synchronize_nessie(request)
     return snapshot(request)
 
 

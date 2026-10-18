@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     allow_memory_write: bool = False
     database_path: Path = BACKEND_DIR / "data" / "trustledger-demo.db"
+    source_database_dir: Path | None = None
     nessie_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     jev_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     backboard_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
