@@ -1241,6 +1241,136 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Explanation' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/transactions/{transaction_id}/relevant-memories:
+    get:
+      summary: Read owner-scoped relevant context
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelevantMemories'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
+  /api/v1/memories/{memory_id}/deletion-verification:
+    get:
+      summary: Fresh point-in-time deletion verification; never deletes
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionVerification'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
+  /api/v1/admin/nessie/customers/{customer_code}/transactions/{transaction_id}/relevant-memories:
+    get:
+      summary: Read owner-scoped relevant context
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: transaction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 80
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelevantMemories'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
+  /api/v1/admin/nessie/customers/{customer_code}/memories/{memory_id}/deletion-verification:
+    get:
+      summary: Fresh point-in-time deletion verification; never deletes
+      description: No analysis mutation. Provider errors are safe response states. Nessie
+        scopes require fresh workspace acquisition. Remote 404 proves only absence at
+        check time.
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      responses:
+        '200':
+          description: Explicit verification state; checked_at is null without full
+            remote verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionVerification'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Invalid request
+        '502':
+          description: Required Nessie acquisition failed
+        '503':
+          description: Nessie not configured
 components:
   parameters:
     TransactionId:
@@ -1885,3 +2015,131 @@ components:
       - transactions
       - sync
       title: WorkspaceSnapshot
+
+    RelevantMemory:
+      additionalProperties: false
+      properties:
+        memory_id:
+          title: Memory Id
+          type: string
+        summary:
+          maxLength: 240
+          title: Summary
+          type: string
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        source:
+          enum:
+          - backboard
+          - local-fallback
+          title: Source
+          type: string
+        verification:
+          enum:
+          - remote_verified
+          - local_only
+          - unverified
+          title: Verification
+          type: string
+      required:
+      - memory_id
+      - summary
+      - created_at
+      - source
+      - verification
+      title: RelevantMemory
+      type: object
+    RelevantMemories:
+      additionalProperties: false
+      properties:
+        memories:
+          items:
+            $ref: '#/components/schemas/RelevantMemory'
+          title: Memories
+          type: array
+        retrieval_mode:
+          enum:
+          - remote_verified
+          - local_fallback
+          - unavailable
+          title: Retrieval Mode
+          type: string
+        checked_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          default: null
+          title: Checked At
+        failure:
+          anyOf:
+          - enum:
+            - missing_key
+            - missing_assistant
+            - provider_error
+            - content_mismatch
+            - storage_unavailable
+            - verification_limit
+            - reference_unavailable
+            - deletion_not_completed
+            type: string
+          - type: 'null'
+          default: null
+          title: Failure
+      required:
+      - memories
+      - retrieval_mode
+      title: RelevantMemories
+      type: object
+      example:
+        memories: []
+        retrieval_mode: remote_verified
+        checked_at: '2026-10-18T12:00:00Z'
+        failure: null
+    DeletionVerification:
+      additionalProperties: false
+      properties:
+        memory_id:
+          title: Memory Id
+          type: string
+        status:
+          enum:
+          - absent
+          - present
+          - unverified
+          title: Status
+          type: string
+        checked_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          default: null
+          title: Checked At
+        failure:
+          anyOf:
+          - enum:
+            - missing_key
+            - missing_assistant
+            - provider_error
+            - content_mismatch
+            - storage_unavailable
+            - verification_limit
+            - reference_unavailable
+            - deletion_not_completed
+            type: string
+          - type: 'null'
+          default: null
+          title: Failure
+      required:
+      - memory_id
+      - status
+      title: DeletionVerification
+      type: object
+      example:
+        memory_id: example-memory
+        status: absent
+        checked_at: '2026-10-18T12:00:00Z'
+        failure: null

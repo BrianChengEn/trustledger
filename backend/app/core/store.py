@@ -665,3 +665,23 @@ class Store:
                 count = db.execute("DELETE FROM query_history WHERE owner=? AND id=?",
                                    (owner, history_id)).rowcount
         return count
+
+
+    def relevant_memory_rows(self, owner):
+        """Only committed normal+consent references; no remote orphan import."""
+        with self.connect() as db:
+            return [dict(row) for row in db.execute("""
+                SELECT DISTINCT m.* FROM memories m JOIN confirmations c
+                ON m.owner=c.owner AND m.memory_id=json_extract(
+                  CASE WHEN json_valid(c.result) THEN c.result ELSE '{}' END, '$.memory_id')
+                WHERE c.owner=? AND c.decision='normal' AND c.consent=1
+                  AND m.local_persisted=1
+                ORDER BY m.created_at DESC, m.memory_id ASC
+            """, (owner,)).fetchall()]
+
+    def has_memory_confirmation(self, owner, memory_id):
+        with self.connect() as db:
+            return db.execute("""SELECT 1 FROM confirmations WHERE owner=?
+                AND decision='normal' AND consent=1 AND json_extract(
+                CASE WHEN json_valid(result) THEN result ELSE '{}' END,'$.memory_id')=?
+                LIMIT 1""", (owner, memory_id)).fetchone() is not None
