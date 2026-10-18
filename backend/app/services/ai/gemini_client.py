@@ -56,9 +56,10 @@ class GoogleGenAITransport:
                 retry_options=types.HttpRetryOptions(attempts=1),
             ),
         )
-        # gemini-3.5-flash-lite accepted a contents-only generateContent call.
-        # A generationConfig/systemInstruction body returned HTTP 400 INVALID_ARGUMENT,
-        # so the instruction stays in the user text and the SDK timeout stays client-side.
+        # Leave config unset. Any GenerateContentConfig, including one that only
+        # disables continuation, makes this SDK add a generationConfig object.
+        # Config-bearing calls to gemini-3.5-flash-lite returned HTTP 400.
+        # A contents-only explanation request is the shape this model accepted.
         prompt = SYSTEM + "\n\n" + json.dumps(document, sort_keys=True, separators=(",", ":"))
         try:
             response = client.models.generate_content(model=self.model, contents=prompt)
