@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 
 class StrictModel(BaseModel):
@@ -14,7 +14,7 @@ class AnalyzeRequest(StrictModel):
 
 class ConfirmationRequest(StrictModel):
     decision: Literal["normal", "review"]
-    consent_to_memory: bool
+    consent_to_memory: StrictBool
 
 
 class Health(StrictModel):

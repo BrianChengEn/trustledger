@@ -79,6 +79,20 @@ def test_tampered_baseline_fails_before_remote_writes(tmp_path):
     assert remote.posts == 0
 
 
+def test_tampered_sqlite_baseline_blocks_before_remote_writes(tmp_path):
+    from app.adapters.nessie_fixture import load_baseline
+
+    store = Store(tmp_path / "db")
+    load_baseline(store)
+    with store.connect() as db:
+        db.execute("UPDATE fixture_accounts SET opening_balance=opening_balance+1")
+    settings = Settings(_env_file=None, database_path=store.filename, nessie_api_key="private")
+    remote = Sandbox(store)
+    with pytest.raises(SeedBlocked):
+        seed_baseline(settings, store, remote, probe=True)
+    assert remote.posts == 0
+
+
 def test_probe_balance_mismatch_blocks_bulk(tmp_path):
     store = Store(tmp_path / "db")
     settings = Settings(_env_file=None, database_path=store.filename, nessie_api_key="private")

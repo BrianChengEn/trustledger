@@ -4,80 +4,59 @@ from time import monotonic
 
 from fastapi import HTTPException
 
-def execute_query(spec, client, store, owner):
+from app.adapters.nessie import REMOTE_ID
+
+
+def public_body(spec, capture, store, owner, scope):
+    if capture["http_status"] != 200 or capture["body_format"] != "json":
+        return None
+    body = capture["response_body"]
+    single = spec.query == "accounts.get"
+    rows = [body] if single else body
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        return None
+    kind = "customer" if spec.query == "customers.list" else "account"
+    if spec.query in {"deposits.by_account", "withdrawals.by_account"}:
+        kind = None
+    if kind:
+        if not all(isinstance(row.get("_id"), str) and REMOTE_ID.fullmatch(row["_id"])
+                   for row in rows):
+            return None
+        aliases = store.alias_resources(owner, scope, kind, [row["_id"] for row in rows])
+    result = []
+    for row in rows:
+        projected = {"resource_id": aliases[row["_id"]]} if kind else {}
+        enums = ({"type": {"Checking", "Savings", "Credit Card"}} if kind == "account" else
+                 {"medium": {"balance"}, "status": {"pending", "completed", "cancelled"}} if not kind else {})
+        for key, allowed in enums.items():
+            if isinstance(row.get(key), str) and row[key] in allowed:
+                projected[key] = row[key]
+        for key in (("balance", "rewards") if kind == "account" else ("amount",) if not kind else ()):
+            value = row.get(key)
+            if type(value) in (int, float) and abs(value) <= 9007199254740991:
+                projected[key] = value
+        result.append(projected)
+    return result[0] if single else result
+
+
+def execute_query(spec, client, store, owner, scope):
+    remote_id = None
+    if spec.resource_id:
+        remote_id = store.resolve_resource(owner, scope, spec.resource_id)
+        if remote_id is None:
+            raise HTTPException(404, "resource_not_found")
     started = monotonic()
     requested_at = datetime.now(timezone.utc).isoformat()
-    capture = client.query(spec.query, spec.resource_id)
-    result = {"source": "nessie", "query": spec.query, "resource_id": spec.resource_id,
-              "requested_at": requested_at, "duration_ms": int((monotonic() - started) * 1000),
-              **capture}
+    capture = client.query(spec.query, remote_id)
+    result = {"source": "nessie", "query": spec.query, "requested_at": requested_at,
+              "duration_ms": int((monotonic() - started) * 1000),
+              "http_status": capture["http_status"], "transport_error": capture["transport_error"],
+              "response_body": None, "body_format": "none"}
     try:
+        body = public_body(spec, capture, store, owner, scope)
+        result.update(response_body=body, body_format="json" if body is not None else "none")
         history_id = store.append_history(owner, result)
     except (sqlite3.Error, OSError, ValueError):
         return {**result, "history_id": None, "write_status": "failed",
                 "write_label": "failed to write"}
     return {**result, "history_id": history_id, "write_status": "saved", "write_label": None}
-
-
-def compare_snapshots(left, right):
-    if any(left[k] != right[k] for k in ("query", "resource_id", "source")):
-        raise HTTPException(409, "incompatible_history")
-    changes = []
-    missing = object()
-
-    def walk(before, after, path="", record_id=None):
-        if before is missing or after is missing:
-            kind = "added" if before is missing else "removed"
-        elif isinstance(before, dict) and isinstance(after, dict):
-            for key in sorted(before.keys() | after.keys()):
-                pointer = str(key).replace("~", "~0").replace("/", "~1")
-                walk(before.get(key, missing), after.get(key, missing), path + "/" + pointer,
-                     record_id)
-            return
-        elif isinstance(before, list) and isinstance(after, list):
-            for i in range(max(len(before), len(after))):
-                walk(before[i] if i < len(before) else missing,
-                     after[i] if i < len(after) else missing, path + f"/{i}", record_id)
-            return
-        elif type(before) is type(after) and before == after:
-            return
-        else:
-            kind = "changed"
-        change = {"kind": kind, "path": path, "before_present": before is not missing,
-                  "after_present": after is not missing,
-                  "before": None if before is missing else before,
-                  "after": None if after is missing else after}
-        if record_id is not None:
-            change["record_id"] = record_id
-        changes.append(change)
-
-    before, after = left["response_body"], right["response_body"]
-    if (isinstance(before, list) and isinstance(after, list)
-            and all(r["http_status"] is not None and 200 <= r["http_status"] < 300
-                    for r in (left, right))):
-        def by_id(rows):
-            result = {}
-            for row in rows:
-                if (not isinstance(row, dict) or not isinstance(row.get("_id"), str)
-                        or not row["_id"] or row["_id"] in result):
-                    raise HTTPException(409, "unmatchable_collection")
-                result[row["_id"]] = row
-            return result
-        old, new = by_id(before), by_id(after)
-        for record_id in sorted(old.keys() | new.keys()):
-            walk(old.get(record_id, missing), new.get(record_id, missing), record_id=record_id)
-    else:
-        walk(before, after)
-    status_change = (None if left["http_status"] == right["http_status"] else
-                     {"before": left["http_status"], "after": right["http_status"]})
-    transport_change = (None if left["transport_error"] == right["transport_error"] else
-                        {"before": left["transport_error"], "after": right["transport_error"]})
-    return {"data_changed": bool(changes or status_change or transport_change), "changes": changes,
-            "status_change": status_change, "transport_change": transport_change}
-
-
-def compare_history(store, owner, left_id, right_id):
-    left, right = store.get_history(owner, left_id), store.get_history(owner, right_id)
-    if left is None or right is None:
-        raise HTTPException(404, "history_not_found")
-    return {"left": left, "right": right, "comparison": compare_snapshots(left, right)}

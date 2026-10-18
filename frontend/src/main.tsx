@@ -54,6 +54,7 @@ function App() {
     finally {setBusy(false);}
   }
   async function removeMemory(id: string) {
+    if (!window.confirm('Delete this confirmed memory? This cannot be undone.')) return;
     setBusy(true); setError('');
     try {
       await request<void>('/memories/'+encodeURIComponent(id), {method: 'DELETE'});

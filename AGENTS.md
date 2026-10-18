@@ -18,10 +18,17 @@ or `feat/local-memory-feedback`.
   shared dependencies, integration tests, CI, contracts/**.
 - Agree on contract changes before implementation; preserve the synthetic baseline.
 - Jev is called through Backboard System One when BACKBOARD_API_KEY is set.
-  The direct TypeSafe API is not the selected route. Nessie and Backboard
-  memory remain extension points. A missing key or failed call stays rules-only
+  The direct TypeSafe API is not the selected route. The Nessie dashboard adapter and Backboard
+  memory remain extension points; Admin sandbox reads and the explicit SQLite baseline CLI are implemented. A missing key or failed call stays rules-only
   or degraded, and must not be labeled rules+jev-live.
 - Local memory must be labelled local-fallback; only write after normal confirmation + consent.
 - Run bash scripts/check.sh. Do not claim tests pass if dependencies could not be installed.
 - Never commit node_modules, .venv, .env, databases, or credentials.
 - Credit AI tools in the submission. This starter includes AI-generated code and documentation.
+
+## Update rules
+
+- Use `docs/00-*.md` through `docs/07-*.md` as the governing implementation constraints; keep the effective update designs under local `docs/vx.x.x/`. Preserve historical designs and user-authored notes.
+- Use `/Users/kenny/Desktop/project-development-workflow/SKILL.md` and its `rule.md` as the sole lifecycle router; preserve ownership, contract, safety and CI requirements above.
+- Runtime synthetic data uses structured SQLite; JSON files are offline compatibility fixtures only. Admin uses local resource codes and stores status/time metadata, never raw response bodies or browser-facing remote IDs. Content comparison is disabled.
+- Every PR excludes all newly added Markdown files. Honor the tracked ignore rule and never force-add local design documents. Check compatibility and the governing constraints before each update.

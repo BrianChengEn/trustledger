@@ -134,8 +134,8 @@ paths:
       operationId: queryNessie
       tags:
       - local-admin
-      description: Loopback-only Nessie sandbox console. Mutations require an allowed
-        local Origin and application/json.
+      description: Query by server-issued local codes. Display only allowlisted de-identified
+        fields. Persist status/time metadata only; never persist raw responses.
       responses:
         '200':
           description: Completed local operation; query envelopes retain the actual
@@ -144,17 +144,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminExecution'
-        '403': &id001
+        '403':
           description: Safe local error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
-        '404': *id001
-        '409': *id001
-        '422': *id001
-        '500': *id001
-        '503': *id001
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
       requestBody:
         required: true
         content:
@@ -166,8 +191,8 @@ paths:
       operationId: listNessieHistory
       tags:
       - local-admin
-      description: Loopback-only Nessie sandbox console. Mutations require an allowed
-        local Origin and application/json.
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
       responses:
         '200':
           description: Completed local operation; query envelopes retain the actual
@@ -176,12 +201,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminHistoryPage'
-        '403': *id001
-        '404': *id001
-        '409': *id001
-        '422': *id001
-        '500': *id001
-        '503': *id001
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
       parameters:
       - name: before_id
         in: query
@@ -192,8 +247,8 @@ paths:
       operationId: clearNessieHistory
       tags:
       - local-admin
-      description: Loopback-only Nessie sandbox console. Mutations require an allowed
-        local Origin and application/json.
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
       responses:
         '200':
           description: Completed local operation; query envelopes retain the actual
@@ -202,12 +257,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminDeleteOutcome'
-        '403': *id001
-        '404': *id001
-        '409': *id001
-        '422': *id001
-        '500': *id001
-        '503': *id001
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
       requestBody:
         required: true
         content:
@@ -219,8 +304,8 @@ paths:
       operationId: getNessieHistory
       tags:
       - local-admin
-      description: Loopback-only Nessie sandbox console. Mutations require an allowed
-        local Origin and application/json.
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
       responses:
         '200':
           description: Completed local operation; query envelopes retain the actual
@@ -228,16 +313,45 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminExecution'
-        '403': *id001
-        '404': *id001
-        '409': *id001
-        '422': *id001
-        '500': *id001
-        '503': *id001
+                $ref: '#/components/schemas/AdminHistoryItem'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
       parameters:
-      - &id002
-        name: history_id
+      - name: history_id
         in: path
         required: true
         schema:
@@ -247,8 +361,8 @@ paths:
       operationId: deleteNessieHistory
       tags:
       - local-admin
-      description: Loopback-only Nessie sandbox console. Mutations require an allowed
-        local Origin and application/json.
+      description: Owner-scoped status/time metadata only; no response body or resource
+        ID is retained. No content comparison.
       responses:
         '200':
           description: Completed local operation; query envelopes retain the actual
@@ -257,12 +371,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminDeleteOutcome'
-        '403': *id001
-        '404': *id001
-        '409': *id001
-        '422': *id001
-        '500': *id001
-        '503': *id001
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
       requestBody:
         required: true
         content:
@@ -270,14 +414,19 @@ paths:
             schema:
               $ref: '#/components/schemas/AdminDeleteRequest'
       parameters:
-      - *id002
-  /api/v1/admin/nessie/compare:
-    post:
-      operationId: compareNessieHistory
+      - name: history_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+  /api/v1/admin/nessie/resources:
+    get:
+      operationId: listNessieLocalResources
       tags:
       - local-admin
-      description: Loopback-only Nessie sandbox console. Mutations require an allowed
-        local Origin and application/json.
+      description: List server-issued owner/credential-scoped local resource codes.
+        No upstream request or raw IDs.
       responses:
         '200':
           description: Completed local operation; query envelopes retain the actual
@@ -285,19 +434,45 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminComparison'
-        '403': *id001
-        '404': *id001
-        '409': *id001
-        '422': *id001
-        '500': *id001
-        '503': *id001
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminCompareRequest'
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminResourceOption'
+        '403':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '422':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe local error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 components:
   parameters:
     TransactionId:
@@ -459,32 +634,16 @@ components:
           type: string
         resource_id:
           anyOf:
-          - maxLength: 128
+          - maxLength: 41
             type: string
+            pattern: ^(customer|account)_[0-9a-f]{32}$
           - type: 'null'
           default: null
-          description: Trimmed, lowercase 24-hex ID or canonical UUID; required for resource
-            queries, absent for lists.
+          description: Server-issued local customer/account code only.
           title: Resource Id
       required:
       - query
       title: QueryRequest
-      type: object
-    AdminCompareRequest:
-      additionalProperties: false
-      properties:
-        left_id:
-          exclusiveMinimum: 0
-          title: Left Id
-          type: integer
-        right_id:
-          exclusiveMinimum: 0
-          title: Right Id
-          type: integer
-      required:
-      - left_id
-      - right_id
-      title: CompareRequest
       type: object
     AdminDeleteRequest:
       additionalProperties: false
@@ -513,6 +672,50 @@ components:
       - message
       title: TransportError
       type: object
+    AdminHistoryItem:
+      additionalProperties: false
+      properties:
+        history_id:
+          exclusiveMinimum: 0
+          title: History Id
+          type: integer
+        source:
+          enum:
+          - nessie
+          - synthetic
+          title: Source
+          type: string
+        query:
+          title: Query
+          type: string
+        requested_at:
+          title: Requested At
+          type: string
+        duration_ms:
+          minimum: 0
+          title: Duration Ms
+          type: integer
+        http_status:
+          anyOf:
+          - maximum: 599
+            minimum: 100
+            type: integer
+          - type: 'null'
+          title: Http Status
+        transport_error:
+          anyOf:
+          - $ref: '#/components/schemas/AdminTransportError'
+          - type: 'null'
+      required:
+      - history_id
+      - source
+      - query
+      - requested_at
+      - duration_ms
+      - http_status
+      - transport_error
+      title: HistoryItem
+      type: object
     AdminExecution:
       additionalProperties: false
       properties:
@@ -531,11 +734,6 @@ components:
         query:
           title: Query
           type: string
-        resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Resource Id
         requested_at:
           title: Requested At
           type: string
@@ -550,19 +748,18 @@ components:
             type: integer
           - type: 'null'
           title: Http Status
-        body_format:
-          enum:
-          - json
-          - text
-          - none
-          title: Body Format
-          type: string
         transport_error:
           anyOf:
           - $ref: '#/components/schemas/AdminTransportError'
           - type: 'null'
         response_body:
           title: Response Body
+        body_format:
+          enum:
+          - json
+          - none
+          title: Body Format
+          type: string
         write_status:
           enum:
           - saved
@@ -579,74 +776,15 @@ components:
       - history_id
       - source
       - query
-      - resource_id
       - requested_at
       - duration_ms
       - http_status
-      - body_format
       - transport_error
       - response_body
+      - body_format
       - write_status
       - write_label
       title: Execution
-      type: object
-    AdminHistoryItem:
-      additionalProperties: false
-      properties:
-        history_id:
-          exclusiveMinimum: 0
-          title: History Id
-          type: integer
-        source:
-          enum:
-          - nessie
-          - synthetic
-          title: Source
-          type: string
-        query:
-          title: Query
-          type: string
-        resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Resource Id
-        requested_at:
-          title: Requested At
-          type: string
-        duration_ms:
-          minimum: 0
-          title: Duration Ms
-          type: integer
-        http_status:
-          anyOf:
-          - maximum: 599
-            minimum: 100
-            type: integer
-          - type: 'null'
-          title: Http Status
-        body_format:
-          enum:
-          - json
-          - text
-          - none
-          title: Body Format
-          type: string
-        transport_error:
-          anyOf:
-          - $ref: '#/components/schemas/AdminTransportError'
-          - type: 'null'
-      required:
-      - history_id
-      - source
-      - query
-      - resource_id
-      - requested_at
-      - duration_ms
-      - http_status
-      - body_format
-      - transport_error
-      title: HistoryItem
       type: object
     AdminHistoryPage:
       additionalProperties: false
@@ -666,118 +804,22 @@ components:
       - next_cursor
       title: HistoryPage
       type: object
-    AdminComparisonData:
+    AdminResourceOption:
       additionalProperties: false
       properties:
-        data_changed:
-          title: Data Changed
-          type: boolean
-        changes:
-          items:
-            $ref: '#/components/schemas/AdminSnapshotChange'
-          title: Changes
-          type: array
-        status_change:
-          anyOf:
-          - $ref: '#/components/schemas/AdminStatusChange'
-          - type: 'null'
-        transport_change:
-          anyOf:
-          - $ref: '#/components/schemas/AdminTransportChange'
-          - type: 'null'
-      required:
-      - data_changed
-      - changes
-      - status_change
-      - transport_change
-      title: ComparisonData
-      type: object
-    AdminSnapshotChange:
-      additionalProperties: false
-      properties:
+        resource_id:
+          title: Resource Id
+          type: string
         kind:
           enum:
-          - added
-          - removed
-          - changed
+          - customer
+          - account
           title: Kind
           type: string
-        record_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: null
-          title: Record Id
-        path:
-          title: Path
-          type: string
-        before_present:
-          title: Before Present
-          type: boolean
-        after_present:
-          title: After Present
-          type: boolean
-        before:
-          title: Before
-        after:
-          title: After
       required:
+      - resource_id
       - kind
-      - path
-      - before_present
-      - after_present
-      - before
-      - after
-      title: SnapshotChange
-      type: object
-    AdminStatusChange:
-      additionalProperties: false
-      properties:
-        before:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Before
-        after:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: After
-      required:
-      - before
-      - after
-      title: StatusChange
-      type: object
-    AdminTransportChange:
-      additionalProperties: false
-      properties:
-        before:
-          anyOf:
-          - $ref: '#/components/schemas/AdminTransportError'
-          - type: 'null'
-        after:
-          anyOf:
-          - $ref: '#/components/schemas/AdminTransportError'
-          - type: 'null'
-      required:
-      - before
-      - after
-      title: TransportChange
-      type: object
-    AdminComparison:
-      additionalProperties: false
-      properties:
-        left:
-          $ref: '#/components/schemas/AdminExecution'
-        right:
-          $ref: '#/components/schemas/AdminExecution'
-        comparison:
-          $ref: '#/components/schemas/AdminComparisonData'
-      required:
-      - left
-      - right
-      - comparison
-      title: Comparison
+      title: ResourceOption
       type: object
     AdminDeleteOutcome:
       additionalProperties: false

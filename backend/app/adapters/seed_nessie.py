@@ -5,15 +5,11 @@ import hashlib
 import json
 import sqlite3
 from datetime import datetime, timezone
-from pathlib import Path
 
 from app.adapters.nessie import API_BASE, REMOTE_ID, NessieClient
+from app.adapters.nessie_fixture import BASELINE_SHA256, baseline_digest, load_baseline
 from app.core.config import Settings
 from app.core.store import Store
-
-BASELINE = Path(__file__).resolve().parents[3] / "datasets/nessie/baseline.json"
-BASELINE_SHA256 = "546a7e5b20ee37dc94cf615b9a88d49919157eaf01227dfb873ae60f7d8277aa"
-
 
 class SeedBlocked(RuntimeError):
     pass
@@ -27,12 +23,13 @@ def now():
     return datetime.now(timezone.utc).isoformat()
 
 
-def seed_baseline(settings, store, client=None, *, probe=False, baseline_path=BASELINE):
-    raw = baseline_path.read_bytes()
-    digest = hashlib.sha256(raw).hexdigest()
+def seed_baseline(settings, store, client=None, *, probe=False, baseline_path=None):
+    if baseline_path is not None:
+        raise SeedBlocked("JSON import sources are disabled; use the SQLite baseline.")
+    data = load_baseline(store)
+    digest = baseline_digest(data)
     if digest != BASELINE_SHA256:
         raise SeedBlocked("Baseline checksum changed; reconcile before importing.")
-    data = json.loads(raw)
     key = settings.nessie_api_key.get_secret_value()
     if not key:
         raise SeedBlocked("NESSIE_API_KEY is not configured.")

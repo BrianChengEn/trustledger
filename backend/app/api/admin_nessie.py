@@ -1,11 +1,12 @@
+import hashlib
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Path, Query, Request
 
 from app.schemas.admin_nessie import (
-    CompareRequest, Comparison, DeleteOutcome, DeleteRequest, Execution, HistoryPage, QueryRequest,
+    DeleteOutcome, DeleteRequest, Execution, HistoryItem, HistoryPage, QueryRequest, ResourceOption,
 )
-from app.services.nessie_console import compare_history, execute_query
+from app.services.nessie_console import execute_query
 
 router = APIRouter(prefix="/api/v1/admin/nessie", tags=["local-admin"])
 HistoryId = Annotated[int, Path(gt=0)]
@@ -17,7 +18,8 @@ def query(body: QueryRequest, request: Request):
     key = state.settings.nessie_api_key
     if not key or not key.get_secret_value():
         raise HTTPException(503, "nessie_not_configured")
-    return execute_query(body, state.nessie, state.store, state.settings.demo_user_id)
+    scope = hashlib.sha256(key.get_secret_value().encode()).hexdigest()
+    return execute_query(body, state.nessie, state.store, state.settings.demo_user_id, scope)
 
 
 @router.get("/history", response_model=HistoryPage)
@@ -26,13 +28,15 @@ def history(request: Request, before_id: Annotated[int | None, Query(gt=0)] = No
     return state.store.list_history(state.settings.demo_user_id, before_id)
 
 
-@router.post("/compare", response_model=Comparison)
-def compare(body: CompareRequest, request: Request):
+@router.get("/resources", response_model=list[ResourceOption])
+def resources(request: Request):
     state = request.app.state
-    return compare_history(state.store, state.settings.demo_user_id, body.left_id, body.right_id)
+    key = state.settings.nessie_api_key.get_secret_value()
+    scope = hashlib.sha256(key.encode()).hexdigest()
+    return state.store.list_resources(state.settings.demo_user_id, scope)
 
 
-@router.get("/history/{history_id}", response_model=Execution)
+@router.get("/history/{history_id}", response_model=HistoryItem)
 def detail(history_id: HistoryId, request: Request):
     state = request.app.state
     record = state.store.get_history(state.settings.demo_user_id, history_id)

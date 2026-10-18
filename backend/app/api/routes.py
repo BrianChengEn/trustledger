@@ -15,8 +15,15 @@ from app.services.ai.privacy import privacy_preview
 router = APIRouter(prefix="/api/v1")
 
 
+def demo_transactions(request: Request) -> list[Transaction]:
+    if not hasattr(request.state, "transactions"):
+        state = request.app.state
+        request.state.transactions = state.store.list_transactions(state.settings.demo_user_id)
+    return request.state.transactions
+
+
 def transaction(request: Request, transaction_id: str) -> Transaction:
-    result = next((t for t in request.app.state.transactions if t.id == transaction_id), None)
+    result = next((t for t in demo_transactions(request) if t.id == transaction_id), None)
     if result is None:
         raise HTTPException(404, "not_found")
     return result
@@ -41,14 +48,15 @@ def record_mode(request: Request, analyses: list[Analysis]) -> None:
 
 async def alerts(request: Request) -> list[Alert]:
     state = request.app.state
+    rows = demo_transactions(request)
     summaries = remembered(request)
     key = api_key(request)
 
     async def one(tx: Transaction) -> Analysis:
         prior = prior_confirmation(tx.merchant_category, summaries)
-        return await review(tx, state.transactions, request.state.request_id, prior, key)
+        return await review(tx, rows, request.state.request_id, prior, key)
 
-    reviewed = list(await asyncio.gather(*(one(tx) for tx in state.transactions)))
+    reviewed = list(await asyncio.gather(*(one(tx) for tx in rows)))
     record_mode(request, reviewed)
     result = []
     for analysis in reviewed:
@@ -63,21 +71,22 @@ async def alerts(request: Request) -> list[Alert]:
 def health(request: Request):
     outcome = getattr(request.app.state, "analysis_outcome", None)
     analysis_mode = outcome if outcome in {"rules+jev-live", "degraded"} else "rules-only"
-    return Health(status="ok", data_mode="synthetic", analysis_mode=analysis_mode,
+    return Health(status="degraded" if analysis_mode == "degraded" else "ok",
+                  data_mode="synthetic", analysis_mode=analysis_mode,
                   memory_mode="local-fallback" if request.app.state.settings.allow_memory_write else "off",
                   request_id=request.state.request_id)
 
 
 @router.get("/transactions", response_model=list[Transaction])
 def list_transactions(request: Request, limit: int = Query(25, ge=1, le=100)):
-    return sorted(request.app.state.transactions, key=lambda t: t.occurred_at, reverse=True)[:limit]
+    return sorted(demo_transactions(request), key=lambda t: t.occurred_at, reverse=True)[:limit]
 
 
 @router.post("/analyses", response_model=Analysis)
 async def analyze_transaction(body: AnalyzeRequest, request: Request):
     tx = transaction(request, body.transaction_id)
     prior = prior_confirmation(tx.merchant_category, remembered(request))
-    result = await review(tx, request.app.state.transactions, request.state.request_id, prior,
+    result = await review(tx, demo_transactions(request), request.state.request_id, prior,
                           api_key(request), force_live=True)
     record_mode(request, [result])
     return result
@@ -92,7 +101,7 @@ async def list_alerts(request: Request):
 def preview(transaction_id: str, request: Request):
     tx = transaction(request, transaction_id)
     prior = prior_confirmation(tx.merchant_category, remembered(request))
-    return privacy_preview(tx, request.app.state.transactions, prior)
+    return privacy_preview(tx, demo_transactions(request), prior)
 
 
 @router.post("/alerts/{alert_id}/confirmations", response_model=Confirmation)

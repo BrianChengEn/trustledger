@@ -17,8 +17,8 @@ from app.core.store import Store
 def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="TrustLedger synthetic development API", version="0.1.0")
     app.state.settings = settings or Settings()
-    app.state.transactions = load_transactions()
     app.state.store = Store(app.state.settings.database_path)
+    load_transactions(app.state.store, app.state.settings.demo_user_id)
     app.state.nessie = NessieClient(app.state.settings.nessie_api_key.get_secret_value())
     origins = list({app.state.settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"})
     local_hosts = {"localhost", "127.0.0.1", "::1"}

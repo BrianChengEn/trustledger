@@ -1,5 +1,6 @@
 from app.schemas.api import FieldAction, PrivacyPreview, SafePayload
 from app.schemas.transaction import Transaction
+from app.services.ai.policy import DAY_SECONDS, SUBSCRIPTION_INCREASE
 
 # Only controlled labels can enter model-facing features. User/merchant text never passes through.
 CATEGORIES = frozenset({
@@ -16,7 +17,7 @@ def prior_transactions(tx: Transaction, history: list[Transaction]) -> list[Tran
 
 def subscription_delta(tx: Transaction, history: list[Transaction]) -> float | None:
     prior = [h for h in prior_transactions(tx, history) if h.is_subscription
-             and h.merchant_display == tx.merchant_display and h.amount > 0]
+             and h.merchant_category == tx.merchant_category and h.amount > 0]
     if not tx.is_subscription or not prior:
         return None
     previous = max(prior, key=lambda h: h.occurred_at)
@@ -27,7 +28,7 @@ def same_charge_count(tx: Transaction, history: list[Transaction]) -> int:
     prior = prior_transactions(tx, history)
     return min(20, 1 + sum(
         h.amount == tx.amount and h.merchant_category == tx.merchant_category
-        and 0 <= (tx.occurred_at - h.occurred_at).total_seconds() <= 86400 for h in prior
+        and 0 <= (tx.occurred_at - h.occurred_at).total_seconds() <= DAY_SECONDS for h in prior
     ))
 
 
@@ -45,7 +46,7 @@ def safe_payload(
     )
     delta = subscription_delta(tx, history)
     delta_bucket = "unknown" if delta is None else (
-        "over-20-percent" if delta > .2 else "up-to-20-percent" if delta > 0 else "none"
+        "over-20-percent" if delta > SUBSCRIPTION_INCREASE else "up-to-20-percent" if delta > 0 else "none"
     )
     return SafePayload(
         merchant_category=tx.merchant_category if tx.merchant_category in CATEGORIES else "other",

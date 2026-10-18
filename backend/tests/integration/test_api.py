@@ -2,8 +2,61 @@ import json
 from pathlib import Path
 
 import yaml
+import pytest
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
+
+
+@pytest.mark.parametrize("consent", [1, "true", "false"])
+def test_memory_requires_literal_boolean_consent(client, consent):
+    response = client.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                           json={"decision": "normal", "consent_to_memory": consent})
+    assert response.status_code == 422
+    assert client.get("/api/v1/memories").json() == []
+
+
+def test_memory_writes_are_disabled_by_default(monkeypatch):
+    from app.core.config import Settings
+
+    monkeypatch.delenv("ALLOW_MEMORY_WRITE", raising=False)
+    assert Settings(_env_file=None).allow_memory_write is False
+
+
+def test_failed_memory_does_not_undo_confirmation_or_retry_it(client):
+    with client.app.state.store.connect() as db:
+        db.execute("CREATE TRIGGER fail_memory BEFORE INSERT ON memories "
+                   "BEGIN SELECT RAISE(FAIL, 'synthetic storage failure'); END")
+    path = "/api/v1/alerts/alert_txn_syn_004/confirmations"
+    body = {"decision": "normal", "consent_to_memory": True}
+    response = client.post(path, json=body)
+    assert response.status_code == 200
+    assert response.json()["decision"] == "normal"
+    assert response.json()["memory_status"] == "failed"
+    assert response.json()["memory_id"] is None
+    assert client.app.state.store.status("demo-user-001", "alert_txn_syn_004") == "normal"
+    assert client.get("/api/v1/memories").json() == []
+    assert client.post(path, json=body).json()["memory_status"] == "failed"
+
+
+def test_transactions_use_persistent_sqlite_instead_of_json(client):
+    store = client.app.state.store
+    owner = client.app.state.settings.demo_user_id
+    with store.connect() as db:
+        db.execute("UPDATE demo_transactions SET amount_cents=1234 WHERE owner=? AND id=?",
+                   (owner, "txn_syn_005"))
+    rows = client.get("/api/v1/transactions").json()
+    assert next(row for row in rows if row["id"] == "txn_syn_005")["amount"] == 12.34
+    analysis = client.post("/api/v1/analyses", json={"transaction_id": "txn_syn_005"}).json()
+    assert analysis["alert_type"] == "none"
+    preview = client.get("/api/v1/privacy/preview/txn_syn_005").json()
+    assert preview["safe_payload"]["amount_bucket"] == "10-25"
+
+    from app.main import create_app
+
+    with TestClient(create_app(client.app.state.settings)) as restarted:
+        rows = restarted.get("/api/v1/transactions").json()
+        assert len(rows) == 8
+        assert next(row for row in rows if row["id"] == "txn_syn_005")["amount"] == 12.34
 
 
 def test_contract_smoke(client):
@@ -114,6 +167,7 @@ def test_backboard_failure_and_success_keep_the_rule_contract(monkeypatch, tmp_p
         assert body["provider_mode"] == "degraded"
         assert body["model_version"] is None
         assert live.get("/api/v1/health").json()["analysis_mode"] == "degraded"
+        assert live.get("/api/v1/health").json()["status"] == "degraded"
         assert "StreamWave" not in json.dumps(body["safe_payload"] if "safe_payload" in body else body)
 
     async def succeeded(payload, api_key, client=None):

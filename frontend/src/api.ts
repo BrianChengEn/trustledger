@@ -37,23 +37,14 @@ export const money = (amount: number) => new Intl.NumberFormat('en-US', {style: 
 
 export type NessieQuery = 'customers.list'|'accounts.list'|'accounts.get'|'accounts.by_customer'|
   'deposits.by_account'|'withdrawals.by_account';
+export interface ResourceOption {resource_id: string; kind: 'customer'|'account'}
 export interface HistoryItem {
-  history_id: number; source: 'nessie'|'synthetic'; query: NessieQuery; resource_id: string|null;
+  history_id: number; source: 'nessie'|'synthetic'; query: NessieQuery;
   requested_at: string; duration_ms: number; http_status: number|null;
-  body_format: 'json'|'text'|'none'; transport_error: {type: string; message: string}|null;
+  transport_error: {type: string; message: string}|null;
 }
 export interface Execution extends Omit<HistoryItem, 'history_id'> {
-  history_id: number|null; response_body: unknown; write_status: 'saved'|'failed'; write_label: string|null;
+  history_id: number|null; response_body: unknown; body_format: 'json'|'none';
+  write_status: 'saved'|'failed'; write_label: string|null;
 }
 export interface HistoryPage {items: HistoryItem[]; next_cursor: number|null}
-export interface SnapshotChange {
-  kind: 'added'|'removed'|'changed'; record_id?: string|null; path: string;
-  before_present: boolean; after_present: boolean; before: unknown; after: unknown;
-}
-export interface Comparison {
-  left: Execution; right: Execution; comparison: {
-    data_changed: boolean; changes: SnapshotChange[];
-    status_change: {before: number|null; after: number|null}|null;
-    transport_change: {before: unknown; after: unknown}|null;
-  };
-}
