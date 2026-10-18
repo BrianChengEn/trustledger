@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+export APP_ENV=test
+printf 'Offline account-demo fixture; not live Nessie; must not be used for the public demo.\n'
 export SOURCE_DATABASE_DIR="${SOURCE_DATABASE_DIR:-$PWD/backend/data/sources}"
 # Resolve the source browser's registry; never seed or overwrite sources.
 if [[ -z "${DEMO_ACCOUNT_TOKEN:-}" ]]; then
@@ -26,4 +28,4 @@ export BACKBOARD_LIVE_TEST=0 GEMINI_LIVE_TEST=0 BACKBOARD_LIVE_SEARCH_TEST=0
 export FRONTEND_ORIGIN=http://127.0.0.1:5174
 printf 'Local synthetic Nessie history: %s (100 records)\n' "$DEMO_ACCOUNT_TOKEN"
 cd backend
-exec .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --no-access-log
+exec .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8002 --no-access-log
