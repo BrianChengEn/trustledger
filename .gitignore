@@ -20,4 +20,5 @@ artifacts/
 evaluation/datasets/
 evaluation/**/*.jsonl
 evaluation/**/*.csv
+/datasets/*.csv
 .idea/
