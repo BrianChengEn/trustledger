@@ -93,7 +93,7 @@ async def write_consented_memory(store: Store, owner, sentence, api_key, client=
 
 
 async def consented_summaries(store, owner, api_key, client=None):
-    local = [item.summary for item in store.list_memories(owner) if approved_memory(item.summary)]
+    local = [summary for summary in store.consented_memory_summaries(owner) if approved_memory(summary)]
     if not api_key.strip():
         return local, None
     assistant_id = store.assistant_id(owner)

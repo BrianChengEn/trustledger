@@ -1,7 +1,6 @@
-from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, StrictBool
 
 
 class StrictModel(BaseModel):
@@ -31,7 +30,7 @@ class Analysis(StrictModel):
     severity: Literal["low", "medium", "high"]
     needs_human: bool
     confidence: float = Field(ge=0, le=1)
-    evidence: list[str] = Field(max_length=8)
+    evidence: list[Annotated[str, Field(max_length=180)]] = Field(max_length=8)
     provider_mode: Literal["rules-only", "rules+jev-live", "degraded"] = "rules-only"
     model_version: str | None = None
     request_id: str
@@ -56,7 +55,7 @@ class SafePayload(StrictModel):
 class FieldAction(StrictModel):
     field: str
     action: Literal["allowed", "dropped", "tokenized", "generalized", "bucketed"]
-    output: str | None = None
+    output: JsonValue = None
     reason: str = Field(max_length=180)
 
 
@@ -71,7 +70,7 @@ class PrivacyPreview(StrictModel):
 class MemorySummary(StrictModel):
     memory_id: str
     summary: str = Field(max_length=240)
-    created_at: datetime
+    created_at: AwareDatetime
     source: Literal["backboard", "local-fallback"]
 
 
@@ -81,3 +80,13 @@ class Confirmation(StrictModel):
     memory_status: Literal["not-requested", "written", "pending", "skipped", "failed"]
     memory_id: str | None = None
     request_id: str
+
+
+class ErrorDetail(StrictModel):
+    code: str
+    message: str
+    request_id: str
+
+
+class ErrorEnvelope(StrictModel):
+    error: ErrorDetail

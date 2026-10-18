@@ -4,6 +4,7 @@ import hashlib
 import json
 import runpy
 import sqlite3
+from contextlib import contextmanager
 
 import httpx
 import pytest
@@ -240,13 +241,15 @@ def test_locked_privacy_cleanup_is_retried_until_raw_wal_is_removed(monkeypatch,
                    "'2026-10-17',200,1,NULL,'RAW_WAL_SENTINEL')")
     original = Store.connect
 
-    def quick_connect(instance):
-        connection = original(instance)
-        connection.execute("PRAGMA busy_timeout=1")
-        return connection
+    @contextmanager
+    def quick_connect(instance, **kwargs):
+        with original(instance, **kwargs) as connection:
+            connection.execute("PRAGMA busy_timeout=1")
+            yield connection
 
     monkeypatch.setattr(Store, "connect", quick_connect)
-    reader = original(store)
+    reader_context = original(store)
+    reader = reader_context.__enter__()
     reader.execute("BEGIN")
     reader.execute("SELECT response_body FROM query_history").fetchall()
     try:
@@ -255,7 +258,7 @@ def test_locked_privacy_cleanup_is_retried_until_raw_wal_is_removed(monkeypatch,
         with pytest.raises(sqlite3.OperationalError):
             Store(store.filename)
     finally:
-        reader.close()
+        reader_context.__exit__(None, None, None)
     restarted = Store(store.filename)
     assert restarted.get_history("owner", 1)["http_status"] == 200
     for path in tmp_path.glob("locked.db*"):

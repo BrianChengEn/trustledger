@@ -1,14 +1,13 @@
-from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
 
 class Transaction(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: str
-    occurred_at: datetime
-    amount: float = Field(ge=0)
+    occurred_at: AwareDatetime
+    amount: float = Field(ge=0, allow_inf_nan=False)
     currency: Literal["USD"]
     direction: Literal["debit", "credit"]
     merchant_display: str = Field(max_length=80)

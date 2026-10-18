@@ -17,7 +17,9 @@ or `feat/local-memory-feedback`.
 - Integrator owner: backend/app/api/**, backend/app/core/**, backend/app/main.py,
   shared dependencies, integration tests, CI, contracts/**.
 - Agree on contract changes before implementation; preserve the synthetic baseline.
-- Jev is called through Backboard System One when BACKBOARD_API_KEY is set.
+- Jev is called through Backboard System One only with FRAUD_PROVIDER=backboard-jev
+  and a BACKBOARD_API_KEY. A key alone never activates inference; only POST analyses
+  may call it, at most once. Rules remain authoritative.
   The direct TypeSafe API is not the selected route. The Nessie dashboard adapter
   remains an extension point. Backboard memory uses explicit consented CRUD;
   inference memory stays off. Admin sandbox reads and the explicit SQLite baseline

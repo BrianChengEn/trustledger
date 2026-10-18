@@ -1,12 +1,13 @@
 import json
 import sqlite3
 import threading
+from contextlib import contextmanager
 from decimal import Decimal
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from app.schemas.api import Confirmation, MemorySummary
+from app.schemas.api import Confirmation, ConfirmationRequest, MemorySummary
 from app.schemas.transaction import Transaction
 
 HISTORY_SCHEMA = """CREATE TABLE IF NOT EXISTS query_history (
@@ -105,6 +106,15 @@ class Store:
                 db.execute("ALTER TABLE memories ADD COLUMN source TEXT NOT NULL DEFAULT 'local-fallback'")
             if "assistant_id" not in columns:
                 db.execute("ALTER TABLE memories ADD COLUMN assistant_id TEXT")
+            if "local_persisted" not in columns:
+                db.execute("ALTER TABLE memories ADD COLUMN local_persisted INTEGER NOT NULL DEFAULT 0")
+                # Legacy receipts prove only completed writes, never pending preparation.
+                db.execute("""UPDATE memories SET local_persisted=1 WHERE EXISTS (
+                    SELECT 1 FROM confirmations c WHERE c.owner=memories.owner
+                    AND c.decision='normal' AND c.consent=1 AND json_valid(c.result)
+                    AND json_extract(c.result,'$.memory_id')=memories.memory_id
+                    AND json_extract(c.result,'$.memory_status')='written')""")
+                db.commit()
             db.execute(HISTORY_SCHEMA)
             schema = db.execute("SELECT sql FROM sqlite_master WHERE name='query_history'").fetchone()[0]
             if "response_body" in schema:
@@ -140,12 +150,17 @@ class Store:
             db.execute("CREATE INDEX IF NOT EXISTS history_owner ON query_history(owner,id)")
         filename.chmod(0o600)
 
-    def connect(self):
-        connection = sqlite3.connect(self.filename, timeout=5)
+    @contextmanager
+    def connect(self, *, timeout: float = 5):
+        connection = sqlite3.connect(self.filename, timeout=timeout)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys=ON")
         connection.execute("PRAGMA secure_delete=ON")
-        return connection
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
 
     def initialize_transactions(self, owner, transactions):
         values = []
@@ -182,7 +197,69 @@ class Store:
                              (owner, alert_id)).fetchone()
             return row["decision"] if row else "open"
 
+    def confirm(self, owner, alert_id, decision, consent, sentence, request_id,
+                *, memory_enabled: bool = True) -> Confirmation:
+        # Keep the persistence boundary strict as well as the HTTP boundary.
+        ConfirmationRequest(decision=decision, consent_to_memory=consent)
+        permitted = decision == "normal" and consent is True and memory_enabled is True
+        write_memory = permitted and bool(sentence)
+        with self.lock:
+            # BEGIN IMMEDIATE serializes the read/insert across separate Store
+            # instances too. Only the creator may attempt this optional write.
+            with self.connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                existing = db.execute("SELECT * FROM confirmations WHERE owner=? AND alert_id=?",
+                                      (owner, alert_id)).fetchone()
+                if existing:
+                    if existing["decision"] != decision or bool(existing["consent"]) != consent:
+                        raise ConflictingConfirmation()
+                    return Confirmation.model_validate_json(existing["result"]).model_copy(
+                        update={"request_id": request_id})
+                result = Confirmation(
+                    alert_id=alert_id, decision=decision, request_id=request_id,
+                    memory_status="pending" if write_memory else (
+                        "skipped" if consent else "not-requested"),
+                )
+                db.execute("INSERT INTO confirmations VALUES (?,?,?,?,?)", (
+                    owner, alert_id, decision, int(consent), result.model_dump_json()))
+            # The authoritative confirmation is now committed and visible to other
+            # connections. Optional work can never roll it back.
+            if not write_memory:
+                return result
+            return self.complete_local_memory(owner, sentence, result)
+
+    def complete_local_memory(self, owner, sentence, result):
+        try:
+            return self._write_memory(owner, sentence, result)
+        except Exception:
+            # Do not expose SQL/summary/exception text. Insert + outcome update
+            # roll back together, leaving the original confirmation intact.
+            failed = result.model_copy(update={"memory_status": "failed"})
+            try:
+                with self.connect() as db:
+                    db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
+                               (failed.model_dump_json(), owner, result.alert_id))
+            except Exception:
+                # If even status persistence is unavailable, return the durable
+                # pending state. Replays never retry/backfill optional memory.
+                return result
+            return failed
+
+    def _write_memory(self, owner: str, sentence: str, result: Confirmation) -> Confirmation:
+        memory = MemorySummary(memory_id="mem_" + uuid4().hex, summary=sentence,
+                               created_at=datetime.now(timezone.utc), source="local-fallback")
+        written = result.model_copy(update={"memory_status": "written", "memory_id": memory.memory_id})
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("INSERT INTO memories (memory_id,owner,summary,created_at,local_persisted) VALUES (?,?,?,?,1)", (
+                memory.memory_id, owner, memory.summary, memory.created_at.isoformat()))
+            db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
+                       (written.model_dump_json(), owner, result.alert_id))
+        return written
+
     def claim_confirmation(self, owner, alert_id, decision, consent, wants_memory, request_id):
+        ConfirmationRequest(decision=decision, consent_to_memory=consent)
+        wants_memory = wants_memory and decision == "normal" and consent is True
         result = Confirmation(alert_id=alert_id, decision=decision, memory_id=None,
                               memory_status="pending" if wants_memory else (
                                   "skipped" if consent else "not-requested"), request_id=request_id)
@@ -233,7 +310,7 @@ class Store:
                     row = db.execute("SELECT owner,summary FROM memories WHERE memory_id=?", (saved_id,)).fetchone()
                     if row["owner"] != owner or row["summary"] != sentence:
                         raise sqlite3.IntegrityError("Memory identity differs.")
-                    db.execute("UPDATE memories SET source=?,assistant_id=? WHERE owner=? AND memory_id=?",
+                    db.execute("UPDATE memories SET source=?,assistant_id=?,local_persisted=1 WHERE owner=? AND memory_id=?",
                                (source, assistant_id, owner, saved_id))
                     if job:
                         db.execute("UPDATE memory_jobs SET remote_id=?,state=? "
@@ -248,14 +325,13 @@ class Store:
                 db.rollback()
                 result = result.model_copy(update={"memory_id": job["local_id"] if job else None,
                                                    "memory_status": "pending" if job else "failed"})
-                db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
-                           (result.model_dump_json(), owner, result.alert_id))
+                try:
+                    db.execute("UPDATE confirmations SET result=? WHERE owner=? AND alert_id=?",
+                               (result.model_dump_json(), owner, result.alert_id))
+                except sqlite3.Error:
+                    db.rollback()
+                    return self.replay_confirmation(owner, result.alert_id, result.decision, True, result.request_id)
         return result
-
-    def confirm(self, owner, alert_id, decision, consent, sentence, request_id, **placement):
-        result, created = self.claim_confirmation(owner, alert_id, decision, consent,
-                                                  bool(sentence), request_id)
-        return self.finish_memory(owner, result, sentence, **placement) if created else result
 
     def prepare_memory_job(self, owner, alert_id, assistant_id, sentence):
         local_id = "mem_" + uuid4().hex
@@ -340,6 +416,19 @@ class Store:
             listed.append(MemorySummary(memory_id=row["memory_id"], summary=row["summary"],
                                         created_at=row["created_at"], source=source))
         return listed
+
+    def consented_memory_summaries(self, owner: str) -> list[str]:
+        """Only extant memories linked to this owner's successful consented write."""
+        # Optional context must not consume the frontend deadline on lock contention.
+        with self.connect(timeout=0.1) as db:
+            rows = db.execute("""
+                SELECT m.summary FROM confirmations c JOIN memories m
+                  ON m.owner = c.owner AND m.memory_id = json_extract(
+                    CASE WHEN json_valid(c.result) THEN c.result ELSE '{}' END, '$.memory_id')
+                WHERE c.owner = ? AND c.decision = 'normal' AND c.consent = 1
+                  AND m.local_persisted = 1
+            """, (owner,)).fetchall()
+        return [row["summary"] for row in rows]
 
     def delete_memory(self, owner, memory_id) -> bool:
         with self.lock, self.connect() as db:

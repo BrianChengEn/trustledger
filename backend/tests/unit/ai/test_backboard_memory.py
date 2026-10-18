@@ -17,8 +17,12 @@ async def write_consented_memory(store, owner, sentence, key, client):
     from uuid import uuid4
 
     alert_id = "alert_test_" + uuid4().hex
-    store.claim_confirmation(owner, alert_id, "normal", True, bool(sentence), "test")
-    return await write_placed_memory(store, owner, sentence, key, client, alert_id=alert_id)
+    result, _ = store.claim_confirmation(owner, alert_id, "normal", True, bool(sentence), "test")
+    placed = await write_placed_memory(store, owner, sentence, key, client, alert_id=alert_id)
+    if key and sentence:
+        store.finish_memory(owner, result, placed.sentence, memory_id=placed.memory_id,
+                            source=placed.source, assistant_id=placed.assistant_id, memory_status=placed.status)
+    return placed
 
 
 ASSISTANT_A = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
@@ -331,10 +335,8 @@ def test_provider_failure_keeps_one_local_sentence(tmp_path):
         return failed, listed, mode
 
     failed, _listed, mode = asyncio.run(run())
-    saved = store.confirm(
-        "demo-user-001", "alert_new", "normal", True, failed.sentence, "rid",
-        memory_id=failed.memory_id, source=failed.source, assistant_id=failed.assistant_id,
-        memory_status=failed.status)
+    job = store.memory_job("demo-user-001", memory_id=failed.memory_id)
+    saved = store.replay_confirmation("demo-user-001", job["alert_id"], "normal", True, "rid")
     rows = store.list_memories("demo-user-001")
     assert failed.status == "failed" and failed.source == "local-fallback"
     assert saved.memory_status == "failed"

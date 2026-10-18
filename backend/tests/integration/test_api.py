@@ -156,19 +156,19 @@ def test_backboard_failure_and_success_keep_the_rule_contract(monkeypatch, tmp_p
     from app.services.ai.jev_client import JevCallError, JevClassification
 
     settings = Settings(_env_file=None, database_path=tmp_path / "live.db",
-                        allow_memory_write=True, backboard_api_key="synthetic-test-key")
+                        allow_memory_write=True, backboard_api_key="synthetic-test-key",
+                        fraud_provider="backboard-jev")
 
     async def failed(*_args, **_kwargs):
         raise JevCallError("request_failed")
 
-    monkeypatch.setattr("app.services.ai.decision.classify", failed)
+    monkeypatch.setattr("app.core.jev.classify", failed)
     with TestClient(create_app(settings)) as live:
         body = live.post("/api/v1/analyses", json={"transaction_id": "txn_syn_004"}).json()
         assert body["alert_type"] == "duplicate"
         assert body["provider_mode"] == "degraded"
         assert body["model_version"] is None
-        assert live.get("/api/v1/health").json()["analysis_mode"] == "degraded"
-        assert live.get("/api/v1/health").json()["status"] == "degraded"
+        assert live.get("/api/v1/health").json()["analysis_mode"] == "rules-only"
         assert "StreamWave" not in json.dumps(body["safe_payload"] if "safe_payload" in body else body)
 
     async def succeeded(payload, api_key, client=None):
@@ -177,7 +177,7 @@ def test_backboard_failure_and_success_keep_the_rule_contract(monkeypatch, tmp_p
         return JevClassification(pattern="duplicate", needs_review=0.93,
                                  choice_confidence=0.81, model_version="jev-1.13.0")
 
-    monkeypatch.setattr("app.services.ai.decision.classify", succeeded)
+    monkeypatch.setattr("app.core.jev.classify", succeeded)
     with TestClient(create_app(settings)) as live:
         body = live.post("/api/v1/analyses", json={"transaction_id": "txn_syn_004"}).json()
         assert body["provider_mode"] == "rules+jev-live"
@@ -185,10 +185,8 @@ def test_backboard_failure_and_success_keep_the_rule_contract(monkeypatch, tmp_p
         assert body["alert_type"] == "duplicate" and body["needs_human"] is True
         alerts = live.get("/api/v1/alerts").json()
         assert len(alerts) == 3
-        assert {item["provider_mode"] for item in alerts} == {"rules+jev-live"}
-        health = live.get("/api/v1/health").json()
-        assert health["analysis_mode"] == "rules+jev-live"
-        assert health["memory_mode"] == "local-fallback"
+        assert {item["provider_mode"] for item in alerts} == {"rules-only"}
+        assert live.get("/api/v1/health").json()["analysis_mode"] == "rules-only"
 
 
 def _memory_client(tmp_path, monkeypatch, handler):
@@ -441,8 +439,10 @@ def test_confirmation_failure_prevents_every_remote_memory_write(tmp_path, monke
         with live.app.state.store.connect() as db:
             db.execute("CREATE TRIGGER fail_confirmation BEFORE INSERT ON confirmations "
                        "BEGIN SELECT RAISE(FAIL, 'Synthetic confirmation failure'); END")
-        import sqlite3
-        with pytest.raises(sqlite3.IntegrityError):
-            live.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
-                      json={"decision": "normal", "consent_to_memory": True})
+        response = live.post("/api/v1/alerts/alert_txn_syn_004/confirmations",
+                             json={"decision": "normal", "consent_to_memory": True})
+        assert response.status_code == 500
+        assert response.json()["error"]["code"] == "internal_error"
+        assert "Synthetic confirmation failure" not in response.text
+        assert live.app.state.store.status("demo-user-001", "alert_txn_syn_004") == "open"
     assert calls == []
