@@ -565,3 +565,7 @@ html[data-stage] .topbar, html[data-stage] main, html[data-stage] .foot { paddin
   overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 [data-paged]::-webkit-scrollbar, .stepbody::-webkit-scrollbar, .flowpanel::-webkit-scrollbar, .payloadpanel::-webkit-scrollbar, .demoform::-webkit-scrollbar { width: 8px; }
 [data-paged]::-webkit-scrollbar-thumb, .stepbody::-webkit-scrollbar-thumb, .flowpanel::-webkit-scrollbar-thumb, .payloadpanel::-webkit-scrollbar-thumb, .demoform::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+
+/* Activity: the whole row is the click target. */
+.clickrow { cursor: pointer; }
+.clickrow:focus-within { background: var(--surface-2); }
