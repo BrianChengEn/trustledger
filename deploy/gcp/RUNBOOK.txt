@@ -1,0 +1,131 @@
+TrustLedger: existing Google Compute Engine VM (PREPARED, NOT DEPLOYED)
+
+Target supplied by owner
+Project display name Technica2026 (actual project ID/zone not yet verified).
+VM instance-20261018-124923, external IP 35.227.39.10, SSH user benson.
+Reported Ubuntu 26.04.1 LTS; host audit must confirm it. Do not provision a VM,
+reserve/change an IP, resize disks, or alter billing without explicit approval.
+PR #35 remains unmerged. This configuration migrates its runtime files and
+keeps app/frontend/provider/schema code unchanged on base main 8fbf407.
+
+Access and audit gate
+Use the local SSH agent, no agent forwarding, no private-key upload/read:
+  ssh -o BatchMode=yes -o IdentityFile=none -o StrictHostKeyChecking=yes benson@35.227.39.10
+User loads the provided key into their agent locally. If authentication fails,
+stop dependent VM work; never fall back to reading the private key. Verify an
+unknown host key through GCP console before adding it to known_hosts.
+Pipe audit.sh into the SSH command above with bash -s to inspect only OS,
+resources, package candidates, sudo, listeners/firewall and selected metadata.
+No metadata tokens or environment values are read. Audit output may contain
+operator IPs; keep it private. Capture project ID/zone from metadata; a display
+name is insufficient for gcloud. Local gcloud is currently unavailable.
+
+Approval boundaries
+Preparation and private local tests are authorized. Before any public listener,
+firewall exposure, production certificate request, or billable changes, present
+the tested full Git SHA, target, network scope, credentials delivery and audit
+results for explicit approval. Do not deploy until the owner approves that SHA.
+Keep ports closed until then. Never merge this PR or #35 automatically.
+
+Runtime and Ubuntu/Python compatibility gate
+One Nginx origin serves React dist and /api to one systemd Uvicorn worker bound
+to 127.0.0.1:8000. SQLite lives ONLY in /var/lib/trustledger; backups and rollback
+preserve it. systemd runs a no-login trustledger user. Deploy account is benson.
+Check RAM/disk before installing/building. Do not assume Ubuntu's Python version
+or dependency compatibility. In a temporary venv using actual python3, install
+backend/requirements.lock.txt, run pip check, backend lint/tests and startup
+checks with temporary SQLite paths. Run the complete scripts/check.sh with
+Node >=22.12.0, plus built frontend/proxy smoke checks. If the default Python
+fails, use a separately installed, verified Python 3.12 runtime in an isolated
+venv; pass its executable using TRUSTLEDGER_PYTHON to release.sh. Never replace
+system Python or change dependency pins merely to force a deployment. Selecting
+or installing that runtime requires inspecting actual available packages first.
+VM compatibility is NOT yet verified. Local tests use Python 3.12.
+
+Host preparation once SSH works (do not expose services)
+Check existing nginx configuration/services/data before touching anything.
+Prevent newly installed nginx from auto-starting its default public site using
+a temporary service mask if absent; remove default site before unmasking. Keep
+existing services intact. Install compatible nginx, apache2-utils, python venv,
+git and Node from trusted repositories. Use a separate /opt/trustledger-certbot
+venv with Certbot >=5.4 for IP webroot support; record installed versions.
+Create /opt/trustledger/releases owned by benson; service user trustledger;
+/var/lib/trustledger 0700 trustledger; /etc/trustledger 0750 root:www-data.
+Generate independent evaluator/user passcodes and session secret privately;
+store runtime.env root:root 0600 and bcrypt htpasswd root:www-data 0640. No
+secret values go into Git, reports, build env, logs or screenshots. Provide
+credentials through owner's private channel. preflight rejects vendor keys,
+admin passcodes, open login, wrong DB paths and weak/placeholder credentials.
+
+GCP networking AFTER explicit approval
+Inspect effective GCP ingress rules, network tags, VPC and IAM permissions.
+Create/update rules scoped to THIS VM via a unique tag: allow TCP 80 and 443
+from evaluator/public networks as approved; TCP 22 only from operator CIDR or
+IAP with its required source range/IAM. Remove broad SSH access only after a
+second restricted SSH session succeeds. Check higher-priority rules and IPv6.
+UFW mirrors the same policy; never allow port 8000 publicly. Keep the current
+SSH connection open. Do not assume host firewall updates change GCP firewall.
+If cloud permissions are missing, ask owner to apply the exact scoped rule in
+console. Do not invent project ID/zone or disrupt other VMs' shared rules.
+
+Trusted HTTPS on existing IP AFTER explicit approval
+Use https://35.227.39.10 as the single origin, contingent on issuance success.
+An ephemeral address can change if the VM stops; do not reserve a paid/static
+address without approval. Keep the VM/IP unchanged for this demo.
+Install nginx-acme.conf first: ONLY challenge files and 404, no app. Create
+/var/www/letsencrypt readable by nginx. Check nginx -t and start after approval.
+Use Certbot >=5.4 webroot IP support, with owner's ACME agreement/contact email:
+  sudo /opt/trustledger-certbot/bin/certbot certonly --staging --webroot -w /var/www/letsencrypt --preferred-profile shortlived --ip-address 35.227.39.10 --cert-name trustledger-ip-staging
+After staging succeeds, issue the trusted lineage WITHOUT --staging:
+  sudo /opt/trustledger-certbot/bin/certbot certonly --webroot -w /var/www/letsencrypt --preferred-profile shortlived --ip-address 35.227.39.10 --cert-name 35.227.39.10
+These certificates last about six days: renewal is mandatory. Do not use the
+staging certificate for the public demo. Install renew-certificate.sh root-owned
+as /usr/local/sbin/trustledger-renew-certificate; install/enable the included
+systemd service/timer (twice daily). Confirm the production lineage is selected,
+run certbot renew --cert-name 35.227.39.10 --dry-run --run-deploy-hooks, inspect
+timer/journal and certificate expiry. Test a challenge retrieval externally.
+Port 80 retains an unauthenticated ACME challenge exception, otherwise redirects
+to HTTPS. Renewal uses webroot, with nginx validation/reload and no downtime.
+Source: https://letsencrypt.org/2026/03/11/shorter-certs-certbot
+
+Activation AFTER exact SHA approval
+Upload a git archive of the approved tested SHA over SSH, or use an approved
+read-only repository checkout. Do not forward the agent or upload GitHub tokens
+or private keys. release.sh expects a local Git repo containing the SHA; an
+archive alone needs to be staged into such a repo before invoking it. Prefer
+streaming git bundle over SSH and cloning on the VM for offline/private access.
+Install service/proxy config files from deploy/gcp. nginx.conf.template is bound
+to the supplied IP. Remove bootstrap config when enabling final config. Validate
+nginx -t. Copy runtime.env.example privately and replace secret placeholders.
+Run systemctl daemon-reload and enable trustledger, then as benson:
+  bash deploy/gcp/release.sh TESTED_FULL_SHA APPROVED_FULL_SHA
+The SHA arguments must match; they assert operator review, not automatic proof.
+release.sh builds in an isolated release, backs up SQLite while service stopped,
+activates code and checks local health. No database is copied/reset. Nginx must
+be restarted/reloaded to activate the approved HTTPS frontend/proxy config.
+Record full SHA and approval before deployment. Config stays managed in this
+unmerged GCP PR until the team explicitly chooses to merge it.
+
+Rollback and data
+Record the last externally verified SHA; previous symlink only denotes previous
+local health success. rollback.sh VERIFIED_FULL_SHA switches code only, retaining
+persistent DB/source stores. Keep old release directories. Never restore a
+backup over current SQLite or reset data during release/rollback. This release
+makes no schema changes. Existing VM data must be inventoried/backed up first.
+
+Acceptance and evidence AFTER approval
+Externally validate trusted TLS; HTTP redirects and public challenge access;
+unauthenticated /, API and health return 401; evaluator Basic auth without app
+session cannot access transactions, POST analyses/explanations/memory; wrong
+app login fails; correct login works; Secure/HttpOnly/SameSite=Strict cookies;
+transactions, alerts, review, consented LOCAL memory, Privacy and Memory pages;
+React navigation and refresh; controlled burst -> 429; dotfiles/docs unavailable;
+external 8000 unreachable; restart retains review/memory state. Inspect logs
+privately for leaks. Keep provider keys absent, outbound provider calls disabled.
+Admin editing/data-source routes remain blocked at edge; admin passcode absent.
+This is a restricted shared-owner evaluator demo, not multi-user bank auth.
+Record actual public URL, SHA, GCP project ID/zone/machine type, redacted VM
+console evidence, test outcomes and certificate renewal evidence for submission.
+Do not claim Vultr hosting for this GCP deployment. No provider is production
+verified. Brian owns paid-provider authorization; Kenny owns Nessie; Ian's
+frontend is unchanged. Superseded PR #23/#26 and open feature PRs are excluded.
