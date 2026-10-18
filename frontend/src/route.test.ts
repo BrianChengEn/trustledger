@@ -34,4 +34,20 @@ describe('customer navigation stays inside Data sources', () => {
     expect(parse(`#/sources/${customer}/case/%`)).toEqual({view: 'today', customer});
     expect(parse('#/case/%')).toEqual({view: 'today'});
   });
+  it('round-trips the Memory and Privacy lab routes', () => {
+    expect(parse('#/memory')).toEqual({view: 'memory'});
+    expect(parse('#/memory/lab')).toEqual({view: 'memory', lab: ''});
+    expect(parse('#/memory/lab/l1-5')).toEqual({view: 'memory', lab: 'l1-5'});
+    expect(href({view: 'memory', lab: 'l2-3'})).toBe('#/memory/lab/l2-3');
+    expect(href({view: 'memory', lab: ''})).toBe('#/memory/lab');
+    expect(parse('#/privacy/lab/p-4')).toEqual({view: 'privacy', lab: 'p-4'});
+    expect(href({view: 'privacy', lab: 'p-4'})).toBe('#/privacy/lab/p-4');
+    expect(parse('#/privacy/txn_syn_004')).toEqual({view: 'privacy', tx: 'txn_syn_004'});
+  });
+  it('round-trips the Fraud Intelligence Lab chapters', () => {
+    expect(parse('#/fraud-lab')).toEqual({view: 'fraudlab', chapter: undefined});
+    expect(parse('#/fraud-lab/arena')).toEqual({view: 'fraudlab', chapter: 'arena'});
+    expect(href({view: 'fraudlab'})).toBe('#/fraud-lab');
+    expect(href({view: 'fraudlab', chapter: 'explorer'})).toBe('#/fraud-lab/explorer');
+  });
 });
