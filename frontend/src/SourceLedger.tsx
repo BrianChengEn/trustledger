@@ -81,7 +81,9 @@ export default function SourceLedger() {
         onClick={() => setAccountOffset(accounts!.next_offset!)}>Next accounts</button>
     </div>}
     {accountError && <p role="alert" className="error">{accountError}</p>}
-    {accountToken && <p role="status">Local synthetic history · 100 generated records per account. Fraud labels stay offline.</p>}
+    {accountToken && <p role="status">{source === 'banksim'
+      ? 'Local BankSim account history · recorded transaction counts are shown. Labels stay offline.'
+      : 'Local Nessie history · 100 synthetic-derived records per account. Labels stay offline.'}</p>}
     <p>{source === 'banksim'  ? 'BankSim research data · EUR · simulation days. Labels and model results are not shown.'
       : 'Nessie sandbox · cached normalized transactions. Refresh explicitly to fetch the sandbox.'}</p>
     {busy && <p role="status">Loading source transactions…</p>}
