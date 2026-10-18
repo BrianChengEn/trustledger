@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export SOURCE_DATABASE_DIR="$PWD/backend/data/sources"
+export SOURCE_DATABASE_DIR="${SOURCE_DATABASE_DIR:-$PWD/backend/data/sources}"
 # Resolve the source browser's registry; never seed or overwrite sources.
 if [[ -z "${DEMO_ACCOUNT_TOKEN:-}" ]]; then
   DEMO_ACCOUNT_TOKEN=$(backend/.venv/bin/python - <<'PY'

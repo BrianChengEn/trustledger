@@ -68,7 +68,8 @@ def test_bundle_round_trip_preserves_transactions_and_excludes_private_state(tmp
             code = accounts['items'][0]['account_token']
             records = client.get(f'/api/v1/data-sources/{source}/transactions',
                                  params={'account_token': code, 'limit': 100}).json()
-            assert records['total'] == len(records['items']) == 100
+            assert records['total'] == (110 if source == 'banksim' else 100)
+            assert len(records['items']) == 100
             assert records['data_mode'] == 'synthetic-derived'
             assert {row['currency'] for row in records['items']} == {currency}
         assert len(client.get('/api/v1/transactions?limit=100').json()) == 18
@@ -135,10 +136,13 @@ def test_install_rejects_unsafe_archives_without_partial_publication(tmp_path, p
     assert not list(tmp_path.glob('.account-install-*'))
 
 
-@pytest.mark.parametrize('change', ['unknown-table', 'review', 'missing-history', 'wal'])
+@pytest.mark.parametrize('change', ['unknown-table', 'review', 'missing-history', 'wal',
+                                  'customer-binding', 'original-row', 'nessie-quota',
+                                  'nessie-owner', 'synthetic-account'])
 def test_pack_rejects_private_or_incomplete_sources(tmp_path, change):
     source = batch(tmp_path)
-    path = source / 'nessie.db'
+    kind = 'banksim' if change in ('customer-binding', 'original-row') else 'nessie'
+    path = source / f'{kind}.db'
     with sqlite3.connect(path) as db:
         if change == 'unknown-table':
             db.execute('CREATE TABLE private_secrets (secret TEXT)')
@@ -146,16 +150,73 @@ def test_pack_rejects_private_or_incomplete_sources(tmp_path, change):
             db.execute("INSERT INTO human_reviews SELECT owner,id,'normal',1,'2026-10-18' FROM transactions LIMIT 1")
         elif change == 'missing-history':
             db.execute('DELETE FROM transactions WHERE id=(SELECT id FROM transactions LIMIT 1)')
+        elif change == 'customer-binding':
+            db.execute("UPDATE transactions SET customer_token='different-source-user'")
+        elif change == 'original-row':
+            owner, record = db.execute('SELECT owner,id FROM transactions LIMIT 1').fetchone()
+            db.execute("UPDATE transactions SET source_record_key='999999999999' WHERE owner=? AND id=?", (owner, record))
+            db.execute("UPDATE account_origins SET source_record_key='999999999999' WHERE owner=? AND transaction_id=?", (owner, record))
+        elif change == 'nessie-quota':
+            db.execute("UPDATE transactions SET kind='deposit' WHERE id=(SELECT id FROM transactions WHERE kind='transfer' LIMIT 1)")
+        elif change == 'nessie-owner':
+            db.execute("UPDATE account_origins SET source_owner='another-owner' WHERE owner=(SELECT owner FROM accounts LIMIT 1)")
+        elif change == 'synthetic-account':
+            db.execute("UPDATE account_origins SET source_record_key='acct_ffffffffffffffffffffffffffffffff:purchase' WHERE source_dataset_id='nessie-synthetic-kinds-v1'")
     if change == 'wal':
         Path(str(path) + '-wal').write_bytes(b'active source')
     # Even an updated fingerprint cannot turn private state into a shareable snapshot.
     manifest = json.loads((source / 'manifest.json').read_text())
-    manifest['database_digests']['nessie'] = hashlib.sha256(path.read_bytes()).hexdigest()
+    manifest['database_digests'][kind] = hashlib.sha256(path.read_bytes()).hexdigest()
     (source / 'manifest.json').write_text(json.dumps(manifest))
     archive = tmp_path / 'dataset.zip'
     assert cli('pack', '--source-dir', source, '--output', archive,
                '--code-ref', CODE_REF).returncode != 0
     assert not archive.exists() and not Path(str(archive) + '.sha256').exists()
+
+
+def test_legacy_v1_bundle_and_original_attribution_remain_installable(tmp_path):
+    from datetime import date
+    from app.core.account_dataset import AccountDataset
+    from app.schemas.dataset import TransactionRecord
+    source = tmp_path / 'v1'
+    source.mkdir()
+    inputs_v1 = {'banksim': 'a' * 64, 'nessie': 'b' * 64, 'seed': 2026, 'version': 'account-demo-v1'}
+    signature = hashlib.sha256(json.dumps(inputs_v1, sort_keys=True).encode()).hexdigest()
+    report = {}
+    for kind, digit in [('banksim', '1'), ('nessie', '2')]:
+        store = AccountDataset(source / f'{kind}.db', kind)
+        code = 'acct_' + digit * 32
+        owner = 'account-demo-v1:' + kind + ':' + code
+        rows = [TransactionRecord(
+            id=f'txn_{index:032x}', owner=owner, source=kind,
+            dataset_id='account-demo-v1:' + signature, source_record_key=f'{index:03d}',
+            account_token=code, amount_minor=123, currency='EUR' if kind == 'banksim' else 'USD',
+            kind='unknown' if kind == 'banksim' else 'transfer',
+            simulation_step=index if kind == 'banksim' else None,
+            occurred_date=None if kind == 'banksim' else date(2026, 10, 18)) for index in range(100)]
+        store.upsert_transactions(rows)
+        with store.connect() as db:
+            db.execute('INSERT INTO accounts VALUES(?,?,?,?)', (code, owner, kind + ' account', 'legacy-owner'))
+            db.executemany('INSERT INTO account_origins VALUES(?,?,?,?,?)',
+                           [(owner, row.id, 'legacy-source', row.source_record_key, 'legacy-owner') for row in rows])
+        report[kind] = {'accounts': 1, 'transactions': 100, 'fraud_samples': 0}
+    manifest = {'inputs': inputs_v1, 'report': report,
+                'database_digests': {kind: hashlib.sha256((source / f'{kind}.db').read_bytes()).hexdigest()
+                                     for kind in ('banksim', 'nessie')}}
+    (source / 'manifest.json').write_text(json.dumps(manifest))
+    archive = tmp_path / 'v1.zip'
+    result = cli('pack', '--source-dir', source, '--output', archive, '--code-ref', CODE_REF)
+    assert result.returncode == 0, result.stderr
+    legacy = tmp_path / 'original-v1.zip'
+    with zipfile.ZipFile(archive) as original, zipfile.ZipFile(legacy, 'w') as bundle:
+        assert json.loads(original.read('DATASET-INFO.json'))['generator_version'] == 'account-demo-v1'
+        for entry in original.infolist():
+            content = ((ROOT / 'fixtures/account-demo-v1-attribution.txt').read_bytes()
+                       if entry.filename == 'LICENSE-BANKSIM.txt' else original.read(entry))
+            bundle.writestr(entry, content)
+    checksum = hashlib.sha256(legacy.read_bytes()).hexdigest()
+    result = cli('install', '--archive', legacy, '--sha256', checksum, '--output-dir', tmp_path / 'installed-v1')
+    assert result.returncode == 0, result.stderr
 
 
 def test_install_never_replaces_a_late_empty_destination(tmp_path, packed, monkeypatch):

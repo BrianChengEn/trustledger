@@ -16,7 +16,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
 
-from app.adapters.account_demo import VERSION, digest  # noqa: E402
+from app.adapters.account_demo import KINDS, SYNTHETIC_KINDS, VERSION, digest, kind_quotas  # noqa: E402
 from app.core.account_dataset import AccountDataset  # noqa: E402
 
 SOURCES = ('banksim', 'nessie')
@@ -31,13 +31,15 @@ Source: https://www.kaggle.com/datasets/ealaxi/banksim1
 Alternate source: https://www.kaggle.com/datasets/ntnu-testimon/banksim1
 License: CC BY-NC-SA 4.0
 https://creativecommons.org/licenses/by-nc-sa/4.0/
-Changes by TrustLedger: sampled and allocated into synthetic 100-record accounts,
-tokenized local identifiers, normalized exact minor-unit EUR amounts and simulated days.
+Changes by TrustLedger: v2 preserves complete original customer histories; v1 sampled
+and allocated cases. Local identifiers are tokenized; exact EUR minor units and
+simulation days are normalized without currency or timestamp fabrication.
 The BankSim-derived data in this bundle is distributed under the same license.
 Noncommercial use only; preserve attribution and share-alike terms.
 Nessie-derived rows are synthetic sandbox examples, not real banking records.
 No fraud labels, raw source CSV, product confirmations, or memories are included.
 '''
+LEGACY_LICENSE_SHA256 = 'd574bee5da42bdfc81a932bcbd147ea0bd2a864db685ed30f5d25cf98844414f'
 
 
 def read_json(path):
@@ -53,7 +55,8 @@ def schema(db):
 
 def validate(directory):
     manifest = read_json(directory / 'manifest.json')
-    if manifest['inputs']['version'] != VERSION:
+    version = manifest['inputs']['version']
+    if version not in ('account-demo-v1', VERSION):
         raise ValueError('Unsupported account generator version.')
     signature = hashlib.sha256(json.dumps(manifest['inputs'], sort_keys=True).encode()).hexdigest()
     for source in SOURCES:
@@ -84,18 +87,52 @@ def validate(directory):
             if not accounts or len(accounts) != report['accounts']:
                 raise ValueError('Account count does not match the manifest.')
             if any(not re.fullmatch(r'acct_[0-9a-f]{32}', code)
-                   or owner != f'{VERSION}:{source}:{code}' for code, owner in accounts):
+                   or owner != f'{version}:{source}:{code}' for code, owner in accounts):
                 raise ValueError('Only generated local account identities may be shared.')
             counts = db.execute('SELECT a.owner,count(t.id) FROM accounts a LEFT JOIN transactions t '
                                 'ON t.owner=a.owner GROUP BY a.owner').fetchall()
             total = db.execute('SELECT count(*) FROM transactions').fetchone()[0]
-            if (any(count != 100 for _, count in counts) or total != 100 * len(accounts)
+            fixed_size = source == 'nessie' or version == 'account-demo-v1'
+            dataset = ('banksim:' + manifest['inputs']['banksim'] if source == 'banksim' and not fixed_size
+                       else version + ':' + signature)
+            if (any(count != 100 if fixed_size else count <= 0 for _, count in counts)
+                    or sum(count for _, count in counts) != total
                     or total != report['transactions']
                     or db.execute('SELECT count(*) FROM account_origins').fetchone()[0] != total
                     or db.execute('SELECT 1 FROM transactions t JOIN accounts a ON a.owner=t.owner '
                                   'WHERE t.source<>? OR t.account_token<>a.account_token OR '
-                                  't.dataset_id<>? LIMIT 1', (source, VERSION + ':' + signature)).fetchone()):
+                                  't.dataset_id<>? LIMIT 1', (source, dataset)).fetchone()):
                 raise ValueError('Account history or provenance is incomplete.')
+            if version == VERSION and source == 'banksim':
+                coverage = db.execute('SELECT count(DISTINCT source_record_key),'
+                                      'min(CAST(source_record_key AS INTEGER)),'
+                                      'max(CAST(source_record_key AS INTEGER)) FROM transactions').fetchone()
+                if (coverage != (total, 1, total)
+                        or db.execute('SELECT count(DISTINCT source_owner) FROM accounts').fetchone()[0] != len(accounts)
+                        or db.execute('SELECT count(*) FROM banksim_features').fetchone()[0] != total
+                        or db.execute('SELECT 1 FROM transactions t JOIN accounts a ON a.owner=t.owner '
+                                      'JOIN account_origins o ON o.owner=t.owner AND o.transaction_id=t.id '
+                                      'WHERE t.customer_token IS NOT a.source_owner OR '
+                                      'o.source_owner IS NOT a.source_owner OR '
+                                      'o.source_dataset_id IS NOT t.dataset_id OR '
+                                      'o.source_record_key IS NOT t.source_record_key LIMIT 1').fetchone()):
+                    raise ValueError('BankSim requires every original row and one account per original user.')
+            if version == VERSION and source == 'nessie':
+                if db.execute('SELECT 1 FROM account_origins o JOIN transactions t '
+                              'ON t.owner=o.owner AND t.id=o.transaction_id JOIN accounts a ON a.owner=t.owner '
+                              'WHERE o.source_owner IS NOT a.source_owner OR '
+                              "(o.source_dataset_id=? AND o.source_record_key IS NOT a.account_token||':'||t.kind) LIMIT 1",
+                              (SYNTHETIC_KINDS,)).fetchone():
+                    raise ValueError('Nessie template provenance must match its original account and type.')
+                distribution = manifest['nessie_distribution']
+                observed = distribution['source_counts']
+                if (set(observed) != set(KINDS) or any(type(value) is not int or value < 0 for value in observed.values())
+                        or not sum(observed.values()) or kind_quotas(observed) != distribution['per_account_counts']):
+                    raise ValueError('Invalid source-derived Nessie type distribution.')
+                for _, owner in accounts:
+                    actual = dict(db.execute('SELECT kind,count(*) FROM transactions WHERE owner=? GROUP BY kind', (owner,)))
+                    if actual != distribution['per_account_counts']:
+                        raise ValueError('Nessie account type counts do not match the approved distribution.')
     return manifest
 
 
@@ -135,7 +172,7 @@ def pack(source_dir, output, code_ref):
         if any(digest(source_dir / f'{s}.db') != original_digests[s] for s in SOURCES):
             raise ValueError('Source changed during packaging; no archive was published.')
         info = {'format': FORMAT, 'compatible_code_commit': code_ref,
-                'generator_version': VERSION, 'inputs': manifest['inputs'],
+                'generator_version': manifest['inputs']['version'], 'inputs': manifest['inputs'],
                 'report': manifest['report'], 'original_database_digests': original_digests,
                 'database_digests': manifest['database_digests'],
                 'transformation': 'SQLite VACUUM; Nessie provenance owners replaced with opaque local bindings.',
@@ -183,7 +220,8 @@ def install(archive, sha256, output_dir):
                     shutil.copyfileobj(source, destination, length=1024 * 1024)
         info = read_json(stage / 'DATASET-INFO.json')
         if (info['format'] != FORMAT or not re.fullmatch(r'[0-9a-f]{40}', info['compatible_code_commit'])
-                or (stage / 'LICENSE-BANKSIM.txt').read_text() != LICENSE):
+                or digest(stage / 'LICENSE-BANKSIM.txt') not in {
+                    hashlib.sha256(LICENSE.encode()).hexdigest(), LEGACY_LICENSE_SHA256}):
             raise ValueError('Unsupported bundle metadata or missing attribution.')
         manifest = validate(stage / 'account-demo')
         if any(info[key] != manifest[key] for key in ('inputs', 'report', 'database_digests')):

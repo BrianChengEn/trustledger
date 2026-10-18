@@ -33,7 +33,7 @@ def test_user_workspace_reads_same_100_nessie_ids_and_fields_as_source(tmp_path)
             assert row['settlement_status'] == original['settlement_status']
             assert row['date_only'] is True
             assert row['occurred_at'] == original['occurred_date'] + 'T00:00:00Z'
-            assert row['merchant_display'] == 'Transfer' and row['merchant_category'] == 'other'
+            assert row['merchant_display'] == row['kind'].capitalize() and row['merchant_category'] == 'other'
             assert row['is_subscription'] is False
         history = client.get('/api/v1/transactions?limit=100').json()
         assert {row['id'] for row in history} == set(originals)
@@ -127,6 +127,12 @@ def test_account_workspace_preserves_timestamp_and_explicit_source_values(tmp_pa
         assert len(rows) == 100
         for row in rows:
             assert row['occurred_at'] == '2026-10-18T13:45:00Z' and row['date_only'] is False
-            assert row['merchant_display'] == 'Known merchant' and row['merchant_category'] == 'groceries'
-            assert row['is_subscription'] is True and row['settlement_status'] == 'pending'
+            if row['kind'] == 'purchase':
+                assert row['merchant_display'] == 'Known merchant' and row['merchant_category'] == 'groceries'
+                assert row['is_subscription'] is True
+            else:
+                assert row['merchant_display'] == row['kind'].capitalize() and row['merchant_category'] == 'other'
+                assert row['is_subscription'] is False
+            assert row['settlement_status'] == 'pending'
+        assert {row['kind'] for row in rows} == {'purchase', 'transfer', 'deposit', 'withdrawal'}
         assert client.get('/api/v1/alerts').json() == []

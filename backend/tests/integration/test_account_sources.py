@@ -17,11 +17,20 @@ def test_local_account_pages_use_same_public_schema_without_remote_keys(tmp_path
             options = response.json()
             assert options['total'] == accounts and options['next_offset'] == 1
             account = options['items'][0]
-            assert account['transaction_count'] == 100
+            total = 110 if source == 'banksim' else 100
+            assert account['transaction_count'] == total
             code = account['account_token']
             rows = client.get(f'/api/v1/data-sources/{source}/transactions?account_token={code}&limit=100').json()
-            assert rows['total'] == 100 and len(rows['items']) == 100
-            assert rows['data_mode'] == 'synthetic-derived' and rows['next_offset'] is None
+            assert rows['total'] == total and len(rows['items']) == 100
+            assert rows['data_mode'] == 'synthetic-derived'
+            if source == 'banksim':
+                assert rows['next_offset'] == 100
+                last = client.get(f'/api/v1/data-sources/{source}/transactions?account_token={code}&limit=100&offset=100').json()
+                assert len(last['items']) == 10 and last['next_offset'] is None
+                assert len({row['id'] for row in rows['items'] + last['items']}) == total
+            else:
+                assert rows['next_offset'] is None
+                assert {row['kind'] for row in rows['items']} == {'purchase', 'transfer', 'deposit', 'withdrawal'}
             assert all(row['account_token'] == code and row['currency'] == currency for row in rows['items'])
             assert not any('fraud' in str(row) or 'owner' in row for row in rows['items'])
             assert client.get(f'/api/v1/data-sources/{source}/accounts?q={account["label"]}').json()['total'] == 1

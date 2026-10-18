@@ -6,7 +6,7 @@ import re
 import shutil
 import sqlite3
 import tempfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from fractions import Fraction
 from pathlib import Path
 
@@ -14,8 +14,10 @@ from app.adapters.dataset_import import banksim_rows, local_token
 from app.core.account_dataset import AccountDataset
 from app.core.dataset_store import DatasetStore
 
-VERSION = 'account-demo-v1'
+VERSION = 'account-demo-v2'
 RATE = Fraction(7200, 594643)
+KINDS = ('purchase', 'transfer', 'deposit', 'withdrawal')
+SYNTHETIC_KINDS = 'nessie-synthetic-kinds-v1'
 
 
 def digest(path):
@@ -25,6 +27,14 @@ def digest(path):
 
 def quota(accounts):
     return round(100 * accounts * RATE)
+
+
+def kind_quotas(counts):
+    weights = {kind: Fraction(96 * counts[kind], sum(counts.values())) for kind in KINDS}
+    result = {kind: 1 + int(weight) for kind, weight in weights.items()}
+    for kind in sorted(KINDS, key=lambda kind: (-(weights[kind] % 1), kind))[:100 - sum(result.values())]:
+        result[kind] += 1
+    return result
 
 
 def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=2026):
@@ -55,16 +65,13 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
                 for source in ('banksim', 'nessie'))):
             raise ValueError('Existing offline labels do not match these inputs.')
     dataset = 'banksim:' + inputs['banksim']
-    customers, positives, negatives = set(), [], []
-    for index, (row, positive) in enumerate(banksim_rows(csv_path, dataset)):
-        customers.add(row.customer_token)
-        (positives if positive else negatives).append(index)
+    customers = Counter()
+    bank_positives = 0
+    for row, positive in banksim_rows(csv_path, dataset):
+        customers[row.customer_token] += 1
+        bank_positives += positive
     if not customers:
         raise ValueError('BankSim has no customers.')
-    required = quota(len(customers))
-    count = 100 * len(customers)
-    if len(positives) < required or len(negatives) < count - required:
-        raise ValueError('BankSim does not have enough cases for sampling without replacement.')
     with sqlite3.connect(nessie_path.as_uri() + '?mode=ro', uri=True) as db:
         db.row_factory = sqlite3.Row
         db.execute('BEGIN')
@@ -73,11 +80,16 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
             raise ValueError('Expected a normalized Nessie source database.')
         groups = defaultdict(list)
         for row in DatasetStore._records(db, db.execute('SELECT * FROM transactions ORDER BY owner,id')):
-            if row.source != 'nessie' or not re.fullmatch(r'acct_[0-9a-f]{32}', row.account_token or ''):
+            if (row.source != 'nessie' or row.kind not in KINDS
+                    or not re.fullmatch(r'acct_[0-9a-f]{32}', row.account_token or '')):
                 raise ValueError('Nessie templates require a local account and Nessie provenance.')
             groups[row.account_token].append(row)
         if not groups or any(len({row.owner for row in rows}) != 1 for rows in groups.values()):
             raise ValueError('Nessie account ownership is missing or ambiguous.')
+    source_counts = Counter(row.kind for rows in groups.values() for row in rows)
+    type_counts = kind_quotas(source_counts)
+    synthetic_counts = {kind: sum(not any(row.kind == kind for row in rows) for rows in groups.values())
+                        for kind in KINDS}
     output_dir.parent.mkdir(parents=True, exist_ok=True)
     labels_dir.parent.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix='.account-demo-', dir=output_dir.parent))
@@ -91,28 +103,35 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
             code: groups[code][0].owner for code in codes}
         accounts = [(code, f'{VERSION}:{source}:{code}', f'{source.title()} account {i:04d}', bindings[code])
                     for i, code in enumerate(codes, 1)]
-        two = set(rng.sample(codes, quota(len(codes)) - len(codes)))
-        selected_positive = iter(rng.sample(positives, required)) if source == 'banksim' else None
-        selected_negative = iter(rng.sample(negatives, count - required)) if source == 'banksim' else None
-        assignments = {}
+        two = set(rng.sample(codes, quota(len(codes)) - len(codes))) if source == 'nessie' else set()
         generated = []
-        for account in accounts:
-            positive_slots = set(rng.sample(range(100), 2 if account[0] in two else 1))
-            for slot in range(100):
-                positive = slot in positive_slots
-                if source == 'banksim':
-                    assignments[next(selected_positive if positive else selected_negative)] = (account, slot)
-                else:
-                    generated.append((rng.choice(groups[account[0]]), positive, account, slot))
+        if source == 'nessie':
+            for account in accounts:
+                positive_slots = set(rng.sample(range(100), 2 if account[0] in two else 1))
+                templates = {kind: [row for row in groups[account[0]] if row.kind == kind] for kind in KINDS}
+                for kind in KINDS:
+                    if not templates[kind]:
+                        base = groups[account[0]][0]
+                        templates[kind] = [base.model_copy(update={
+                            'id': local_token('template_', SYNTHETIC_KINDS, account[0] + ':' + kind),
+                            'dataset_id': SYNTHETIC_KINDS, 'source_record_key': account[0] + ':' + kind,
+                            'kind': kind, 'direction': 'credit' if kind == 'deposit' else
+                            'unknown' if kind == 'transfer' else 'debit',
+                            'merchant_token': None, 'merchant_display': None, 'merchant_category': None,
+                            'source_category': None, 'is_subscription': None})]
+                kinds = [kind for kind, count in type_counts.items() for _ in range(count)]
+                rng.shuffle(kinds)
+                for slot, kind in enumerate(kinds):
+                    positive = slot in positive_slots
+                    generated.append((rng.choice(templates[kind]), positive, account, slot))
 
         def cases():
             if source == 'nessie':
                 yield from generated
             else:
-                for index, (row, positive) in enumerate(banksim_rows(csv_path, dataset)):
-                    if index in assignments:
-                        account, slot = assignments[index]
-                        yield row, positive, account, slot
+                by_customer = {account[3]: account for account in accounts}
+                for row, positive in banksim_rows(csv_path, dataset):
+                    yield row, positive, by_customer[row.customer_token], row.source_record_key
 
         store = AccountDataset(stage / f'{source}.db', source)
         positive_count = 0
@@ -122,13 +141,15 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
             def records():
                 nonlocal positive_count
                 for original, positive, account, slot in cases():
-                    code, owner, _, binding = account
-                    key = f'{slot:03d}'
-                    row = original.model_copy(update={
-                        'id': local_token('txn_', signature, code + ':' + key), 'owner': owner,
-                        'dataset_id': VERSION + ':' + signature, 'source_record_key': key,
-                        'account_token': code,
-                        'customer_token': binding if source == 'banksim' else original.customer_token})
+                    code, owner, _, _ = account
+                    if source == 'banksim':
+                        row = original.model_copy(update={'owner': owner, 'account_token': code})
+                    else:
+                        key = f'{slot:03d}'
+                        row = original.model_copy(update={
+                            'id': local_token('txn_', signature, code + ':' + key), 'owner': owner,
+                            'dataset_id': VERSION + ':' + signature, 'source_record_key': key,
+                            'account_token': code})
                     yield row
                     db.execute('INSERT INTO account_origins VALUES(?,?,?,?,?)',
                                (owner, row.id, original.dataset_id, original.source_record_key, original.owner))
@@ -138,14 +159,21 @@ def build_account_demo(csv_path, nessie_path, output_dir, labels_dir, *, seed=20
                     positive_count += positive
 
             written = store._upsert(db, records())
-            sizes = {row[0] for row in db.execute('SELECT count(*) FROM transactions GROUP BY owner')}
-            if (written != 100 * len(accounts) or sizes != {100}
-                    or positive_count != quota(len(accounts)) or db.execute('PRAGMA foreign_key_check').fetchall()):
+            sizes = dict(db.execute('SELECT owner,count(*) FROM transactions GROUP BY owner'))
+            expected = {account[1]: customers[account[3]] if source == 'banksim' else 100
+                        for account in accounts}
+            positives = bank_positives if source == 'banksim' else quota(len(accounts))
+            if (written != sum(expected.values()) or sizes != expected
+                    or positive_count != positives or db.execute('PRAGMA foreign_key_check').fetchall()):
                 raise ValueError('Allocation verification failed.')
         report[source] = {'accounts': len(accounts), 'transactions': written, 'fraud_samples': positive_count}
     if digest(csv_path) != inputs['banksim'] or digest(nessie_path) != inputs['nessie']:
         raise ValueError('Source changed during generation; no batch was published.')
     manifest = {'inputs': inputs, 'report': report,
+                'nessie_distribution': {'method': 'minimum-one-largest-remainder-v1',
+                                        'source_counts': {kind: source_counts[kind] for kind in KINDS},
+                                        'per_account_counts': type_counts,
+                                        'synthetic_template_counts': synthetic_counts},
                 'database_digests': {s: digest(stage / f'{s}.db') for s in report},
                 'label_digests': {s: digest(label_stage / f'{s}.jsonl') for s in report}}
     (stage / 'manifest.json').write_text(json.dumps(manifest, indent=2))

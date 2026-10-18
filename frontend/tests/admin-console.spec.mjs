@@ -645,19 +645,19 @@ try {
   await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===26);
   const bankOptions = await page.locator('#S-ACCOUNT option').evaluateAll(nodes=>nodes.map(n=>n.value).filter(Boolean));
   await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
-  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  await sourceLedger.getByText('110 transactions',{exact:true}).waitFor();
   assert((await sourceLedger.innerText()).includes('synthetic-derived'));
   assert((await sourceLedger.locator('tbody').innerText()).includes('€180.01'));
-  for (let offset=25;offset<=75;offset+=25) {
+  for (let offset=25;offset<=100;offset+=25) {
     await page.locator('#S-NEXT').click();
-    await sourceLedger.getByText(`${offset+1}–${offset+25} of 100`,{exact:true}).waitFor();
+    await sourceLedger.getByText(`${offset+1}–${Math.min(offset+25,110)} of 110`,{exact:true}).waitFor();
   }
   assert(await page.locator('#S-NEXT').isDisabled());
   await page.locator('#S-ACCOUNT-NEXT').click();
   await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===7);
   const lastBank = await page.locator('#S-ACCOUNT option').last().getAttribute('value');
   await page.locator('#S-ACCOUNT').selectOption(lastBank);
-  await sourceLedger.getByText('1–25 of 100',{exact:true}).waitFor();
+  await sourceLedger.getByText('1–25 of 110',{exact:true}).waitFor();
   await page.locator('#S-ACCOUNT-PREV').click();
   await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===27);
   let releaseAccount, captureAccount;
@@ -670,7 +670,7 @@ try {
   await capturedAccount;
   assert.equal(await sourceLedger.locator('tbody tr').count(),0);
   await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
-  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  await sourceLedger.getByText('110 transactions',{exact:true}).waitFor();
   const lateAccount=page.waitForResponse(response=>response.url().includes('account_token='+bankOptions[1]));
   releaseAccount(); await lateAccount;
   assert.equal(await page.locator('#S-ACCOUNT').inputValue(),bankOptions[0]);
@@ -681,6 +681,18 @@ try {
   await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
   assert((await sourceLedger.locator('tbody').innerText()).includes('$1.24'));
   assert((await sourceLedger.locator('tbody').innerText()).includes('Date only'));
+  const sourceKinds = new Set();
+  let sourceRows = 0;
+  for (let offset=0;offset<100;offset+=25) {
+    if (offset) await sourceLedger.locator('#S-NEXT').click();
+    await sourceLedger.getByText(`${offset+1}–${offset+25} of 100`,{exact:true}).waitFor();
+    const kinds = await sourceLedger.locator('tbody tr td:first-child small').allTextContents();
+    kinds.forEach(text=>sourceKinds.add(text.split(' · ').at(-1)));
+    sourceRows += kinds.length;
+  }
+  assert.equal(sourceRows,100);
+  assert.deepEqual([...sourceKinds].sort(),['deposit','purchase','transfer','withdrawal']);
+  assert(await sourceLedger.locator('#S-NEXT').isDisabled());
   assert.equal(analysisCalls,previousAnalysis);
   assert.equal(explanationCalls,previousExplanation);
   await page.screenshot({path:join(root,'artifacts/account-demo-nessie.png'),fullPage:true});
@@ -725,7 +737,8 @@ try {
   assert.equal(visited.size,100,'each history row is reachable through the physical Pager');
   await page.locator('.txtable tbody tr').last().getByRole('button').click();
   await page.locator('.facts').getByText(view.transactions.at(-1).id,{exact:true}).waitFor();
-  await page.locator('.facts').getByText('Direction unknown',{exact:false}).waitFor();
+  await page.locator('.facts').getByText(view.transactions.at(-1).direction === 'unknown'
+    ? 'Direction unknown' : view.transactions.at(-1).direction,{exact:false}).waitFor();
   await page.getByRole('button',{name:'Activity',exact:true}).click();
   await page.getByRole('searchbox').fill('not-a-merchant');
   await page.getByText('No transactions match',{exact:false}).waitFor();

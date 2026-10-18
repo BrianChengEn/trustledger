@@ -1,4 +1,4 @@
-"""Build offline 100-row account histories without modifying original sources.
+"""Build complete BankSim user histories and distributed 100-row Nessie accounts.
 
 backend/.venv/bin/python scripts/generate_account_demo.py --banksim-csv /path/banks.csv
     --nessie-db /path/normalized/nessie.db
