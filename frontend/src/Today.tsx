@@ -1,6 +1,6 @@
 import {labels, money} from './api';
 import {Icon, type IconName} from './icons';
-import {alertHints, byPriority, day} from './lib';
+import {alertHints, byPriority, day, ruleCoverage} from './lib';
 import Pager from './Pager';
 import {Chip, PageHead, stagger} from './ui';
 import Widgets from './Widgets';
@@ -13,7 +13,8 @@ export const statusText = {open: 'Waiting for you', normal: 'You marked it norma
 
 /** Today answers one question: does anything need me, and what first? It never lists every transaction. */
 export default function Today() {
-  const {alerts, transactions, memories, go} = useWorkspace();
+  const {alerts, transactions, memories, ready, go} = useWorkspace();
+  const insufficient = transactions.filter(tx => ruleCoverage(tx) === 'Insufficient evidence').length;
   const ordered = byPriority(alerts, transactions);
   const open = ordered.filter(a => a.status === 'open');
   const decided = ordered.length - open.length;
@@ -24,10 +25,10 @@ export default function Today() {
   const flaggedValue = open.reduce((n, a) => n + (tx(a.transaction_id)?.amount ?? 0), 0);
 
   return <div className="page today">
-    <PageHead eyebrow="Today" title={open.length ? `${open.length} ${open.length === 1 ? 'charge needs' : 'charges need'} your eyes.` : 'Nothing needs you right now.'}>
+    <PageHead eyebrow="Today" title={open.length ? `${open.length} ${open.length === 1 ? 'charge needs' : 'charges need'} your eyes.` : !ready ? 'Analysis unavailable.' : insufficient ? 'Some transactions need more evidence.' : 'Nothing needs you right now.'}>
       {open.length
         ? `${money(flaggedValue)} across flagged charges. Rules found them; you decide what they mean. Nothing changes until you do.`
-        : `${transactions.length} transactions checked by the rules. ${decided} flagged ${decided === 1 ? 'charge was' : 'charges were'} reviewed by you.`}
+        : insufficient ? `${insufficient} transactions have insufficient evidence. An absent alert is not a safe verdict.` : `${transactions.length} transactions checked by the rules. ${decided} flagged ${decided === 1 ? 'charge was' : 'charges were'} reviewed by you.`}
     </PageHead>
 
     {first && firstTx && <section className="startcard" aria-labelledby="start-title">
@@ -71,7 +72,7 @@ export default function Today() {
     </section>}
 
     {!ordered.length && <div className="empty">
-      <Icon name="shieldCheck" size={28}/><p>No rule flagged any of your {transactions.length} transactions.</p></div>}
+      <Icon name={insufficient ? 'info' : 'shieldCheck'} size={28}/><p>No rule flagged any of your {transactions.length} transactions.</p></div>}
 
     <Widgets/>
   </div>;

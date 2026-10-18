@@ -13,6 +13,7 @@ export default function MemoryView() {
   const mode = memoryModeCopy(health?.memory_mode);
   const affected = (summary: string) => {
     const category = memoryCategory(summary);
+    if (!category || category === 'other') return [];
     return alerts.filter(a => transactions.find(t => t.id === a.transaction_id)?.merchant_category === category)
       .map(a => ({alert: a, tx: transactions.find(t => t.id === a.transaction_id)!}));
   };
@@ -39,8 +40,8 @@ export default function MemoryView() {
           </div>
           <blockquote>{m.summary}</blockquote>
           <p className="quiet">{store.detail}</p>
-          <div className="effect"><b>How it affects analysis</b>
-            <p>For <em>{memoryCategory(m.summary) ? prettyCategory(memoryCategory(m.summary)!) : 'this category'}</em> charges, the AI request carries “prior confirmation: normal” as context. Rules still decide and the alert is still shown.</p>
+          <div className="effect"><b>How context is checked</b>
+            {memoryCategory(m.summary) === 'other' ? <p>This saved confirmation has no specific category evidence. It is not matched to other transactions or used as a prior confirmation.</p> : <p>For <em>{memoryCategory(m.summary) ? prettyCategory(memoryCategory(m.summary)!) : 'this category'}</em> charges, eligible consented records may provide “prior confirmation: normal” as context. The case view checks eligibility and provider status. Rules still decide and the alert is still shown.</p>}
             {touched.length > 0 && <ul>{touched.map(({alert, tx}) => <li key={alert.alert_id}>
               <a href={href({view: 'case', tx: tx.id})}>{tx.merchant_display}: {labels[alert.alert_type]}</a></li>)}</ul>}
           </div>

@@ -1,5 +1,5 @@
 import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
-import {request, ApiError, type Alert, type Analysis, type Confirmation, type Health, type Memory, type Movement, type WorkspaceSnapshot} from './api';
+import {request, ApiError, type Alert, type Analysis, type Confirmation, type DeletionVerification, type Health, type Memory, type Movement, type WorkspaceSnapshot} from './api';
 import {go as navigate, href as routeHref, type Route} from './route';
 
 export type Run =
@@ -145,7 +145,13 @@ export function WorkspaceProvider({children, customerId, active = true}: {
       setMemories(rows => rows.filter(row => row.memory_id !== memoryId));
       pending.current.delete('mutation');
       const refreshed = await refresh();
-      setNotice(refreshed ? 'Memory deleted. Future analyses will no longer use it.' : 'Memory deleted. Refresh to load the current workspace.');
+      let remote = 'Remote absence has not been verified.';
+      try {
+        const verification = await request<DeletionVerification>(prefix + '/memories/' + encodeURIComponent(memoryId) + '/deletion-verification');
+        remote = verification.status === 'absent' ? 'A fresh provider read verified remote absence.'
+          : verification.status === 'present' ? 'The provider still reports this memory present.' : remote;
+      } catch { /* Local removal and remote verification are separate outcomes. */ }
+      setNotice((refreshed ? 'Memory deleted from active context. ' : 'Memory removed locally; refresh the workspace. ') + remote);
       return true;
     } catch (e) {
       if (mounted.current) {

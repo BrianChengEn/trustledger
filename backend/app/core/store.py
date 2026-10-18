@@ -575,6 +575,8 @@ class Store:
                     CASE WHEN json_valid(c.result) THEN c.result ELSE '{}' END, '$.memory_id')
                 WHERE c.owner = ? AND c.decision = 'normal' AND c.consent = 1
                   AND m.local_persisted = 1
+                  AND NOT EXISTS (SELECT 1 FROM memory_jobs j WHERE j.owner=m.owner
+                    AND (j.local_id=m.memory_id OR j.remote_id=m.memory_id) AND j.state='deleted')
             """, (owner,)).fetchall()
         return [row["summary"] for row in rows]
 
@@ -708,6 +710,8 @@ class Store:
                   CASE WHEN json_valid(c.result) THEN c.result ELSE '{}' END, '$.memory_id')
                 WHERE c.owner=? AND c.decision='normal' AND c.consent=1
                   AND m.local_persisted=1
+                  AND NOT EXISTS (SELECT 1 FROM memory_jobs j WHERE j.owner=m.owner
+                    AND (j.local_id=m.memory_id OR j.remote_id=m.memory_id) AND j.state='deleted')
                 ORDER BY m.created_at DESC, m.memory_id ASC
             """, (owner,)).fetchall()]
 

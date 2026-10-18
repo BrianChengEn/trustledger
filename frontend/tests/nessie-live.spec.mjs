@@ -91,8 +91,15 @@ try {
   assert((await row.textContent()).includes(first.occurred_at.slice(0, 10)));
   const money = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD'}).format(first.amount);
   assert((await row.locator('td.amount').textContent()).includes(money));
+  const privacyResponse = page.waitForResponse(r => r.request().method() === 'GET' && r.url().includes('/privacy/preview/') && r.status() === 200);
+  const relevantResponse = page.waitForResponse(r => r.request().method() === 'GET' && r.url().endsWith('/relevant-memories') && r.status() === 200);
   await row.getByRole('button').click();
   assert(page.url().includes(encodeURIComponent(first.id)));
+  const privacy = await (await privacyResponse).json();
+  assert.equal(Object.keys(privacy.safe_payload).length, 8);
+  assert(!JSON.stringify(privacy.safe_payload).includes(first.id));
+  const related = await (await relevantResponse).json();
+  if (first.merchant_category === 'other') assert.equal(related.memories.length, 0);
   await page.getByRole('button', {name:'Analyze with Jev', exact:true}).waitFor({state:'visible'});
   const analysisResponse = page.waitForResponse(r => r.url().endsWith('/api/v1/analyses') && r.request().method() === 'POST' && r.status() === 200);
   await page.getByRole('button', {name:'Analyze with Jev', exact:true}).click();
@@ -104,7 +111,7 @@ try {
     transaction_count: snapshot.transactions.length, account_count: snapshot.accounts.length,
     transaction_kinds: [...new Set(snapshot.transactions.map(t => t.kind))], live_alert_count: liveAlertCount,
     amount_date_kind_rendering: 'passed', selected_transaction_identity: 'matched',
-    analysis_transaction_identity: 'matched', synthetic_rows: 0, upstream_status: 'live',
+    analysis_transaction_identity: 'matched', privacy_transformation: 'passed', actual_memory_query: 'passed', synthetic_rows: 0, upstream_status: 'live',
     fallback_used: false, mocked_upstream: false, external_writes: 0};
   writeFileSync(join(temp,'safe-evidence.json'),JSON.stringify(evidence,null,2),{mode:0o600});
   console.log(JSON.stringify(evidence));

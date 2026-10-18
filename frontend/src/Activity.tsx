@@ -2,7 +2,7 @@ import {useMemo, useState} from 'react';
 import {labels, money} from './api';
 import {Icon, type IconName} from './icons';
 import Pager from './Pager';
-import {dataModeCopy, day, prettyCategory, time} from './lib';
+import {dataModeCopy, day, prettyCategory, time, ruleCoverage} from './lib';
 import {alertIcons} from './Today';
 import {Chip, PageHead, Seg, stagger} from './ui';
 import {useWorkspace} from './workspace';
@@ -62,7 +62,7 @@ export default function Activity({initial}: {initial?: string}) {
             <td data-label="When">{t.date_only ? t.occurred_at.slice(0, 10) : day(t.occurred_at)}<small>{t.date_only ? 'Date only' : time(t.occurred_at)}</small></td>
             <td data-label="Check result">{!ready ? <Chip>Analysis unavailable</Chip> : a
               ? <Chip tone={a.status === 'open' ? 'warn' : 'neutral'} icon={alertIcons[a.alert_type]}>{labels[a.alert_type]}{a.status !== 'open' && ` · ${a.status === 'normal' ? 'normal' : 'review'}`}</Chip>
-              : <Chip icon="check">No rule triggered</Chip>}</td>
+              : <Chip icon={ruleCoverage(t) === 'Insufficient evidence' ? 'info' : 'check'}>{ruleCoverage(t)}</Chip>}</td>
             <td data-label="Amount" className="amount">{money(t.amount)}</td>
           </tr>;
         })}</tbody>

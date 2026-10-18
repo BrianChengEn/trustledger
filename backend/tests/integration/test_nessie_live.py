@@ -82,6 +82,8 @@ def test_real_nessie_to_fastapi_readonly(tmp_path):
         tx = rows[0]['id']
         analysis = client.post('/api/v1/analyses', json={'transaction_id': tx})
         assert analysis.status_code == 200 and analysis.json()['transaction_id'] == tx
+        if rows[0]['direction'] == 'unknown':
+            assert 'Insufficient evidence' in analysis.json()['evidence'][0]
         privacy = client.get('/api/v1/privacy/preview/' + tx)
         assert privacy.status_code == 200 and privacy.json()['transaction_id'] == tx
         memories = client.get('/api/v1/transactions/' + tx + '/relevant-memories')
@@ -89,6 +91,9 @@ def test_real_nessie_to_fastapi_readonly(tmp_path):
         assert app.state.store.list_transactions(settings.demo_user_id) == []
         print(json.dumps({'verification': 'actual Nessie HTTPS to FastAPI', 'transaction_count': len(rows),
                           'stable_identity': True, 'wire_projection_matched': True,
+                          'direction_counts': {direction: sum(r['direction'] == direction for r in rows) for direction in ('debit','credit','unknown')},
+                          'at_or_above_250': sum(r['amount'] >= 250 for r in rows),
+                          'settlement_counts': {status: sum(r['settlement_status'] == status for r in snapshot.json()['transactions']) for status in ('completed','pending','cancelled')},
                           'http_statuses': sorted({c['http_status'] for _, c in captures}),
                           'upstream_get_count': len(captures), 'fraud_privacy_relevant_memory': 'passed',
                           'synthetic_rows': 0, 'external_writes': 0}))
