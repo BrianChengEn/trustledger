@@ -1,0 +1,62 @@
+GCP preparation evidence — 18 October 2026 (not a deployment)
+
+Agent-only SSH succeeded as benson. Private SSH key was not read/copied/uploaded.
+Project ID technica2026; zone us-east1-b; VM instance-20261018-124923.
+Machine e2-micro, 2 logical CPUs, 952 MiB RAM, no swap; initial free root disk
+17 GB of 19 GB. Actual Ubuntu 26.04.1, kernel 7.0.0-1014-gcp, Python 3.14.4.
+benson has NOPASSWD sudo. Initial network listeners were SSH and loopback DNS.
+Initial nginx/Node/Certbot/UFW absent. VM tags http-server, https-server.
+
+Preparation installed host dependencies with nginx masked, preventing its
+package default site from starting. An offline nginx -t of the prepared final
+configuration succeeded with a disposable self-signed TEST certificate. This
+is configuration validation, not public HTTPS verification. No public
+certificate has been requested; no web listener has been started.
+
+Created no-login trustledger service user, release/persistent directories and
+private runtime.env (root:root 0600). Evaluator bcrypt file root:www-data 0640;
+private credential delivery file /home/benson/trustledger-demo-access.txt,
+benson-owned 0600. No secret values in this file or Git.
+
+Local scripts/check.sh passed: Python 3.12, 710 backend tests, 2 skipped;
+12 frontend tests, typecheck, production build, Admin/auth browser workflows.
+Deployment shell syntax and Python lint passed. Startup settings accepted the
+GCP IP origin and rejected six unsafe configurations.
+
+GCP firewall read via REST failed HTTP 403. Remote gcloud confirmed insufficient
+authentication scopes for the default Compute service account. No scopes,
+IAM or firewall rules were changed. Cloud Shell rule output requested from
+owner. Public activation needs explicit approval. Existing IP reservation and
+billing status were not changed or verified; no VM/resources provisioned.
+
+Runtime/renewal test outcomes are appended when completed. PR #35 is unmerged;
+GCP configuration is managed separately in PR #38. Application code unchanged.
+
+Owner-supplied Cloud Shell firewall inventory confirms default-allow-http and
+https target the VM's existing tags, allowing TCP 80/443 from 0.0.0.0/0.
+Shared default SSH/RDP rules are broad. UFW is now active, default-deny ingress,
+with SSH allowed only from the current operator; a second agent-only SSH
+connection succeeded. Web ports remain closed at the host. The Cloud Shell
+script narrows SSH/RDP for this VM via a unique tag; it has NOT been applied.
+
+Python 3.14 compatibility: locked requirements installed successfully in the
+VM's isolated venv; pip check passed; backend lint passed; 710 tests passed,
+2 skipped, in 520.98 seconds. No alternate Python installation was required.
+The two warnings are FastAPI/httpx deprecation and a Google SDK Python typing
+deprecation, not failed tests or live provider requests.
+
+A disposable loopback-only TLS integration test passed on the VM with the
+production frontend artifact: evaluator gate; API authorization; Secure,
+HttpOnly, SameSite=Strict cookie; 18 transactions and 3 alerts; privacy preview;
+local review/consented memory; memory/transaction persistence across backend
+restart; SPA fallback; admin/data-source/dotfile denial; rate limiting -> 429.
+The test used a self-signed certificate only on loopback, temporary credentials
+and temporary SQLite data. All private test processes were stopped afterward.
+This does NOT establish a trusted public URL or certificate renewal success.
+
+Deadline prioritization: full VM backend suite is complete and was not rerun.
+The redundant VM frontend workflow was stopped; local full frontend/build/
+browser checks, green CI and VM private production-artifact smoke remain the
+frontend evidence. At the resource snapshot: 742/952 MiB used, 209 MiB available,
+no swap configured, zero swap-in/out, CPU 18% user/82% idle and no blocked tasks.
+The frontend compiler was CPU-active rather than demonstrably stuck.

@@ -1,3 +1,15 @@
+> Runtime migration (2026-10-18): Normal runtime now defaults to `TRANSACTION_PROVIDER=nessie`.
+> Set backend-only `NESSIE_API_KEY` and `NESSIE_CUSTOMER_ID` to an authorized sandbox customer.
+> An existing confirmed baseline customer mapping is also supported. Missing selection returns
+> `workspace_not_linked`; missing credentials return `nessie_not_configured`; failed reads return
+> `nessie_unavailable`. No synthetic fallback is used. Each request refreshes required collections.
+> Synthetic and account-demo providers, including generated account browsing, require `APP_ENV=test`
+> and are retained for isolated tests. Historical demo instructions below describe the previous setup.
+> Never use the seeding CLI to configure this read-only integration. No remote writes are required.
+> Source diagnostics are available as `X-Transaction-Provider`, `X-Transaction-Upstream-Status`
+> and `X-Transaction-Fallback-Used` response headers and in the frontend development console.
+> Nessie is a banking simulator; live HTTP does not mean real customer bank data.
+
 # TrustLedger · Technica 2026
 
 TrustLedger is a B2C, privacy-first financial assistant. It reviews simulated banking transactions, explains patterns that need a person, and stores only an explicit, minimized memory of what that person confirmed.
@@ -120,18 +132,69 @@ localhost demo gate, not production authentication. Admin edits only change synt
 
 ## Local account datasets
 
-The Admin **Data sources → 交易資料來源** table can browse local generated accounts from either source. Existing source views, Nessie refresh and the 18-record product demo remain unchanged. Search or page through the account options, choose one, then use the existing record pages to read its 100 transactions. Generated histories are labelled `synthetic-derived`; no banking records are created remotely.
+The Admin **Data sources → 交易資料來源** table browses source-isolated local accounts through the existing search, selector, table, and record pages. The `account-demo-v3` batch preserves **every BankSim transaction under its original customer**, with one local account per customer, while generating **100 Nessie records per account across all four transaction kinds**. The original source views, explicit Nessie refresh and default 18-record product demo remain unchanged. No banking records are created remotely.
 
-Prepare an existing normalized Nessie snapshot, then explicitly generate the separate local batch:
+Prepare an existing normalized Nessie snapshot, then explicitly generate a **new** local batch:
 
 ```bash
 backend/.venv/bin/python scripts/import_source_databases.py --nessie-cache backend/data/trustledger-demo.db
 backend/.venv/bin/python scripts/generate_account_demo.py --banksim-csv /path/to/banksim.csv --nessie-db backend/data/sources/nessie.db
 ```
 
-The BankSim CSV stays outside Git. With the checked 4,112-customer CSV and 18-account Nessie snapshot, this produces 411,200 BankSim-derived and 1,800 Nessie-derived rows under `backend/data/sources/account-demo`. Exact source fingerprints, seed and generator version make the batch repeatable; changed inputs require a new output directory. No original source or product database is modified. A running backend discovers a complete default batch on its next account request; `SOURCE_DATABASE_DIR` selects a different source directory.
+The complete checked BankSim CSV produces 4,112 accounts and **594,643 transactions**, with **5–265 records per original user**. No row is sampled away, duplicated, reassigned to another customer or padded to 100. Source transaction IDs/row keys, customer/merchant features, all 15 categories, exact EUR amounts and simulation days are preserved. Ground-truth labels remain offline: all 7,200 original positive rows are retained without imposing a quota on individual customers.
 
-Offline labels are stored separately under ignored `evaluation/datasets/account-demo-labels`: 4,979 original BankSim positive cases and 22 explicitly simulated Nessie positives, about 1.2109% combined. Each account has one or two positive slots; exact 1.2108% is impossible in 100 integer rows. Labels never enter runtime SQLite, the browser, rules, Gemini, Jev or Backboard. BankSim preserves EUR and simulation days; Nessie uses only its own account's templates and preserves USD, date precision and unknown direction. Generated histories are constructed examples, not original customer histories or measured detector accuracy. Databases and offline labels are not distributed in the PR; collaborators supply their local synthetic source files.
+Nessie type quotas use the pinned [2025 DCPC research profile](fixtures/dcpc2025-kind-profile.json): **85.652453% purchase, 5.330061% transfer, 7.987865% deposit and 1.029620% withdrawal**. These are analyst-derived, individually weighted probabilities conditional on identifiable diary events, not official Federal Reserve bank-ledger shares. The fixture records the official source URLs, archive fingerprint, exact weighted counts, classification and exclusions. It contains aggregates only, not respondents' financial histories. The original cache's 1/180/48/48 inventory no longer determines quotas.
+
+Round the cohort's 100-per-account slots by largest fractional remainder, then balance remaining slots deterministically over the seeded account order. The 18-account cohort has **1,542 purchases, 96 transfers, 144 deposits and 18 withdrawals**: 12 accounts have 86/5/8/1 and six have 85/6/8/1. A single-account demonstration rounds to 86/5/8/1. Finite integer quotas approximate the target probabilities; they are controlled synthetic scenarios, not independent random samples or observed account histories. Select matching templates only from the same account. A missing account/type gets a local template explicitly recorded under `nessie-synthetic-kinds-v1`; it inherits only that account's base amount, date precision and settlement, uses a simulated type-appropriate direction and supplies no invented merchant/category/subscription fact. The batch remains labelled synthetic-derived, never live acquisition. `manifest.json` records the research profile ID, input inventory, cohort/account quotas and missing-template coverage. The batch signature includes the calibration file fingerprint; derived owners also include the signature, isolating decisions and memories when sources, seed or calibration change. Amount, merchant, timestamp, settlement, subscription and fraud distributions are not recalibrated.
+
+Fraud labels are separate from these transaction kinds. Nessie's 22 simulated positive assignments remain offline examples, not observed fraud or measured detector accuracy. No labels enter runtime SQLite, browser responses, rules, Gemini, Jev or Backboard. The original CSV and source/product databases remain unchanged.
+
+Existing v1/v2 data remains historical. V1 sampled/reassigned BankSim cases; v2 preserved complete BankSim histories but used cache-frequency Nessie quotas (1/63/18/18 for the checked source). **Do not overwrite installed directories or replace published assets.** Generate v3 alongside them with `--output-dir backend/data/v3/sources/account-demo --labels-dir evaluation/datasets/account-demo-v3-labels`, then start the backend with `SOURCE_DATABASE_DIR` set to the absolute `backend/data/v3/sources` path. Use the same source directory for the Nessie account-demo launcher. Source hashes, generator version, calibration fingerprint and seed identify each batch; altered inputs require a new output directory. A v3 dataset Release has not been published by this change; use explicit local generation rather than assuming the older v2 download contains the new probabilities.
+
+### Share the same account snapshot through GitHub Releases
+
+Git tracks the schema, generator, and installer. A versioned **dataset Release** distributes the two generated SQLite snapshots without adding databases to Git history. Teammates download the same starting transactions; their later confirmations and memories remain independent. No live provider key or original CSV is needed to install a snapshot. Repository access is required for the private Release.
+
+In a fresh checkout containing this installer, run `bash scripts/bootstrap-mac.sh`, then download both assets from the selected dataset Release. For the corrected v2 bundle (the historical v1 Release remains available):
+
+```bash
+gh release download dataset-2026-10-18-v2 --repo BrianChengEn/trustledger \
+  --pattern 'trustledger-account-demo-2026-10-18-v2.zip*' --dir artifacts/account-demo-download
+backend/.venv/bin/python scripts/account_demo_bundle.py install \
+  --archive artifacts/account-demo-download/trustledger-account-demo-2026-10-18-v2.zip \
+  --sha256 "$(cut -d ' ' -f 1 artifacts/account-demo-download/trustledger-account-demo-2026-10-18-v2.zip.sha256)"
+```
+
+Use the Release's tagged code (or the source-fidelity PR before merge); older main checkouts lack this installer. Obtain the checksum from the authenticated, trusted Release alongside the archive. Installation checks it before opening the archive, accepts only the five documented members, validates SQLite integrity/schema/counts, and publishes a complete batch under `backend/data/sources/account-demo`. It rejects existing directories and symlinks. To preserve an existing batch, use `--output-dir backend/data/another-source/sources/account-demo` and start the backend with `SOURCE_DATABASE_DIR` set to the absolute path of `backend/data/another-source/sources`. Stop the backend before installing or changing source directories.
+
+Start the backend and frontend normally, sign in as Admin when login is enabled, and use **Data sources → 交易資料來源** to select a BankSim or Nessie account. The v2 snapshot contains 4,112 complete BankSim accounts/594,643 rows and 18 Nessie accounts/1,800 rows (596,443 total). The installer accepts v1, v2 and v3 while enforcing each version's own history and quota semantics. The ordinary product demo still has 18 transactions; the optional selected-account user workspace incorporates the behavior reviewed in PR #34. This download does not activate live Nessie or AI services. `DATASET-INFO.json` records the compatible code commit, generator version, original/exported fingerprints and counts; retain it and `LICENSE-BANKSIM.txt` with the installed batch.
+
+Maintainers create a new snapshot with the existing backend environment:
+
+```bash
+backend/.venv/bin/python scripts/account_demo_bundle.py pack \
+  --source-dir backend/data/sources/account-demo \
+  --output artifacts/trustledger-account-demo-YYYY-MM-DD-vN.zip \
+  --code-ref FULL_COMPATIBLE_CODE_COMMIT_SHA
+```
+
+Pack reads a closed, complete generator batch whose fingerprints match its manifest. It refuses noncanonical tables, review/prediction/cache rows, and SQLite sidecars. It copies and revalidates the exact manifest-addressed database bytes, compacts them to remove deleted-page remnants, replaces Nessie credential-scoped provenance owners with opaque local bindings, and preserves all transaction IDs, amounts, currencies, dates, directions, kinds, and source-record provenance. Exported database fingerprints therefore differ from the originals. It includes source attribution and the repository-recorded CC BY-NC-SA 4.0 terms for BankSim-derived data. Original CSVs, product databases, confirmations, memories, credentials, and offline labels are excluded. The corrected v2 snapshot uses the original BankSim fingerprint `e37006f76d993bfaec3a02d717b4f0bdc1ebfa5d36449e91fb7c07e225278377` from `data/manifests/banksim.yaml`. Historical v1 used the separately recorded `ad04de75f3e95e45a04ddba1d7780e66aa812eaf7d21af33883a744c95989a67` input; neither identity is silently relabelled.
+
+The installer reserves a fresh directory and publishes its `manifest.json` readiness marker last. An ordinary failure removes only its own staged files. A process crash can leave an unpublished directory; preserve it for inspection and choose a fresh destination on retry. No existing dataset is replaced.
+
+After validating an install and reviewing the contents, attach the ZIP and its `.sha256` sidecar to a new private-repository dataset Release pinned to the reviewed code commit. Never replace an existing dataset version or commit the generated artifacts. Changes to source inputs require a new dataset version. Bundle tooling and verification were assisted by OpenAI Codex.
+### Offline selected-account user workspace
+
+To use one generated Nessie account in the **user's Today / Activity / Case / Privacy / Memory** workspace, start the explicit offline account demo after generating the batch:
+
+```bash
+bash scripts/dev-account-demo-backend.sh
+# In a second terminal:
+cd frontend
+API_PROXY_TARGET=http://127.0.0.1:8001 npm run dev -- --port 5174
+```
+
+Open `http://127.0.0.1:5174`. The launcher selects the first registered Nessie account and prints its local code; set `DEMO_ACCOUNT_TOKEN=acct_...` before launching to select another Nessie account. It reads the same 100 transaction IDs and fields as the source browser, uses a separate `account-user-demo.db` for account-scoped decisions/memory, clears vendor keys and reports **Synthetic demo data**. Missing or incomplete account data fails without falling back to 18 fixtures. Existing synthetic and live Nessie modes are unchanged. The USD product workspace only accepts Nessie-derived accounts; BankSim remains in the source browser with EUR and simulation days. Date-only rows retain their precision, with no invented merchant identity or recurring-payment inference.
 
 ## Tests
 

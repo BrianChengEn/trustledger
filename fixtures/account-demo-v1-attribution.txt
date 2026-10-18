@@ -1,0 +1,12 @@
+BankSim-derived synthetic account demonstration data
+Authors: Edgar Alonso Lopez-Rojas and Stefan Axelsson (BankSim, EMSS 2014).
+Source: https://www.kaggle.com/datasets/ealaxi/banksim1
+Alternate source: https://www.kaggle.com/datasets/ntnu-testimon/banksim1
+License: CC BY-NC-SA 4.0
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+Changes by TrustLedger: sampled and allocated into synthetic 100-record accounts,
+tokenized local identifiers, normalized exact minor-unit EUR amounts and simulated days.
+The BankSim-derived data in this bundle is distributed under the same license.
+Noncommercial use only; preserve attribution and share-alike terms.
+Nessie-derived rows are synthetic sandbox examples, not real banking records.
+No fraud labels, raw source CSV, product confirmations, or memories are included.

@@ -1,0 +1,30 @@
+{
+  "id": "dcpc2025-restricted-four-kind-v1",
+  "description": "Analyst-derived conditional distribution of identifiable diary events, not the complete bank-ledger distribution or an official Federal Reserve four-kind statistic.",
+  "source_url": "https://www.atlantafed.org/banking-and-payments/consumer-payments/survey-and-diary-of-consumer-payment-choice",
+  "archive_url": "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents/research-and-data/surveys/consumer-payments/survey-diary-consumer-payment-choice/2025/dcpc-2025-public-csv.zip",
+  "codebook_url": "https://www.atlantafed.org/-/media/Project/Atlanta/FRBA/Documents/research-and-data/surveys/consumer-payments/survey-diary-consumer-payment-choice/2025/dcpc-2025-data-codebook.pdf",
+  "archive_sha256": "75c1456bc4e25761afd157b72e35b362968f07327ebcb1e72fa82c4e6f89e68c",
+  "estimator": "Ratio of event counts weighted by ind_weight, restricted to 5735 nationally weighted respondents with complete three-day diaries; full fieldwork, not a strict October-only estimate.",
+  "mapped_rows": 20274,
+  "excluded_rows": 13971,
+  "weighted_counts": {
+    "purchase": "16833.88430991768836231",
+    "transfer": "1047.55479139089584415",
+    "deposit": "1569.91185887157916753",
+    "withdrawal": "202.35858970880508432"
+  },
+  "mapping": {
+    "purchase": "payment=1, pi in 3/4, known merch other than financial-services code 15 or P2P code 16",
+    "transfer": "payment=1 and pi=11; or payment=0 with chktransferaccount in 1..6 in chktransfer module, or chkdepfunds in 6/8 in chkdep module",
+    "deposit": "payment=0 with chkdepfunds in 1/2/4/5/7 in chkdep module, or cashdepaccount in 1/2 in cashdep module",
+    "withdrawal": "payment=0 with cashgetsource in 1/2/5 in cashget module"
+  },
+  "limitations": [
+    "Exclude missing/nonpositive amounts, unmatched/incomplete/non-national respondents and ambiguous events; retain published rows, without deduplicating nonunique nominal transaction keys.",
+    "Cash payments are not withdrawals. ACH and mobile-app payments are not exclusively transfers.",
+    "Reported transfer events are not linked economic transfers or paired ledger entries.",
+    "No amount, merchant, timestamp, settlement, subscription or fraud distribution is inferred or changed by this profile."
+  ],
+  "ai_assistance": "OpenAI Codex"
+}

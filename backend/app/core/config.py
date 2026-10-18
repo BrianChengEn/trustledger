@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -12,7 +12,8 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
     app_env: str = "development"
-    transaction_provider: Literal["synthetic", "nessie"] = "synthetic"
+    transaction_provider: Literal["synthetic", "nessie", "account-demo"] = "nessie"
+    demo_account_token: str | None = Field(default=None, pattern=r'^acct_[0-9a-f]{32}$')
     fraud_provider: Literal["rules-only", "mock-jev", "backboard-jev"] = "rules-only"
     # A single local demo identity; this is not an authentication mechanism.
     demo_user_id: str = "demo-user-001"
@@ -21,6 +22,8 @@ class Settings(BaseSettings):
     database_path: Path = BACKEND_DIR / "data" / "trustledger-demo.db"
     source_database_dir: Path | None = None
     nessie_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
+    # Backend-only sandbox customer selection; never expose the remote identifier.
+    nessie_customer_id: SecretStr = Field(default=SecretStr(""), repr=False)
     jev_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     backboard_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     # Server-side explanation only. A missing key keeps the rules explanation and does not call Gemini.
@@ -37,6 +40,17 @@ class Settings(BaseSettings):
     session_ttl_minutes: int = Field(default=480, ge=5, le=1440)
     # Admin editing of the synthetic demo data. Off unless explicitly enabled.
     allow_demo_edit: bool = False
+
+    @model_validator(mode='after')
+    def selected_demo_account(self):
+        if self.transaction_provider != 'nessie' and self.app_env != 'test':
+            raise ValueError('Synthetic transaction providers require APP_ENV=test')
+        customer = self.nessie_customer_id.get_secret_value()
+        if customer and not re.fullmatch(r'(?:[0-9a-f]{24}|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})', customer):
+            raise ValueError('Invalid Nessie customer configuration')
+        if self.transaction_provider == 'account-demo' and self.demo_account_token is None:
+            raise ValueError('account-demo requires DEMO_ACCOUNT_TOKEN')
+        return self
 
     @field_validator("frontend_origin")
     @classmethod

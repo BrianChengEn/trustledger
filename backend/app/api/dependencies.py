@@ -17,7 +17,7 @@ from app.services.workspace import WorkspaceTransactionProvider, owner
 def get_transaction_provider(request: Request) -> TransactionProvider:
     """Override this dependency to inject a canonical mock/Data-owned provider."""
     state = request.app.state
-    if request.path_params.get('customer_code') or state.settings.transaction_provider == 'nessie':
+    if request.path_params.get('customer_code') or state.settings.transaction_provider in {'nessie', 'account-demo'}:
         return WorkspaceTransactionProvider(request)
     return SQLiteTransactionProvider(state.store, state.settings.demo_user_id)
 
