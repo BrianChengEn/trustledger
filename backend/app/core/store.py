@@ -533,10 +533,10 @@ class Store:
                                         created_at=row["created_at"], source=source))
         return listed
 
-    def consented_memory_summaries(self, owner: str) -> list[str]:
+    def consented_memory_summaries(self, owner: str, *, timeout: float = 0.1) -> list[str]:
         """Only extant memories linked to this owner's successful consented write."""
         # Optional context must not consume the frontend deadline on lock contention.
-        with self.connect(timeout=0.1) as db:
+        with self.connect(timeout=timeout) as db:
             rows = db.execute("""
                 SELECT m.summary FROM confirmations c JOIN memories m
                   ON m.owner = c.owner AND m.memory_id = json_extract(
