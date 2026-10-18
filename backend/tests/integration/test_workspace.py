@@ -107,6 +107,41 @@ def test_customer_review_memory_and_privacy_are_isolated(workspace):
     assert client.get(first + '/alerts').json()[0]['status'] == 'normal'
 
 
+def test_customer_explanation_uses_scoped_data_and_requires_fresh_workspace(workspace, monkeypatch):
+    from app.services.ai.gemini_explanation import GeminiExplanationService
+
+    client, customers, behavior = workspace
+    first, second = [PREFIX + '/customers/' + code for code in customers]
+    rows = client.post(first + '/workspace/refresh', json={}).json()['transactions']
+    transaction = next(row['id'] for row in rows if row['kind'] == 'withdrawal')
+    before_alerts = [{k: v for k, v in row.items() if k != 'request_id'}
+                     for row in client.get(first + '/alerts').json()]
+    seen = []
+    original = GeminiExplanationService.explain
+
+    def observe(self, analysis, features, markers):
+        seen.append(analysis.transaction_id)
+        return original(self, analysis, features, markers)
+
+    monkeypatch.setattr(GeminiExplanationService, 'explain', observe)
+    path = '/transactions/' + transaction + '/explanation'
+    response = client.post(first + path, json={})
+    assert response.status_code == 200
+    result = response.json()
+    assert result['transaction_id'] == transaction
+    assert result['explanation_mode'] == 'template' and result['sent_to_provider'] is False
+    assert result['safe_payload']['local_day_part'] == 'unknown'
+    assert [{k: v for k, v in row.items() if k != 'request_id'}
+            for row in client.get(first + '/alerts').json()] == before_alerts
+    assert client.get(first + '/memories').json() == []
+    assert client.post(second + path, json={}).status_code == 404
+    assert seen == [transaction]
+    assert all(raw not in response.text for raw in [*CUSTOMERS, *ACCOUNTS, 'PRIVATE'])
+    behavior['fail'].add('/withdrawals')
+    assert client.post(first + path, json={}).status_code == 502
+    assert seen == [transaction]
+
+
 def test_fixed_mapping_reuses_admin_state_and_survives_restart(workspace):
     client, customers, behavior = workspace
     assert client.post('/api/v1/workspace/refresh', json={}).status_code == 409

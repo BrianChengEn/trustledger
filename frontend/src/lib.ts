@@ -1,4 +1,4 @@
-import type {Alert, Confirmation, Health, Memory, Transaction} from './api';
+import type {Alert, Confirmation, Explanation, Health, Memory, Transaction} from './api';
 
 export const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
 export const time = (iso: string) => new Date(iso).toLocaleTimeString(undefined, {hour: 'numeric', minute: '2-digit'});
@@ -64,4 +64,25 @@ export function outcomeCopy(c: Confirmation, source?: Memory['source']): {title:
     case 'skipped': return {title: 'Nothing remembered', tone: 'neutral', detail: 'Memory did not apply to this confirmation.'};
     default: return {title: 'Nothing remembered', tone: 'neutral', detail: 'No memory was saved for this decision.'};
   }
+}
+
+/** Labels explanation provenance. Template and fallback text are never called Gemini output. */
+export function explanationModeCopy(mode: Explanation['explanation_mode'], fromCache: boolean):
+  {title: string; detail: string; tone: Tone} {
+  if (mode === 'gemini-live' && fromCache) return {
+    title: 'Gemini explanation reused', tone: 'ai',
+    detail: 'This text came from Gemini earlier in this session. No new Gemini call was made.',
+  };
+  if (mode === 'gemini-live') return {
+    title: 'Live Gemini explanation', tone: 'ai',
+    detail: 'Gemini wrote this from the privacy-safe summary. It does not decide whether the charge is fraud.',
+  };
+  if (mode === 'fallback') return {
+    title: 'Rules explanation', tone: 'warn',
+    detail: 'Gemini did not return a usable explanation. This text comes from the rules, not from Gemini.',
+  };
+  return {
+    title: 'Rules explanation', tone: 'neutral',
+    detail: 'Gemini was not called. This text is written from the rules and the privacy-safe summary.',
+  };
 }

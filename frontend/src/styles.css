@@ -484,3 +484,10 @@ pre.json { margin: 0; padding: 12px; border-radius: 12px; background: var(--code
   .qside small { max-width: 90px; }
   .admin-query > .panel, #V-HISTORY, .flowpanel, .payloadpanel, .memlist { overflow: visible; }
 }
+
+.explain { display: grid; gap: 10px; margin-top: 14px; }
+.explain dl { display: grid; gap: 8px; }
+.explain dt { font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.explain dd { margin: 0; }
+.explain details { display: grid; gap: 8px; }
+.explain summary { cursor: pointer; font-weight: 600; }

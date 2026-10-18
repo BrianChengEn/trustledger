@@ -31,6 +31,32 @@ export interface PrivacyPreview {
   safe_payload: Record<string, string|number|boolean>;
 }
 export interface Memory {memory_id: string; summary: string; source: string; created_at: string}
+export interface SharedExplanation {
+  task: 'explain_existing_alert';
+  alert_type: Analysis['alert_type'];
+  severity: Analysis['severity'];
+  needs_human: boolean;
+  reason_codes: string[];
+  features: PrivacyPreview['safe_payload'];
+}
+export interface Explanation {
+  transaction_id: string;
+  alert_type: Analysis['alert_type'];
+  severity: Analysis['severity'];
+  needs_human: boolean;
+  why_flagged: string;
+  supporting_evidence: string;
+  what_it_means: string;
+  what_to_check: string;
+  next_steps: string[];
+  explanation_mode: 'gemini-live' | 'template' | 'fallback';
+  model_version: string | null;
+  failure: 'timeout' | 'unavailable' | 'quota' | 'rate_limited' | 'invalid_output' | 'provider_error' | 'invalid_input' | null;
+  safe_payload: PrivacyPreview['safe_payload'];
+  shared: SharedExplanation;
+  sent_to_provider: boolean;
+  from_cache: boolean;
+}
 export interface Health {status: string; data_mode: string; analysis_mode: string; memory_mode: string}
 export interface Confirmation {decision: string; memory_status: string; memory_id: string|null}
 const base = import.meta.env.VITE_API_BASE_URL || '';

@@ -56,7 +56,7 @@ def upstream(request):
 
 settings = Settings(_env_file=None, nessie_api_key="isolated-browser-test-key",
                     fraud_provider='rules-only',
-                    backboard_api_key="", jev_api_key="", allow_memory_write=True)
+                    backboard_api_key="", jev_api_key="", gemini_api_key="", allow_memory_write=True)
 app = create_app(settings)
 data = load_baseline(app.state.store)
 with app.state.store.connect() as db:

@@ -1,0 +1,2821 @@
+{
+  "amount_slices": {
+    "trackA_atavci_rf": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 150,
+        "false_positives": 56,
+        "fraud": 454,
+        "missed_fraud": 304,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 664,
+        "false_positives": 49,
+        "fraud": 701,
+        "missed_fraud": 37,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_atavci_soft_vote_approx": [
+      {
+        "detected_fraud": 1,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 44,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 176,
+        "false_positives": 46,
+        "fraud": 454,
+        "missed_fraud": 278,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 670,
+        "false_positives": 26,
+        "fraud": 701,
+        "missed_fraud": 31,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_atavci_xgb_hinge": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 168,
+        "false_positives": 65,
+        "fraud": 454,
+        "missed_fraud": 286,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 665,
+        "false_positives": 21,
+        "fraud": 701,
+        "missed_fraud": 36,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_atavci_xgb_logistic": [
+      {
+        "detected_fraud": 11,
+        "false_positives": 6,
+        "fraud": 45,
+        "missed_fraud": 34,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 173,
+        "false_positives": 52,
+        "fraud": 454,
+        "missed_fraud": 281,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 661,
+        "false_positives": 16,
+        "fraud": 701,
+        "missed_fraud": 40,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_sushmitha_lgbm": [
+      {
+        "detected_fraud": 8,
+        "false_positives": 5,
+        "fraud": 45,
+        "missed_fraud": 37,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 176,
+        "false_positives": 55,
+        "fraud": 454,
+        "missed_fraud": 278,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 658,
+        "false_positives": 17,
+        "fraud": 701,
+        "missed_fraud": 43,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_rf": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 128,
+        "false_positives": 75,
+        "fraud": 454,
+        "missed_fraud": 326,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 682,
+        "false_positives": 34,
+        "fraud": 701,
+        "missed_fraud": 19,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_soft_vote_approx": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 149,
+        "false_positives": 45,
+        "fraud": 454,
+        "missed_fraud": 305,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 694,
+        "false_positives": 31,
+        "fraud": 701,
+        "missed_fraud": 7,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_xgb_hinge": [
+      {
+        "detected_fraud": 1,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 44,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 167,
+        "false_positives": 40,
+        "fraud": 454,
+        "missed_fraud": 287,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 693,
+        "false_positives": 18,
+        "fraud": 701,
+        "missed_fraud": 8,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_xgb_logistic": [
+      {
+        "detected_fraud": 3,
+        "false_positives": 2,
+        "fraud": 45,
+        "missed_fraud": 42,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 161,
+        "false_positives": 39,
+        "fraud": 454,
+        "missed_fraud": 293,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 696,
+        "false_positives": 18,
+        "fraud": 701,
+        "missed_fraud": 5,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_sushmitha_lgbm": [
+      {
+        "detected_fraud": 10,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 35,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 211,
+        "false_positives": 13,
+        "fraud": 454,
+        "missed_fraud": 243,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 677,
+        "false_positives": 8,
+        "fraud": 701,
+        "missed_fraud": 24,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ]
+  },
+  "category_breakdown": {
+    "trackA_atavci_rf": {
+      "es_barsandrestaurants": {
+        "FN": 14,
+        "FP": 2,
+        "TP": 12,
+        "fraud": 26,
+        "precision": 0.8571428571428571,
+        "recall": 0.46153846153846156
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 9,
+        "FP": 1,
+        "TP": 9,
+        "fraud": 18,
+        "precision": 0.9,
+        "recall": 0.5
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 108,
+        "FP": 43,
+        "TP": 176,
+        "fraud": 284,
+        "precision": 0.8036529680365296,
+        "recall": 0.6197183098591549
+      },
+      "es_home": {
+        "FN": 14,
+        "FP": 9,
+        "TP": 22,
+        "fraud": 36,
+        "precision": 0.7096774193548387,
+        "recall": 0.6111111111111112
+      },
+      "es_hotelservices": {
+        "FN": 41,
+        "FP": 0,
+        "TP": 61,
+        "fraud": 102,
+        "precision": 1.0,
+        "recall": 0.5980392156862745
+      },
+      "es_hyper": {
+        "FN": 25,
+        "FP": 0,
+        "TP": 23,
+        "fraud": 48,
+        "precision": 1.0,
+        "recall": 0.4791666666666667
+      },
+      "es_leisure": {
+        "FN": 4,
+        "FP": 0,
+        "TP": 70,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9459459459459459
+      },
+      "es_otherservices": {
+        "FN": 10,
+        "FP": 1,
+        "TP": 30,
+        "fraud": 40,
+        "precision": 0.967741935483871,
+        "recall": 0.75
+      },
+      "es_sportsandtoys": {
+        "FN": 76,
+        "FP": 18,
+        "TP": 226,
+        "fraud": 302,
+        "precision": 0.9262295081967213,
+        "recall": 0.7483443708609272
+      },
+      "es_tech": {
+        "FN": 7,
+        "FP": 4,
+        "TP": 27,
+        "fraud": 34,
+        "precision": 0.8709677419354839,
+        "recall": 0.7941176470588235
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 22,
+        "FP": 1,
+        "TP": 70,
+        "fraud": 92,
+        "precision": 0.9859154929577465,
+        "recall": 0.7608695652173914
+      },
+      "es_wellnessandbeauty": {
+        "FN": 56,
+        "FP": 26,
+        "TP": 88,
+        "fraud": 144,
+        "precision": 0.7719298245614035,
+        "recall": 0.6111111111111112
+      }
+    },
+    "trackA_atavci_soft_vote_approx": {
+      "es_barsandrestaurants": {
+        "FN": 14,
+        "FP": 1,
+        "TP": 12,
+        "fraud": 26,
+        "precision": 0.9230769230769231,
+        "recall": 0.46153846153846156
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 10,
+        "FP": 0,
+        "TP": 8,
+        "fraud": 18,
+        "precision": 1.0,
+        "recall": 0.4444444444444444
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 108,
+        "FP": 25,
+        "TP": 176,
+        "fraud": 284,
+        "precision": 0.8756218905472637,
+        "recall": 0.6197183098591549
+      },
+      "es_home": {
+        "FN": 14,
+        "FP": 3,
+        "TP": 22,
+        "fraud": 36,
+        "precision": 0.88,
+        "recall": 0.6111111111111112
+      },
+      "es_hotelservices": {
+        "FN": 32,
+        "FP": 3,
+        "TP": 70,
+        "fraud": 102,
+        "precision": 0.958904109589041,
+        "recall": 0.6862745098039216
+      },
+      "es_hyper": {
+        "FN": 25,
+        "FP": 0,
+        "TP": 23,
+        "fraud": 48,
+        "precision": 1.0,
+        "recall": 0.4791666666666667
+      },
+      "es_leisure": {
+        "FN": 1,
+        "FP": 0,
+        "TP": 73,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9864864864864865
+      },
+      "es_otherservices": {
+        "FN": 8,
+        "FP": 1,
+        "TP": 32,
+        "fraud": 40,
+        "precision": 0.9696969696969697,
+        "recall": 0.8
+      },
+      "es_sportsandtoys": {
+        "FN": 65,
+        "FP": 19,
+        "TP": 237,
+        "fraud": 302,
+        "precision": 0.92578125,
+        "recall": 0.7847682119205298
+      },
+      "es_tech": {
+        "FN": 10,
+        "FP": 0,
+        "TP": 24,
+        "fraud": 34,
+        "precision": 1.0,
+        "recall": 0.7058823529411765
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 7,
+        "FP": 4,
+        "TP": 85,
+        "fraud": 92,
+        "precision": 0.9550561797752809,
+        "recall": 0.9239130434782609
+      },
+      "es_wellnessandbeauty": {
+        "FN": 59,
+        "FP": 16,
+        "TP": 85,
+        "fraud": 144,
+        "precision": 0.8415841584158416,
+        "recall": 0.5902777777777778
+      }
+    },
+    "trackA_atavci_xgb_hinge": {
+      "es_barsandrestaurants": {
+        "FN": 12,
+        "FP": 1,
+        "TP": 14,
+        "fraud": 26,
+        "precision": 0.9333333333333333,
+        "recall": 0.5384615384615384
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 1,
+        "TP": 0,
+        "fraud": 0,
+        "precision": 0.0,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 9,
+        "FP": 2,
+        "TP": 9,
+        "fraud": 18,
+        "precision": 0.8181818181818182,
+        "recall": 0.5
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 114,
+        "FP": 29,
+        "TP": 170,
+        "fraud": 284,
+        "precision": 0.8542713567839196,
+        "recall": 0.5985915492957746
+      },
+      "es_home": {
+        "FN": 14,
+        "FP": 1,
+        "TP": 22,
+        "fraud": 36,
+        "precision": 0.9565217391304348,
+        "recall": 0.6111111111111112
+      },
+      "es_hotelservices": {
+        "FN": 30,
+        "FP": 2,
+        "TP": 72,
+        "fraud": 102,
+        "precision": 0.972972972972973,
+        "recall": 0.7058823529411765
+      },
+      "es_hyper": {
+        "FN": 24,
+        "FP": 0,
+        "TP": 24,
+        "fraud": 48,
+        "precision": 1.0,
+        "recall": 0.5
+      },
+      "es_leisure": {
+        "FN": 1,
+        "FP": 0,
+        "TP": 73,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9864864864864865
+      },
+      "es_otherservices": {
+        "FN": 9,
+        "FP": 1,
+        "TP": 31,
+        "fraud": 40,
+        "precision": 0.96875,
+        "recall": 0.775
+      },
+      "es_sportsandtoys": {
+        "FN": 78,
+        "FP": 25,
+        "TP": 224,
+        "fraud": 302,
+        "precision": 0.8995983935742972,
+        "recall": 0.7417218543046358
+      },
+      "es_tech": {
+        "FN": 9,
+        "FP": 0,
+        "TP": 25,
+        "fraud": 34,
+        "precision": 1.0,
+        "recall": 0.7352941176470589
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 5,
+        "FP": 3,
+        "TP": 87,
+        "fraud": 92,
+        "precision": 0.9666666666666667,
+        "recall": 0.9456521739130435
+      },
+      "es_wellnessandbeauty": {
+        "FN": 62,
+        "FP": 21,
+        "TP": 82,
+        "fraud": 144,
+        "precision": 0.7961165048543689,
+        "recall": 0.5694444444444444
+      }
+    },
+    "trackA_atavci_xgb_logistic": {
+      "es_barsandrestaurants": {
+        "FN": 11,
+        "FP": 1,
+        "TP": 15,
+        "fraud": 26,
+        "precision": 0.9375,
+        "recall": 0.5769230769230769
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 9,
+        "FP": 0,
+        "TP": 9,
+        "fraud": 18,
+        "precision": 1.0,
+        "recall": 0.5
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 116,
+        "FP": 20,
+        "TP": 168,
+        "fraud": 284,
+        "precision": 0.8936170212765957,
+        "recall": 0.5915492957746479
+      },
+      "es_home": {
+        "FN": 13,
+        "FP": 2,
+        "TP": 23,
+        "fraud": 36,
+        "precision": 0.92,
+        "recall": 0.6388888888888888
+      },
+      "es_hotelservices": {
+        "FN": 30,
+        "FP": 4,
+        "TP": 72,
+        "fraud": 102,
+        "precision": 0.9473684210526315,
+        "recall": 0.7058823529411765
+      },
+      "es_hyper": {
+        "FN": 27,
+        "FP": 1,
+        "TP": 21,
+        "fraud": 48,
+        "precision": 0.9545454545454546,
+        "recall": 0.4375
+      },
+      "es_leisure": {
+        "FN": 1,
+        "FP": 0,
+        "TP": 73,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9864864864864865
+      },
+      "es_otherservices": {
+        "FN": 7,
+        "FP": 1,
+        "TP": 33,
+        "fraud": 40,
+        "precision": 0.9705882352941176,
+        "recall": 0.825
+      },
+      "es_sportsandtoys": {
+        "FN": 66,
+        "FP": 26,
+        "TP": 236,
+        "fraud": 302,
+        "precision": 0.9007633587786259,
+        "recall": 0.7814569536423841
+      },
+      "es_tech": {
+        "FN": 10,
+        "FP": 0,
+        "TP": 24,
+        "fraud": 34,
+        "precision": 1.0,
+        "recall": 0.7058823529411765
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 4,
+        "FP": 4,
+        "TP": 88,
+        "fraud": 92,
+        "precision": 0.9565217391304348,
+        "recall": 0.9565217391304348
+      },
+      "es_wellnessandbeauty": {
+        "FN": 61,
+        "FP": 15,
+        "TP": 83,
+        "fraud": 144,
+        "precision": 0.8469387755102041,
+        "recall": 0.5763888888888888
+      }
+    },
+    "trackA_sushmitha_lgbm": {
+      "es_barsandrestaurants": {
+        "FN": 11,
+        "FP": 1,
+        "TP": 15,
+        "fraud": 26,
+        "precision": 0.9375,
+        "recall": 0.5769230769230769
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 7,
+        "FP": 3,
+        "TP": 11,
+        "fraud": 18,
+        "precision": 0.7857142857142857,
+        "recall": 0.6111111111111112
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 117,
+        "FP": 20,
+        "TP": 167,
+        "fraud": 284,
+        "precision": 0.893048128342246,
+        "recall": 0.5880281690140845
+      },
+      "es_home": {
+        "FN": 17,
+        "FP": 4,
+        "TP": 19,
+        "fraud": 36,
+        "precision": 0.8260869565217391,
+        "recall": 0.5277777777777778
+      },
+      "es_hotelservices": {
+        "FN": 32,
+        "FP": 3,
+        "TP": 70,
+        "fraud": 102,
+        "precision": 0.958904109589041,
+        "recall": 0.6862745098039216
+      },
+      "es_hyper": {
+        "FN": 21,
+        "FP": 1,
+        "TP": 27,
+        "fraud": 48,
+        "precision": 0.9642857142857143,
+        "recall": 0.5625
+      },
+      "es_leisure": {
+        "FN": 1,
+        "FP": 0,
+        "TP": 73,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9864864864864865
+      },
+      "es_otherservices": {
+        "FN": 7,
+        "FP": 0,
+        "TP": 33,
+        "fraud": 40,
+        "precision": 1.0,
+        "recall": 0.825
+      },
+      "es_sportsandtoys": {
+        "FN": 68,
+        "FP": 26,
+        "TP": 234,
+        "fraud": 302,
+        "precision": 0.9,
+        "recall": 0.7748344370860927
+      },
+      "es_tech": {
+        "FN": 9,
+        "FP": 2,
+        "TP": 25,
+        "fraud": 34,
+        "precision": 0.9259259259259259,
+        "recall": 0.7352941176470589
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 10,
+        "FP": 2,
+        "TP": 82,
+        "fraud": 92,
+        "precision": 0.9761904761904762,
+        "recall": 0.8913043478260869
+      },
+      "es_wellnessandbeauty": {
+        "FN": 58,
+        "FP": 15,
+        "TP": 86,
+        "fraud": 144,
+        "precision": 0.8514851485148515,
+        "recall": 0.5972222222222222
+      }
+    },
+    "trackB_atavci_rf": {
+      "es_barsandrestaurants": {
+        "FN": 18,
+        "FP": 0,
+        "TP": 8,
+        "fraud": 26,
+        "precision": 1.0,
+        "recall": 0.3076923076923077
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 8,
+        "FP": 0,
+        "TP": 10,
+        "fraud": 18,
+        "precision": 1.0,
+        "recall": 0.5555555555555556
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 89,
+        "FP": 37,
+        "TP": 195,
+        "fraud": 284,
+        "precision": 0.8405172413793104,
+        "recall": 0.6866197183098591
+      },
+      "es_home": {
+        "FN": 10,
+        "FP": 2,
+        "TP": 26,
+        "fraud": 36,
+        "precision": 0.9285714285714286,
+        "recall": 0.7222222222222222
+      },
+      "es_hotelservices": {
+        "FN": 26,
+        "FP": 7,
+        "TP": 76,
+        "fraud": 102,
+        "precision": 0.9156626506024096,
+        "recall": 0.7450980392156863
+      },
+      "es_hyper": {
+        "FN": 32,
+        "FP": 0,
+        "TP": 16,
+        "fraud": 48,
+        "precision": 1.0,
+        "recall": 0.3333333333333333
+      },
+      "es_leisure": {
+        "FN": 11,
+        "FP": 0,
+        "TP": 63,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.8513513513513513
+      },
+      "es_otherservices": {
+        "FN": 19,
+        "FP": 0,
+        "TP": 21,
+        "fraud": 40,
+        "precision": 1.0,
+        "recall": 0.525
+      },
+      "es_sportsandtoys": {
+        "FN": 99,
+        "FP": 13,
+        "TP": 203,
+        "fraud": 302,
+        "precision": 0.9398148148148148,
+        "recall": 0.6721854304635762
+      },
+      "es_tech": {
+        "FN": 6,
+        "FP": 32,
+        "TP": 28,
+        "fraud": 34,
+        "precision": 0.4666666666666667,
+        "recall": 0.8235294117647058
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 10,
+        "FP": 6,
+        "TP": 82,
+        "fraud": 92,
+        "precision": 0.9318181818181818,
+        "recall": 0.8913043478260869
+      },
+      "es_wellnessandbeauty": {
+        "FN": 62,
+        "FP": 12,
+        "TP": 82,
+        "fraud": 144,
+        "precision": 0.8723404255319149,
+        "recall": 0.5694444444444444
+      }
+    },
+    "trackB_atavci_soft_vote_approx": {
+      "es_barsandrestaurants": {
+        "FN": 17,
+        "FP": 0,
+        "TP": 9,
+        "fraud": 26,
+        "precision": 1.0,
+        "recall": 0.34615384615384615
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 8,
+        "FP": 0,
+        "TP": 10,
+        "fraud": 18,
+        "precision": 1.0,
+        "recall": 0.5555555555555556
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 89,
+        "FP": 25,
+        "TP": 195,
+        "fraud": 284,
+        "precision": 0.8863636363636364,
+        "recall": 0.6866197183098591
+      },
+      "es_home": {
+        "FN": 11,
+        "FP": 1,
+        "TP": 25,
+        "fraud": 36,
+        "precision": 0.9615384615384616,
+        "recall": 0.6944444444444444
+      },
+      "es_hotelservices": {
+        "FN": 25,
+        "FP": 3,
+        "TP": 77,
+        "fraud": 102,
+        "precision": 0.9625,
+        "recall": 0.7549019607843137
+      },
+      "es_hyper": {
+        "FN": 28,
+        "FP": 0,
+        "TP": 20,
+        "fraud": 48,
+        "precision": 1.0,
+        "recall": 0.4166666666666667
+      },
+      "es_leisure": {
+        "FN": 1,
+        "FP": 0,
+        "TP": 73,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9864864864864865
+      },
+      "es_otherservices": {
+        "FN": 12,
+        "FP": 1,
+        "TP": 28,
+        "fraud": 40,
+        "precision": 0.9655172413793104,
+        "recall": 0.7
+      },
+      "es_sportsandtoys": {
+        "FN": 93,
+        "FP": 11,
+        "TP": 209,
+        "fraud": 302,
+        "precision": 0.95,
+        "recall": 0.6920529801324503
+      },
+      "es_tech": {
+        "FN": 7,
+        "FP": 23,
+        "TP": 27,
+        "fraud": 34,
+        "precision": 0.54,
+        "recall": 0.7941176470588235
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 5,
+        "FP": 6,
+        "TP": 87,
+        "fraud": 92,
+        "precision": 0.9354838709677419,
+        "recall": 0.9456521739130435
+      },
+      "es_wellnessandbeauty": {
+        "FN": 61,
+        "FP": 6,
+        "TP": 83,
+        "fraud": 144,
+        "precision": 0.9325842696629213,
+        "recall": 0.5763888888888888
+      }
+    },
+    "trackB_atavci_xgb_hinge": {
+      "es_barsandrestaurants": {
+        "FN": 20,
+        "FP": 0,
+        "TP": 6,
+        "fraud": 26,
+        "precision": 1.0,
+        "recall": 0.23076923076923078
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 8,
+        "FP": 0,
+        "TP": 10,
+        "fraud": 18,
+        "precision": 1.0,
+        "recall": 0.5555555555555556
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 94,
+        "FP": 17,
+        "TP": 190,
+        "fraud": 284,
+        "precision": 0.9178743961352657,
+        "recall": 0.6690140845070423
+      },
+      "es_home": {
+        "FN": 15,
+        "FP": 1,
+        "TP": 21,
+        "fraud": 36,
+        "precision": 0.9545454545454546,
+        "recall": 0.5833333333333334
+      },
+      "es_hotelservices": {
+        "FN": 22,
+        "FP": 6,
+        "TP": 80,
+        "fraud": 102,
+        "precision": 0.9302325581395349,
+        "recall": 0.7843137254901961
+      },
+      "es_hyper": {
+        "FN": 28,
+        "FP": 1,
+        "TP": 20,
+        "fraud": 48,
+        "precision": 0.9523809523809523,
+        "recall": 0.4166666666666667
+      },
+      "es_leisure": {
+        "FN": 1,
+        "FP": 0,
+        "TP": 73,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9864864864864865
+      },
+      "es_otherservices": {
+        "FN": 12,
+        "FP": 2,
+        "TP": 28,
+        "fraud": 40,
+        "precision": 0.9333333333333333,
+        "recall": 0.7
+      },
+      "es_sportsandtoys": {
+        "FN": 62,
+        "FP": 11,
+        "TP": 240,
+        "fraud": 302,
+        "precision": 0.9561752988047809,
+        "recall": 0.7947019867549668
+      },
+      "es_tech": {
+        "FN": 7,
+        "FP": 8,
+        "TP": 27,
+        "fraud": 34,
+        "precision": 0.7714285714285715,
+        "recall": 0.7941176470588235
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 6,
+        "FP": 5,
+        "TP": 86,
+        "fraud": 92,
+        "precision": 0.945054945054945,
+        "recall": 0.9347826086956522
+      },
+      "es_wellnessandbeauty": {
+        "FN": 64,
+        "FP": 7,
+        "TP": 80,
+        "fraud": 144,
+        "precision": 0.9195402298850575,
+        "recall": 0.5555555555555556
+      }
+    },
+    "trackB_atavci_xgb_logistic": {
+      "es_barsandrestaurants": {
+        "FN": 18,
+        "FP": 0,
+        "TP": 8,
+        "fraud": 26,
+        "precision": 1.0,
+        "recall": 0.3076923076923077
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 8,
+        "FP": 0,
+        "TP": 10,
+        "fraud": 18,
+        "precision": 1.0,
+        "recall": 0.5555555555555556
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 94,
+        "FP": 19,
+        "TP": 190,
+        "fraud": 284,
+        "precision": 0.9090909090909091,
+        "recall": 0.6690140845070423
+      },
+      "es_home": {
+        "FN": 12,
+        "FP": 1,
+        "TP": 24,
+        "fraud": 36,
+        "precision": 0.96,
+        "recall": 0.6666666666666666
+      },
+      "es_hotelservices": {
+        "FN": 21,
+        "FP": 3,
+        "TP": 81,
+        "fraud": 102,
+        "precision": 0.9642857142857143,
+        "recall": 0.7941176470588235
+      },
+      "es_hyper": {
+        "FN": 27,
+        "FP": 0,
+        "TP": 21,
+        "fraud": 48,
+        "precision": 1.0,
+        "recall": 0.4375
+      },
+      "es_leisure": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 74,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "es_otherservices": {
+        "FN": 11,
+        "FP": 3,
+        "TP": 29,
+        "fraud": 40,
+        "precision": 0.90625,
+        "recall": 0.725
+      },
+      "es_sportsandtoys": {
+        "FN": 73,
+        "FP": 14,
+        "TP": 229,
+        "fraud": 302,
+        "precision": 0.9423868312757202,
+        "recall": 0.7582781456953642
+      },
+      "es_tech": {
+        "FN": 9,
+        "FP": 5,
+        "TP": 25,
+        "fraud": 34,
+        "precision": 0.8333333333333334,
+        "recall": 0.7352941176470589
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 4,
+        "FP": 7,
+        "TP": 88,
+        "fraud": 92,
+        "precision": 0.9263157894736842,
+        "recall": 0.9565217391304348
+      },
+      "es_wellnessandbeauty": {
+        "FN": 63,
+        "FP": 7,
+        "TP": 81,
+        "fraud": 144,
+        "precision": 0.9204545454545454,
+        "recall": 0.5625
+      }
+    },
+    "trackB_sushmitha_lgbm": {
+      "es_barsandrestaurants": {
+        "FN": 21,
+        "FP": 0,
+        "TP": 5,
+        "fraud": 26,
+        "precision": 1.0,
+        "recall": 0.19230769230769232
+      },
+      "es_contents": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_fashion": {
+        "FN": 7,
+        "FP": 0,
+        "TP": 11,
+        "fraud": 18,
+        "precision": 1.0,
+        "recall": 0.6111111111111112
+      },
+      "es_food": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_health": {
+        "FN": 78,
+        "FP": 6,
+        "TP": 206,
+        "fraud": 284,
+        "precision": 0.9716981132075472,
+        "recall": 0.7253521126760564
+      },
+      "es_home": {
+        "FN": 13,
+        "FP": 2,
+        "TP": 23,
+        "fraud": 36,
+        "precision": 0.92,
+        "recall": 0.6388888888888888
+      },
+      "es_hotelservices": {
+        "FN": 19,
+        "FP": 2,
+        "TP": 83,
+        "fraud": 102,
+        "precision": 0.9764705882352941,
+        "recall": 0.8137254901960784
+      },
+      "es_hyper": {
+        "FN": 36,
+        "FP": 0,
+        "TP": 12,
+        "fraud": 48,
+        "precision": 1.0,
+        "recall": 0.25
+      },
+      "es_leisure": {
+        "FN": 1,
+        "FP": 0,
+        "TP": 73,
+        "fraud": 74,
+        "precision": 1.0,
+        "recall": 0.9864864864864865
+      },
+      "es_otherservices": {
+        "FN": 7,
+        "FP": 0,
+        "TP": 33,
+        "fraud": 40,
+        "precision": 1.0,
+        "recall": 0.825
+      },
+      "es_sportsandtoys": {
+        "FN": 44,
+        "FP": 5,
+        "TP": 258,
+        "fraud": 302,
+        "precision": 0.9809885931558935,
+        "recall": 0.8543046357615894
+      },
+      "es_tech": {
+        "FN": 9,
+        "FP": 1,
+        "TP": 25,
+        "fraud": 34,
+        "precision": 0.9615384615384616,
+        "recall": 0.7352941176470589
+      },
+      "es_transportation": {
+        "FN": 0,
+        "FP": 0,
+        "TP": 0,
+        "fraud": 0,
+        "precision": null,
+        "recall": null
+      },
+      "es_travel": {
+        "FN": 6,
+        "FP": 3,
+        "TP": 86,
+        "fraud": 92,
+        "precision": 0.9662921348314607,
+        "recall": 0.9347826086956522
+      },
+      "es_wellnessandbeauty": {
+        "FN": 61,
+        "FP": 2,
+        "TP": 83,
+        "fraud": 144,
+        "precision": 0.9764705882352941,
+        "recall": 0.5763888888888888
+      }
+    }
+  },
+  "failures": [],
+  "feature_names": {
+    "trackA": [
+      "log_amount",
+      "prior_count",
+      "amount_over_mean",
+      "customer_z",
+      "new_merchant",
+      "days_since",
+      "dup_merchant",
+      "dup_native",
+      "vel_same_step",
+      "vel_7",
+      "personal_median_ratio_30",
+      "cat_cdf",
+      "amount_over_cat_median",
+      "native_es_transportation",
+      "native_es_health",
+      "native_es_otherservices",
+      "native_es_food",
+      "native_es_hotelservices",
+      "native_es_barsandrestaurants",
+      "native_es_tech",
+      "native_es_sportsandtoys",
+      "native_es_wellnessandbeauty",
+      "native_es_hyper",
+      "native_es_fashion",
+      "native_es_home",
+      "native_es_contents",
+      "native_es_travel",
+      "native_es_leisure"
+    ],
+    "trackB_atavci": [
+      "step",
+      "customer_code",
+      "age_code",
+      "gender_code",
+      "merchant_code",
+      "category_code",
+      "amount"
+    ],
+    "trackB_sushmitha": [
+      "amount",
+      "step",
+      "customer_code",
+      "merchant_code",
+      "time_since_last_txn_days",
+      "prior_same_step_count",
+      "prior_24step_amount_sum",
+      "prior_24step_amount_z",
+      "pair_prior_count",
+      "is_first_interaction",
+      "customer_prior_count",
+      "merchant_prior_count",
+      "is_night_step_mod_24",
+      "age_2",
+      "age_3",
+      "age_5",
+      "age_1",
+      "age_6",
+      "age_U",
+      "age_0",
+      "gender_F",
+      "gender_E",
+      "gender_U",
+      "category_es_health",
+      "category_es_otherservices",
+      "category_es_food",
+      "category_es_hotelservices",
+      "category_es_barsandrestaurants",
+      "category_es_tech",
+      "category_es_sportsandtoys",
+      "category_es_wellnessandbeauty",
+      "category_es_hyper",
+      "category_es_fashion",
+      "category_es_home",
+      "category_es_contents",
+      "category_es_travel",
+      "category_es_leisure"
+    ]
+  },
+  "feature_seconds": {
+    "trackA": 0.12658729199999996,
+    "trackB_atavci": 0.3554556670000011,
+    "trackB_sushmitha": 1.850457917
+  },
+  "feature_shapes": {
+    "trackA": [
+      594643,
+      28
+    ],
+    "trackB_atavci": [
+      594643,
+      7
+    ],
+    "trackB_sushmitha": [
+      594643,
+      37
+    ]
+  },
+  "hyperparameters_frozen": true,
+  "knn_probes": {
+    "A": {
+      "elapsed_seconds": 0.529211584,
+      "extrapolated_seconds": 552.1023358187773,
+      "extrapolation": "(374914 / probe_train) * (111306 / probe_test) * elapsed",
+      "full_test_rows": 111306,
+      "full_train_rows": 374914,
+      "full_training_fit": false,
+      "knn_in_saved_ensemble": false,
+      "n_jobs": 4,
+      "n_neighbors": 5,
+      "p": 1,
+      "probe_test_rows": 2000,
+      "probe_train_rows": 20000,
+      "reason": "time gate passed, but KNeighborsClassifier is still not fit on the full training set",
+      "returncode": 0,
+      "skip_knn": false,
+      "stderr_tail": "",
+      "timed_out": false,
+      "track": "A",
+      "wall_seconds": 1.3582917499999994
+    },
+    "B": {
+      "elapsed_seconds": 0.026779792000000024,
+      "extrapolated_seconds": 27.93813696251407,
+      "extrapolation": "(374914 / probe_train) * (111306 / probe_test) * elapsed",
+      "full_test_rows": 111306,
+      "full_train_rows": 374914,
+      "full_training_fit": false,
+      "knn_in_saved_ensemble": false,
+      "n_jobs": 4,
+      "n_neighbors": 5,
+      "p": 1,
+      "probe_test_rows": 2000,
+      "probe_train_rows": 20000,
+      "reason": "time gate passed, but KNeighborsClassifier is still not fit on the full training set",
+      "returncode": 0,
+      "skip_knn": false,
+      "stderr_tail": "",
+      "timed_out": false,
+      "track": "B",
+      "wall_seconds": 0.6837799159999989
+    }
+  },
+  "libraries": {
+    "lightgbm": "4.6.0",
+    "numpy": "2.0.2",
+    "scikit_learn": "1.6.1",
+    "xgboost": "2.1.4"
+  },
+  "missing_models": [],
+  "model_index": [
+    {
+      "FN": 386,
+      "FP": 105,
+      "TN": 110001,
+      "TP": 814,
+      "fidelity": "ADAPTED",
+      "model": "trackA_atavci_rf",
+      "predict_seconds": 0.12296733400000193,
+      "ranking_possible": true,
+      "score_source": "predict_proba",
+      "score_unique_values": 15462,
+      "test_average_precision": 0.8467384237840266,
+      "track": "A",
+      "train_seconds": 6.524226833
+    },
+    {
+      "FN": 390,
+      "FP": 109,
+      "TN": 109997,
+      "TP": 810,
+      "fidelity": "ADAPTED",
+      "model": "trackB_atavci_rf",
+      "predict_seconds": 0.11143608399999749,
+      "ranking_possible": true,
+      "score_source": "predict_proba",
+      "score_unique_values": 12088,
+      "test_average_precision": 0.8614408784064103,
+      "track": "B",
+      "train_seconds": 2.5005973330000018
+    },
+    {
+      "FN": 355,
+      "FP": 74,
+      "TN": 110032,
+      "TP": 845,
+      "fidelity": "ADAPTED",
+      "model": "trackA_atavci_xgb_logistic",
+      "predict_seconds": 0.8694532090000067,
+      "ranking_possible": true,
+      "score_source": "predict_proba",
+      "score_unique_values": 65025,
+      "test_average_precision": 0.8844407924100497,
+      "track": "A",
+      "train_seconds": 5.351970292000004
+    },
+    {
+      "FN": 340,
+      "FP": 59,
+      "TN": 110047,
+      "TP": 860,
+      "fidelity": "ADAPTED",
+      "model": "trackB_atavci_xgb_logistic",
+      "predict_seconds": 0.7522467920000011,
+      "ranking_possible": true,
+      "score_source": "predict_proba",
+      "score_unique_values": 36032,
+      "test_average_precision": 0.9215974681908374,
+      "track": "B",
+      "train_seconds": 2.82509125
+    },
+    {
+      "FN": 367,
+      "FP": 86,
+      "TN": 110020,
+      "TP": 833,
+      "fidelity": "ADAPTED",
+      "model": "trackA_atavci_xgb_hinge",
+      "predict_seconds": 2.3615230420000017,
+      "ranking_possible": false,
+      "score_source": "predict",
+      "score_unique_values": 2,
+      "test_average_precision": 0.6387804529426814,
+      "track": "A",
+      "train_seconds": 5.995414250000003
+    },
+    {
+      "FN": 339,
+      "FP": 58,
+      "TN": 110048,
+      "TP": 861,
+      "fidelity": "ADAPTED",
+      "model": "trackB_atavci_xgb_hinge",
+      "predict_seconds": 2.449441,
+      "ranking_possible": false,
+      "score_source": "predict",
+      "score_unique_values": 2,
+      "test_average_precision": 0.6821036729871625,
+      "track": "B",
+      "train_seconds": 3.282412208999993
+    },
+    {
+      "FN": 353,
+      "FP": 72,
+      "TN": 110034,
+      "TP": 847,
+      "fidelity": "APPROXIMATION",
+      "model": "trackA_atavci_soft_vote_approx",
+      "predict_seconds": 0.001606208000005438,
+      "ranking_possible": true,
+      "score_source": "weighted_probability_average",
+      "score_unique_values": 68975,
+      "test_average_precision": 0.8698371938595477,
+      "track": "A",
+      "train_seconds": 0.0
+    },
+    {
+      "FN": 357,
+      "FP": 76,
+      "TN": 110030,
+      "TP": 843,
+      "fidelity": "APPROXIMATION",
+      "model": "trackB_atavci_soft_vote_approx",
+      "predict_seconds": 0.0012133749999989618,
+      "ranking_possible": true,
+      "score_source": "weighted_probability_average",
+      "score_unique_values": 38251,
+      "test_average_precision": 0.8925265158960306,
+      "track": "B",
+      "train_seconds": 0.0
+    },
+    {
+      "FN": 358,
+      "FP": 77,
+      "TN": 110029,
+      "TP": 842,
+      "fidelity": "ADAPTED",
+      "model": "trackA_sushmitha_lgbm",
+      "predict_seconds": 4.521172416000013,
+      "ranking_possible": true,
+      "score_source": "mean_predict_proba",
+      "score_unique_values": 110248,
+      "test_average_precision": 0.8816858479769111,
+      "track": "A",
+      "train_seconds": 6.991617082999994
+    },
+    {
+      "FN": 302,
+      "FP": 21,
+      "TN": 110085,
+      "TP": 898,
+      "fidelity": "ADAPTED",
+      "model": "trackB_sushmitha_lgbm",
+      "predict_seconds": 3.717019666999988,
+      "ranking_possible": true,
+      "score_source": "mean_predict_proba",
+      "score_unique_values": 111079,
+      "test_average_precision": 0.9534913676772602,
+      "track": "B",
+      "train_seconds": 8.008427166000004
+    }
+  ],
+  "models": [
+    {
+      "architecture": "sklearn.ensemble.RandomForestClassifier n_estimators=100 max_depth=8 class_weight=balanced",
+      "confirm": {
+        "FN": 96,
+        "FP": 415,
+        "TN": 53686,
+        "TP": 504,
+        "accuracy": 0.9906583060638745,
+        "alerts": 919,
+        "average_precision": 0.8426570151488701,
+        "balanced_accuracy": 0.9161645810613481,
+        "f1": 0.6635944700460829,
+        "fpr": 0.007670837877303562,
+        "n": 54701,
+        "precision": 0.5484221980413493,
+        "recall": 0.84,
+        "review_budget": 919,
+        "roc_auc": 0.9957933001854555,
+        "score_unique_values": 8605
+      },
+      "feature_note": "contract.parity_parts: v2 enriched numeric columns, category CDF, amount relative to the category median, and native category one-hot. No merchant fraud rate, age, gender, zip, or raw customer or merchant ids.",
+      "feature_seconds": 0.12658729199999996,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "class_weight": "balanced",
+        "max_depth": 8,
+        "n_estimators": 100,
+        "n_jobs": 4,
+        "random_state": 42,
+        "score_source": "predict_proba",
+        "verbose": 0
+      },
+      "leakage_status": "no merchant fraud rate and no identifier codes.",
+      "model": "trackA_atavci_rf",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 0.12296733400000193,
+      "ranking_possible": true,
+      "select": {
+        "FN": 84,
+        "FP": 403,
+        "TN": 52719,
+        "TP": 516,
+        "accuracy": 0.9909348125535162,
+        "alerts": 919,
+        "average_precision": 0.8558662248620466,
+        "balanced_accuracy": 0.9262068446218139,
+        "f1": 0.6793943383805136,
+        "fpr": 0.007586310756372124,
+        "n": 53722,
+        "precision": 0.5614798694232862,
+        "recall": 0.86,
+        "review_budget": 919,
+        "roc_auc": 0.9962455291592938,
+        "score_unique_values": 8275
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 386,
+        "FP": 105,
+        "TN": 110001,
+        "TP": 814,
+        "accuracy": 0.9955887373546799,
+        "alerts": 919,
+        "average_precision": 0.8467384237840266,
+        "balanced_accuracy": 0.8386898534139828,
+        "f1": 0.7682869277961303,
+        "fpr": 0.0009536265053675549,
+        "n": 111306,
+        "precision": 0.8857453754080522,
+        "recall": 0.6783333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9956850027851949,
+        "score_unique_values": 15462
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "A",
+      "train_seconds": 6.524226833
+    },
+    {
+      "architecture": "sklearn.ensemble.RandomForestClassifier n_estimators=100 max_depth=8 class_weight=balanced",
+      "confirm": {
+        "FN": 73,
+        "FP": 392,
+        "TN": 53709,
+        "TP": 527,
+        "accuracy": 0.9914992413301402,
+        "alerts": 919,
+        "average_precision": 0.8443593509261059,
+        "balanced_accuracy": 0.9355438131149763,
+        "f1": 0.693877551020408,
+        "fpr": 0.007245707103380714,
+        "n": 54701,
+        "precision": 0.573449401523395,
+        "recall": 0.8783333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9970846349112463,
+        "score_unique_values": 6532
+      },
+      "feature_note": "contract.atavci_matrix: step, amount, and train-prefix appearance codes for customer, age, gender, merchant, and category. Unseen values are -1. Track B is the closer reproduction. The chronological split and the train-only codebook differ from the 2019 shuffled notebook. The atavci matrix has no rolling amount window.",
+      "feature_seconds": 0.3554556670000011,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "class_weight": "balanced",
+        "max_depth": 8,
+        "n_estimators": 100,
+        "n_jobs": 4,
+        "random_state": 42,
+        "score_source": "predict_proba",
+        "verbose": 0
+      },
+      "leakage_status": "identifier codes are fit on train labels' rows but are not target encodings; history windows exclude the current row and future rows.",
+      "model": "trackB_atavci_rf",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 0.11143608399999749,
+      "ranking_possible": true,
+      "select": {
+        "FN": 62,
+        "FP": 381,
+        "TN": 52741,
+        "TP": 538,
+        "accuracy": 0.9917538438628495,
+        "alerts": 919,
+        "average_precision": 0.8496561267876886,
+        "balanced_accuracy": 0.9447472484720705,
+        "f1": 0.7083607636603028,
+        "fpr": 0.007172169722525507,
+        "n": 53722,
+        "precision": 0.5854189336235038,
+        "recall": 0.8966666666666666,
+        "review_budget": 919,
+        "roc_auc": 0.9969098960882496,
+        "score_unique_values": 6479
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 390,
+        "FP": 109,
+        "TN": 109997,
+        "TP": 810,
+        "accuracy": 0.9955168634215585,
+        "alerts": 919,
+        "average_precision": 0.8614408784064103,
+        "balanced_accuracy": 0.8370050224329283,
+        "f1": 0.7645115620575744,
+        "fpr": 0.0009899551341434618,
+        "n": 111306,
+        "precision": 0.8813928182807399,
+        "recall": 0.675,
+        "review_budget": 919,
+        "roc_auc": 0.9973366649713306,
+        "score_unique_values": 12088
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "B",
+      "train_seconds": 2.5005973330000018
+    },
+    {
+      "architecture": "xgboost.XGBClassifier objective=binary:logistic. Predeclared ranking adaptation, not a test-tuned model.",
+      "confirm": {
+        "FN": 69,
+        "FP": 388,
+        "TN": 53713,
+        "TP": 531,
+        "accuracy": 0.9916454909416647,
+        "alerts": 919,
+        "average_precision": 0.8833956441139762,
+        "balanced_accuracy": 0.9389141143416943,
+        "f1": 0.6991441737985516,
+        "fpr": 0.007171771316611523,
+        "n": 54701,
+        "precision": 0.5778019586507073,
+        "recall": 0.885,
+        "review_budget": 919,
+        "roc_auc": 0.9971126688970628,
+        "score_unique_values": 38741
+      },
+      "feature_note": "contract.parity_parts: v2 enriched numeric columns, category CDF, amount relative to the category median, and native category one-hot. No merchant fraud rate, age, gender, zip, or raw customer or merchant ids.",
+      "feature_seconds": 0.12658729199999996,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1,
+        "colsample_bytree": 1,
+        "gamma": 0,
+        "learning_rate": 0.05,
+        "max_delta_step": 0,
+        "max_depth": 6,
+        "min_child_weight": 1,
+        "n_estimators": 400,
+        "n_jobs": 4,
+        "objective": "binary:logistic",
+        "random_state": 42,
+        "reg_alpha": 0,
+        "reg_lambda": 1,
+        "scale_pos_weight": 1,
+        "score_source": "predict_proba",
+        "subsample": 1,
+        "tree_method": "library default auto; not frozen in the contract",
+        "verbosity": 0
+      },
+      "leakage_status": "no merchant fraud rate and no identifier codes.",
+      "model": "trackA_atavci_xgb_logistic",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 0.8694532090000067,
+      "ranking_possible": true,
+      "select": {
+        "FN": 52,
+        "FP": 371,
+        "TN": 52751,
+        "TP": 548,
+        "accuracy": 0.9921261308216374,
+        "alerts": 919,
+        "average_precision": 0.904258020403969,
+        "balanced_accuracy": 0.9531747047676418,
+        "f1": 0.7215273206056616,
+        "fpr": 0.0069839237980497725,
+        "n": 53722,
+        "precision": 0.5963003264417845,
+        "recall": 0.9133333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9976786140080067,
+        "score_unique_values": 38263
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 355,
+        "FP": 74,
+        "TN": 110032,
+        "TP": 845,
+        "accuracy": 0.99614576033637,
+        "alerts": 919,
+        "average_precision": 0.8844407924100497,
+        "balanced_accuracy": 0.8517472935171562,
+        "f1": 0.7975460122699386,
+        "fpr": 0.0006720796323542768,
+        "n": 111306,
+        "precision": 0.9194776931447225,
+        "recall": 0.7041666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9969243426031884,
+        "score_unique_values": 65025
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "A",
+      "train_seconds": 5.351970292000004
+    },
+    {
+      "architecture": "xgboost.XGBClassifier objective=binary:logistic. Predeclared ranking adaptation, not a test-tuned model.",
+      "confirm": {
+        "FN": 39,
+        "FP": 358,
+        "TN": 53743,
+        "TP": 561,
+        "accuracy": 0.9927423630280982,
+        "alerts": 919,
+        "average_precision": 0.916064885964741,
+        "balanced_accuracy": 0.9641913735420787,
+        "f1": 0.7386438446346281,
+        "fpr": 0.006617252915842591,
+        "n": 54701,
+        "precision": 0.6104461371055495,
+        "recall": 0.935,
+        "review_budget": 919,
+        "roc_auc": 0.9985238874204421,
+        "score_unique_values": 23483
+      },
+      "feature_note": "contract.atavci_matrix: step, amount, and train-prefix appearance codes for customer, age, gender, merchant, and category. Unseen values are -1. Track B is the closer reproduction. The chronological split and the train-only codebook differ from the 2019 shuffled notebook. The atavci matrix has no rolling amount window.",
+      "feature_seconds": 0.3554556670000011,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1,
+        "colsample_bytree": 1,
+        "gamma": 0,
+        "learning_rate": 0.05,
+        "max_delta_step": 0,
+        "max_depth": 6,
+        "min_child_weight": 1,
+        "n_estimators": 400,
+        "n_jobs": 4,
+        "objective": "binary:logistic",
+        "random_state": 42,
+        "reg_alpha": 0,
+        "reg_lambda": 1,
+        "scale_pos_weight": 1,
+        "score_source": "predict_proba",
+        "subsample": 1,
+        "tree_method": "library default auto; not frozen in the contract",
+        "verbosity": 0
+      },
+      "leakage_status": "identifier codes are fit on train labels' rows but are not target encodings; history windows exclude the current row and future rows.",
+      "model": "trackB_atavci_xgb_logistic",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 0.7522467920000011,
+      "ranking_possible": true,
+      "select": {
+        "FN": 38,
+        "FP": 357,
+        "TN": 52765,
+        "TP": 562,
+        "accuracy": 0.9926473325639403,
+        "alerts": 919,
+        "average_precision": 0.9155155667793934,
+        "balanced_accuracy": 0.9649731435814415,
+        "f1": 0.7399605003291638,
+        "fpr": 0.006720379503783743,
+        "n": 53722,
+        "precision": 0.6115342763873776,
+        "recall": 0.9366666666666666,
+        "review_budget": 919,
+        "roc_auc": 0.9982945546728913,
+        "score_unique_values": 23274
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 340,
+        "FP": 59,
+        "TN": 110047,
+        "TP": 860,
+        "accuracy": 0.9964152875855748,
+        "alerts": 919,
+        "average_precision": 0.9215974681908374,
+        "balanced_accuracy": 0.858065409696111,
+        "f1": 0.8117036337895234,
+        "fpr": 0.0005358472744446261,
+        "n": 111306,
+        "precision": 0.9357997823721437,
+        "recall": 0.7166666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9986201516417513,
+        "score_unique_values": 36032
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "B",
+      "train_seconds": 2.82509125
+    },
+    {
+      "architecture": "xgboost.XGBClassifier objective=binary:hinge. Original objective. No invented probabilities.",
+      "confirm": {
+        "FN": 127,
+        "FP": 446,
+        "TN": 53655,
+        "TP": 473,
+        "accuracy": 0.9895248715745599,
+        "alerts": 919,
+        "average_precision": 0.617443494749721,
+        "balanced_accuracy": 0.8900447465542842,
+        "f1": 0.6227781435154707,
+        "fpr": 0.008243840224764792,
+        "n": 54701,
+        "precision": 0.514689880304679,
+        "recall": 0.7883333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.8560289705057824,
+        "score_unique_values": 2
+      },
+      "feature_note": "contract.parity_parts: v2 enriched numeric columns, category CDF, amount relative to the category median, and native category one-hot. No merchant fraud rate, age, gender, zip, or raw customer or merchant ids.",
+      "feature_seconds": 0.12658729199999996,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1,
+        "colsample_bytree": 1,
+        "gamma": 0,
+        "learning_rate": 0.05,
+        "max_delta_step": 0,
+        "max_depth": 6,
+        "min_child_weight": 1,
+        "n_estimators": 400,
+        "n_jobs": 4,
+        "objective": "binary:hinge",
+        "random_state": 42,
+        "reg_alpha": 0,
+        "reg_lambda": 1,
+        "scale_pos_weight": 1,
+        "score_source": "predict",
+        "subsample": 1,
+        "tree_method": "library default auto; not frozen in the contract",
+        "verbosity": 0
+      },
+      "leakage_status": "no merchant fraud rate and no identifier codes.",
+      "model": "trackA_atavci_xgb_hinge",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 2.3615230420000017,
+      "ranking_possible": false,
+      "select": {
+        "FN": 123,
+        "FP": 442,
+        "TN": 52680,
+        "TP": 477,
+        "accuracy": 0.9894828934142437,
+        "alerts": 919,
+        "average_precision": 0.6579482630853968,
+        "balanced_accuracy": 0.8933397650690863,
+        "f1": 0.6280447662936143,
+        "fpr": 0.008320469861827492,
+        "n": 53722,
+        "precision": 0.5190424374319913,
+        "recall": 0.795,
+        "review_budget": 919,
+        "roc_auc": 0.8595952712623772,
+        "score_unique_values": 2
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 367,
+        "FP": 86,
+        "TN": 110020,
+        "TP": 833,
+        "accuracy": 0.9959301385370061,
+        "alerts": 919,
+        "average_precision": 0.6387804529426814,
+        "balanced_accuracy": 0.8466928005739924,
+        "f1": 0.7862199150542709,
+        "fpr": 0.0007810655186819974,
+        "n": 111306,
+        "precision": 0.9064200217627857,
+        "recall": 0.6941666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.8533140564546892,
+        "score_unique_values": 2
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "A",
+      "train_seconds": 5.995414250000003
+    },
+    {
+      "architecture": "xgboost.XGBClassifier objective=binary:hinge. Original objective. No invented probabilities.",
+      "confirm": {
+        "FN": 138,
+        "FP": 457,
+        "TN": 53644,
+        "TP": 462,
+        "accuracy": 0.9891226851428676,
+        "alerts": 919,
+        "average_precision": 0.6674509562245119,
+        "balanced_accuracy": 0.88077641818081,
+        "f1": 0.6082949308755761,
+        "fpr": 0.008447163638380066,
+        "n": 54701,
+        "precision": 0.5027203482045702,
+        "recall": 0.77,
+        "review_budget": 919,
+        "roc_auc": 0.8637785037861284,
+        "score_unique_values": 2
+      },
+      "feature_note": "contract.atavci_matrix: step, amount, and train-prefix appearance codes for customer, age, gender, merchant, and category. Unseen values are -1. Track B is the closer reproduction. The chronological split and the train-only codebook differ from the 2019 shuffled notebook. The atavci matrix has no rolling amount window.",
+      "feature_seconds": 0.3554556670000011,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "base_score": 0.5,
+        "booster": "gbtree",
+        "colsample_bylevel": 1,
+        "colsample_bytree": 1,
+        "gamma": 0,
+        "learning_rate": 0.05,
+        "max_delta_step": 0,
+        "max_depth": 6,
+        "min_child_weight": 1,
+        "n_estimators": 400,
+        "n_jobs": 4,
+        "objective": "binary:hinge",
+        "random_state": 42,
+        "reg_alpha": 0,
+        "reg_lambda": 1,
+        "scale_pos_weight": 1,
+        "score_source": "predict",
+        "subsample": 1,
+        "tree_method": "library default auto; not frozen in the contract",
+        "verbosity": 0
+      },
+      "leakage_status": "identifier codes are fit on train labels' rows but are not target encodings; history windows exclude the current row and future rows.",
+      "model": "trackB_atavci_xgb_hinge",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 2.449441,
+      "ranking_possible": false,
+      "select": {
+        "FN": 126,
+        "FP": 445,
+        "TN": 52677,
+        "TP": 474,
+        "accuracy": 0.9893712073266073,
+        "alerts": 919,
+        "average_precision": 0.6794235711097693,
+        "balanced_accuracy": 0.890811528180415,
+        "f1": 0.6240947992100065,
+        "fpr": 0.008376943639170213,
+        "n": 53722,
+        "precision": 0.515778019586507,
+        "recall": 0.79,
+        "review_budget": 919,
+        "roc_auc": 0.8753627185221441,
+        "score_unique_values": 2
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 339,
+        "FP": 58,
+        "TN": 110048,
+        "TP": 861,
+        "accuracy": 0.9964332560688552,
+        "alerts": 919,
+        "average_precision": 0.6821036729871625,
+        "balanced_accuracy": 0.8584866174413747,
+        "f1": 0.8126474752241624,
+        "fpr": 0.0005267651172506494,
+        "n": 111306,
+        "precision": 0.9368879216539717,
+        "recall": 0.7175,
+        "review_budget": 919,
+        "roc_auc": 0.8630563275389169,
+        "score_unique_values": 2
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "B",
+      "train_seconds": 3.282412208999993
+    },
+    {
+      "architecture": "Approximation of the original 1/4/1 KNN, random forest, and XGBoost soft vote. Score is (4 * rf_proba + 1 * logistic_xgb_proba) / 5. KNN and the hinge objective are absent.",
+      "confirm": {
+        "FN": 85,
+        "FP": 404,
+        "TN": 53697,
+        "TP": 515,
+        "accuracy": 0.9910604924955668,
+        "alerts": 919,
+        "average_precision": 0.8653292263343223,
+        "balanced_accuracy": 0.9254329094348225,
+        "f1": 0.6780776826859777,
+        "fpr": 0.007467514463688286,
+        "n": 54701,
+        "precision": 0.5603917301414582,
+        "recall": 0.8583333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9962204641935146,
+        "score_unique_values": 40735
+      },
+      "feature_note": "contract.parity_parts: v2 enriched numeric columns, category CDF, amount relative to the category median, and native category one-hot. No merchant fraud rate, age, gender, zip, or raw customer or merchant ids.",
+      "feature_seconds": 0.12658729199999996,
+      "fidelity": "APPROXIMATION",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "component_train_seconds": {
+          "logistic_train_seconds": 5.351970292000004,
+          "rf_train_seconds": 6.524226833
+        },
+        "formula": "(4 * rf_proba + 1 * logistic_xgb_proba) / 5",
+        "full_knn_fit": false,
+        "hinge_in_ensemble": false,
+        "knn_in_ensemble": false,
+        "knn_probe": {
+          "elapsed_seconds": 0.529211584,
+          "extrapolated_seconds": 552.1023358187773,
+          "extrapolation": "(374914 / probe_train) * (111306 / probe_test) * elapsed",
+          "full_test_rows": 111306,
+          "full_train_rows": 374914,
+          "full_training_fit": false,
+          "knn_in_saved_ensemble": false,
+          "n_jobs": 4,
+          "n_neighbors": 5,
+          "p": 1,
+          "probe_test_rows": 2000,
+          "probe_train_rows": 20000,
+          "reason": "time gate passed, but KNeighborsClassifier is still not fit on the full training set",
+          "returncode": 0,
+          "skip_knn": false,
+          "stderr_tail": "",
+          "timed_out": false,
+          "track": "A",
+          "wall_seconds": 1.3582917499999994
+        },
+        "no_additional_fit": true,
+        "note": "KNN and the hinge objective are absent.",
+        "score_source": "weighted_probability_average",
+        "weights": {
+          "knn": 0,
+          "random_forest": 4,
+          "xgb_hinge": 0,
+          "xgb_logistic": 1
+        }
+      },
+      "leakage_status": "no merchant fraud rate and no identifier codes.",
+      "model": "trackA_atavci_soft_vote_approx",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 0.001606208000005438,
+      "ranking_possible": true,
+      "select": {
+        "FN": 72,
+        "FP": 391,
+        "TN": 52731,
+        "TP": 528,
+        "accuracy": 0.9913815569040616,
+        "alerts": 919,
+        "average_precision": 0.881432439220345,
+        "balanced_accuracy": 0.9363197921764994,
+        "f1": 0.6951942067149441,
+        "fpr": 0.007360415647001242,
+        "n": 53722,
+        "precision": 0.5745375408052231,
+        "recall": 0.88,
+        "review_budget": 919,
+        "roc_auc": 0.9966763613317772,
+        "score_unique_values": 39757
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 353,
+        "FP": 72,
+        "TN": 110034,
+        "TP": 847,
+        "accuracy": 0.9961816973029307,
+        "alerts": 919,
+        "average_precision": 0.8698371938595477,
+        "balanced_accuracy": 0.8525897090076835,
+        "f1": 0.7994336951392166,
+        "fpr": 0.0006539153179663233,
+        "n": 111306,
+        "precision": 0.9216539717083787,
+        "recall": 0.7058333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9961077355760206,
+        "score_unique_values": 68975
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "A",
+      "train_seconds": 0.0
+    },
+    {
+      "architecture": "Approximation of the original 1/4/1 KNN, random forest, and XGBoost soft vote. Score is (4 * rf_proba + 1 * logistic_xgb_proba) / 5. KNN and the hinge objective are absent.",
+      "confirm": {
+        "FN": 64,
+        "FP": 383,
+        "TN": 53718,
+        "TP": 536,
+        "accuracy": 0.9918283029560703,
+        "alerts": 919,
+        "average_precision": 0.8826435385532171,
+        "balanced_accuracy": 0.9431269908750917,
+        "f1": 0.7057274522712309,
+        "fpr": 0.0070793515831500346,
+        "n": 54701,
+        "precision": 0.5832426550598476,
+        "recall": 0.8933333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9975950845024429,
+        "score_unique_values": 24511
+      },
+      "feature_note": "contract.atavci_matrix: step, amount, and train-prefix appearance codes for customer, age, gender, merchant, and category. Unseen values are -1. Track B is the closer reproduction. The chronological split and the train-only codebook differ from the 2019 shuffled notebook. The atavci matrix has no rolling amount window.",
+      "feature_seconds": 0.3554556670000011,
+      "fidelity": "APPROXIMATION",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "component_train_seconds": {
+          "logistic_train_seconds": 2.82509125,
+          "rf_train_seconds": 2.5005973330000018
+        },
+        "formula": "(4 * rf_proba + 1 * logistic_xgb_proba) / 5",
+        "full_knn_fit": false,
+        "hinge_in_ensemble": false,
+        "knn_in_ensemble": false,
+        "knn_probe": {
+          "elapsed_seconds": 0.026779792000000024,
+          "extrapolated_seconds": 27.93813696251407,
+          "extrapolation": "(374914 / probe_train) * (111306 / probe_test) * elapsed",
+          "full_test_rows": 111306,
+          "full_train_rows": 374914,
+          "full_training_fit": false,
+          "knn_in_saved_ensemble": false,
+          "n_jobs": 4,
+          "n_neighbors": 5,
+          "p": 1,
+          "probe_test_rows": 2000,
+          "probe_train_rows": 20000,
+          "reason": "time gate passed, but KNeighborsClassifier is still not fit on the full training set",
+          "returncode": 0,
+          "skip_knn": false,
+          "stderr_tail": "",
+          "timed_out": false,
+          "track": "B",
+          "wall_seconds": 0.6837799159999989
+        },
+        "no_additional_fit": true,
+        "note": "KNN and the hinge objective are absent.",
+        "score_source": "weighted_probability_average",
+        "weights": {
+          "knn": 0,
+          "random_forest": 4,
+          "xgb_hinge": 0,
+          "xgb_logistic": 1
+        }
+      },
+      "leakage_status": "identifier codes are fit on train labels' rows but are not target encodings; history windows exclude the current row and future rows.",
+      "model": "trackB_atavci_soft_vote_approx",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 0.0012133749999989618,
+      "ranking_possible": true,
+      "select": {
+        "FN": 55,
+        "FP": 374,
+        "TN": 52748,
+        "TP": 545,
+        "accuracy": 0.992014444734001,
+        "alerts": 919,
+        "average_precision": 0.8848292200573495,
+        "balanced_accuracy": 0.9506464678789703,
+        "f1": 0.7175773535220539,
+        "fpr": 0.007040397575392493,
+        "n": 53722,
+        "precision": 0.5930359085963003,
+        "recall": 0.9083333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9974129990085715,
+        "score_unique_values": 24267
+      },
+      "source_url": "https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py",
+      "test": {
+        "FN": 357,
+        "FP": 76,
+        "TN": 110030,
+        "TP": 843,
+        "accuracy": 0.9961098233698094,
+        "alerts": 919,
+        "average_precision": 0.8925265158960306,
+        "balanced_accuracy": 0.8509048780266288,
+        "f1": 0.7956583294006607,
+        "fpr": 0.0006902439467422302,
+        "n": 111306,
+        "precision": 0.9173014145810664,
+        "recall": 0.7025,
+        "review_budget": 919,
+        "roc_auc": 0.9977745271223488,
+        "score_unique_values": 38251
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "B",
+      "train_seconds": 0.0
+    },
+    {
+      "architecture": "Mean of five lightgbm.LGBMClassifier models. Each keeps every training fraud row and undersamples training legitimate rows so fraud/legitimate = 0.05.",
+      "confirm": {
+        "FN": 63,
+        "FP": 382,
+        "TN": 53719,
+        "TP": 537,
+        "accuracy": 0.9918648653589514,
+        "alerts": 919,
+        "average_precision": 0.88337481498121,
+        "balanced_accuracy": 0.9439695661817711,
+        "f1": 0.707044107965767,
+        "fpr": 0.0070608676364577365,
+        "n": 54701,
+        "precision": 0.5843307943416758,
+        "recall": 0.895,
+        "review_budget": 919,
+        "roc_auc": 0.997077811254259,
+        "score_unique_values": 54467
+      },
+      "feature_note": "contract.parity_parts: v2 enriched numeric columns, category CDF, amount relative to the category median, and native category one-hot. No merchant fraud rate, age, gender, zip, or raw customer or merchant ids. The five-model LightGBM procedure is trained on these Track A features, not on customer or merchant codes.",
+      "feature_seconds": 0.12658729199999996,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "aggregation": "mean of predict_proba[:, 1]",
+        "learning_rate": 0.07,
+        "n_estimators": 300,
+        "n_jobs": 4,
+        "n_models": 5,
+        "num_leaves": 63,
+        "random_state": [
+          200,
+          201,
+          202,
+          203,
+          204
+        ],
+        "sampler": "contract.undersample_indices NumPy Generator, not imblearn",
+        "score_source": "mean_predict_proba",
+        "undersample_ratio": 0.05,
+        "undersample_scope": "training rows only",
+        "verbose": -1
+      },
+      "leakage_status": "no merchant fraud rate and no identifier codes.",
+      "model": "trackA_sushmitha_lgbm",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 4.521172416000013,
+      "ranking_possible": true,
+      "select": {
+        "FN": 55,
+        "FP": 374,
+        "TN": 52748,
+        "TP": 545,
+        "accuracy": 0.992014444734001,
+        "alerts": 919,
+        "average_precision": 0.8983471936232698,
+        "balanced_accuracy": 0.9506464678789703,
+        "f1": 0.7175773535220539,
+        "fpr": 0.007040397575392493,
+        "n": 53722,
+        "precision": 0.5930359085963003,
+        "recall": 0.9083333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9975175696196178,
+        "score_unique_values": 53572
+      },
+      "source_url": "https://github.com/0xSushmitha/Fraud-detection-in-financial-Transactions",
+      "test": {
+        "FN": 358,
+        "FP": 77,
+        "TN": 110029,
+        "TP": 842,
+        "accuracy": 0.9960918548865291,
+        "alerts": 919,
+        "average_precision": 0.8816858479769111,
+        "balanced_accuracy": 0.8504836702813652,
+        "f1": 0.7947144879660216,
+        "fpr": 0.000699326103936207,
+        "n": 111306,
+        "precision": 0.9162132752992383,
+        "recall": 0.7016666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9967378177998172,
+        "score_unique_values": 110248
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "A",
+      "train_seconds": 6.991617082999994
+    },
+    {
+      "architecture": "Mean of five lightgbm.LGBMClassifier models. Each keeps every training fraud row and undersamples training legitimate rows so fraud/legitimate = 0.05.",
+      "confirm": {
+        "FN": 19,
+        "FP": 338,
+        "TN": 53763,
+        "TP": 581,
+        "accuracy": 0.9934736110857205,
+        "alerts": 919,
+        "average_precision": 0.9474591959879332,
+        "balanced_accuracy": 0.9810428796756684,
+        "f1": 0.7649769585253456,
+        "fpr": 0.006247573981996636,
+        "n": 54701,
+        "precision": 0.6322089227421109,
+        "recall": 0.9683333333333334,
+        "review_budget": 919,
+        "roc_auc": 0.9990231850304677,
+        "score_unique_values": 54645
+      },
+      "feature_note": "contract.sushmitha_matrix: amount, step, train-prefix customer and merchant codes, past-only customer and merchant history, is_night from step % 24, and train-level one-hot age, gender, and category with the first level dropped. The current row is outside the rolling window. The published step<=600 split does not exist on this file.",
+      "feature_seconds": 1.850457917,
+      "fidelity": "ADAPTED",
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "hyperparameters": {
+        "aggregation": "mean of predict_proba[:, 1]",
+        "learning_rate": 0.07,
+        "n_estimators": 300,
+        "n_jobs": 4,
+        "n_models": 5,
+        "num_leaves": 63,
+        "random_state": [
+          200,
+          201,
+          202,
+          203,
+          204
+        ],
+        "sampler": "contract.undersample_indices NumPy Generator, not imblearn",
+        "score_source": "mean_predict_proba",
+        "undersample_ratio": 0.05,
+        "undersample_scope": "training rows only",
+        "verbose": -1
+      },
+      "leakage_status": "identifier codes are fit on train labels' rows but are not target encodings; history windows exclude the current row and future rows.",
+      "model": "trackB_sushmitha_lgbm",
+      "peak_rss_mb": 1106.1875,
+      "predict_seconds": 3.717019666999988,
+      "ranking_possible": true,
+      "select": {
+        "FN": 19,
+        "FP": 338,
+        "TN": 52784,
+        "TP": 581,
+        "accuracy": 0.9933546777856371,
+        "alerts": 919,
+        "average_precision": 0.9547029685808235,
+        "balanced_accuracy": 0.9809853105430268,
+        "f1": 0.7649769585253456,
+        "fpr": 0.006362712247279846,
+        "n": 53722,
+        "precision": 0.6322089227421109,
+        "recall": 0.9683333333333334,
+        "review_budget": 919,
+        "roc_auc": 0.999179341892248,
+        "score_unique_values": 53674
+      },
+      "source_url": "https://github.com/0xSushmitha/Fraud-detection-in-financial-Transactions",
+      "test": {
+        "FN": 302,
+        "FP": 21,
+        "TN": 110085,
+        "TP": 898,
+        "accuracy": 0.9970980899502273,
+        "alerts": 919,
+        "average_precision": 0.9534913676772602,
+        "balanced_accuracy": 0.8740713040161299,
+        "f1": 0.8475696083058046,
+        "fpr": 0.00019072530107351097,
+        "n": 111306,
+        "precision": 0.9771490750816104,
+        "recall": 0.7483333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9991703827826518,
+        "score_unique_values": 111079
+      },
+      "test_fraud": 1200,
+      "test_rows": 111306,
+      "track": "B",
+      "train_seconds": 8.008427166000004
+    }
+  ],
+  "n_jobs": 4,
+  "not_a_blind_holdout": true,
+  "population": {
+    "confirm": {
+      "fraud": 600,
+      "rows": 54701
+    },
+    "select": {
+      "fraud": 600,
+      "rows": 53722
+    },
+    "test": {
+      "fraud": 1200,
+      "rows": 111306
+    },
+    "train": {
+      "fraud": 4800,
+      "rows": 374914
+    }
+  },
+  "population_text": "\u901a\u904e\u3002 train 374914 \u7b46\u30014800 \u4ef6\u8a50\u6b3a\uff1b select 53722\u3001600\uff1b confirm 54701\u3001600\uff1b test 111306\u30011200\u3002",
+  "status": "complete",
+  "tuned_on_select_confirm_or_test": false
+}

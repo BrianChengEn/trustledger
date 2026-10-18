@@ -61,11 +61,13 @@ try {
   let queryCalls = 0;
   let deletes = 0;
   let analysisCalls = 0;
+  let explanationCalls = 0;
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', req => {
     if (req.url().endsWith('/admin/nessie/query')) queryCalls++;
     if (req.method()==='DELETE') deletes++;
     if (req.url().endsWith('/analyses')) analysisCalls++;
+    if (req.url().endsWith('/explanation')) explanationCalls++;
   });
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(
     new URL(route.request().url()).hostname) ? route.continue() : route.abort());
@@ -347,6 +349,16 @@ try {
   assert.equal(await workspace.locator('tbody tr').count(),overview.transactions.length);
   await workspace.getByText('Unusual amount',{exact:true}).first().waitFor();
   await workspace.locator('tbody tr').filter({has:page.getByText('Unusual amount',{exact:true})}).getByRole('button').first().click();
+  assert.equal(explanationCalls,0,'browsing must not request explanations');
+  const customerExplanation = page.waitForResponse(response=>response.url().endsWith('/explanation'));
+  await workspace.getByRole('button',{name:'Explain this alert',exact:true}).click();
+  const explained = await customerExplanation;
+  assert(explained.url().includes('/customers/'+customerCodes[0]+'/transactions/'));
+  assert.equal(explained.status(),200);
+  assert.equal((await explained.json()).explanation_mode,'template');
+  await workspace.getByText('Rules explanation',{exact:true}).waitFor();
+  await assertStableScale();
+  assert.equal(explanationCalls,1);
   await workspace.getByRole('radio',{name:/looks normal/}).click();
   const customerConsent = workspace.getByRole('checkbox');
   assert(!(await customerConsent.isChecked()));
@@ -407,6 +419,7 @@ try {
   assert.equal(await unavailable.getByText('No applicable rule was triggered',{exact:false}).count(),0);
   assert.equal(await unavailable.getByRole('radio').count(),0);
   assert(await unavailable.getByRole('button',{name:'Analyze with Jev',exact:true}).isDisabled());
+  assert(await unavailable.getByRole('button',{name:'Explain this alert',exact:true}).isDisabled());
   await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
   await page.locator('.topbar').getByRole('link',{name:'Activity',exact:true}).click();
   await unavailable.getByText('No rule triggered',{exact:true}).first().waitFor();
@@ -482,6 +495,14 @@ try {
   await page.getByRole('button',{name:/Possible duplicate/}).click();
   await page.getByRole('heading',{name:'AI second opinion',exact:true}).waitFor();
   assert.equal(analysisCalls,1,'neither customer browsing nor synthetic navigation invokes inference');
+  assert.equal(explanationCalls,1,'only the explicit customer explanation requested text');
+  const syntheticExplanation = page.waitForResponse(response=>response.url().endsWith('/explanation'));
+  await page.getByRole('button',{name:'Explain this alert',exact:true}).click();
+  const explanation = await syntheticExplanation;
+  assert(explanation.url().includes('/api/v1/transactions/txn_syn_004/explanation'));
+  assert.equal((await explanation.json()).sent_to_provider,false);
+  await page.getByText('Rules explanation',{exact:true}).waitFor();
+  await assertStableScale();
   await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
   await page.route('**/api/v1/workspace/refresh',async route=>{
     const response = await route.fetch();

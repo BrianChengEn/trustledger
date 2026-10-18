@@ -1,0 +1,588 @@
+{
+  "overlaps": {
+    "v2_merchant__trackB_sushmitha_lgbm": {
+      "both": 822,
+      "only_a": 70,
+      "only_b": 76,
+      "neither": 232
+    },
+    "v2_merchant_step_causal__trackB_sushmitha_lgbm": {
+      "both": 829,
+      "only_a": 67,
+      "only_b": 69,
+      "neither": 235
+    },
+    "v2_merchant__v2_merchant_step_causal": {
+      "both": 848,
+      "only_a": 44,
+      "only_b": 48,
+      "neither": 260
+    },
+    "v2_merchant__trackB_atavci_xgb_logistic": {
+      "both": 774,
+      "only_a": 118,
+      "only_b": 86,
+      "neither": 222
+    },
+    "v2_enriched_sqrt__trackA_atavci_xgb_logistic": {
+      "both": 811,
+      "only_a": 26,
+      "only_b": 34,
+      "neither": 329
+    },
+    "v2_enriched_sqrt__trackA_sushmitha_lgbm": {
+      "both": 808,
+      "only_a": 29,
+      "only_b": 34,
+      "neither": 329
+    },
+    "v2_enriched_sqrt__trackA_atavci_soft_vote_approx": {
+      "both": 808,
+      "only_a": 29,
+      "only_b": 39,
+      "neither": 324
+    },
+    "v2_enriched_sqrt__pr14_mapped_hgb": {
+      "both": 733,
+      "only_a": 104,
+      "only_b": 53,
+      "neither": 310
+    },
+    "trackB_sushmitha_lgbm__trackA_sushmitha_lgbm": {
+      "both": 785,
+      "only_a": 113,
+      "only_b": 57,
+      "neither": 245
+    }
+  },
+  "amount_slices": {
+    "v2_merchant": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 16,
+        "missed_fraud": 29,
+        "false_positives": 2
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 235,
+        "missed_fraud": 219,
+        "false_positives": 20
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 641,
+        "missed_fraud": 60,
+        "false_positives": 5
+      }
+    ],
+    "v2_merchant_step_causal": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 14,
+        "missed_fraud": 31,
+        "false_positives": 1
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 231,
+        "missed_fraud": 223,
+        "false_positives": 19
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 651,
+        "missed_fraud": 50,
+        "false_positives": 3
+      }
+    ],
+    "v2_enriched_sqrt": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 4,
+        "missed_fraud": 41,
+        "false_positives": 3
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 180,
+        "missed_fraud": 274,
+        "false_positives": 63
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 653,
+        "missed_fraud": 48,
+        "false_positives": 16
+      }
+    ],
+    "trackB_sushmitha_lgbm": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 10,
+        "missed_fraud": 35,
+        "false_positives": 0
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 211,
+        "missed_fraud": 243,
+        "false_positives": 13
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 677,
+        "missed_fraud": 24,
+        "false_positives": 8
+      }
+    ],
+    "trackA_sushmitha_lgbm": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 8,
+        "missed_fraud": 37,
+        "false_positives": 5
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 176,
+        "missed_fraud": 278,
+        "false_positives": 55
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 658,
+        "missed_fraud": 43,
+        "false_positives": 17
+      }
+    ],
+    "trackB_atavci_xgb_logistic": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 3,
+        "missed_fraud": 42,
+        "false_positives": 2
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 161,
+        "missed_fraud": 293,
+        "false_positives": 39
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 696,
+        "missed_fraud": 5,
+        "false_positives": 18
+      }
+    ],
+    "trackA_atavci_xgb_logistic": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 11,
+        "missed_fraud": 34,
+        "false_positives": 6
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 173,
+        "missed_fraud": 281,
+        "false_positives": 52
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 661,
+        "missed_fraud": 40,
+        "false_positives": 16
+      }
+    ],
+    "pr14_mapped_hgb": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 0,
+        "missed_fraud": 45,
+        "false_positives": 0
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 133,
+        "missed_fraud": 321,
+        "false_positives": 72
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 653,
+        "missed_fraud": 48,
+        "false_positives": 61
+      }
+    ],
+    "prod_rules": [
+      {
+        "slice": "[0,20)",
+        "rows": 40965,
+        "fraud": 45,
+        "detected_fraud": 0,
+        "missed_fraud": 45,
+        "false_positives": 7
+      },
+      {
+        "slice": "[20,250)",
+        "rows": 69435,
+        "fraud": 454,
+        "detected_fraud": 0,
+        "missed_fraud": 454,
+        "false_positives": 6
+      },
+      {
+        "slice": ">=250",
+        "rows": 906,
+        "fraud": 701,
+        "detected_fraud": 701,
+        "missed_fraud": 0,
+        "false_positives": 205
+      }
+    ]
+  },
+  "merchant_tp": {
+    "v2_merchant": {
+      "tp": 892,
+      "tp_in_top5_test_fraud_merchants": 580
+    },
+    "v2_merchant_step_causal": {
+      "tp": 896,
+      "tp_in_top5_test_fraud_merchants": 579
+    },
+    "v2_enriched_sqrt": {
+      "tp": 837,
+      "tp_in_top5_test_fraud_merchants": 503
+    },
+    "trackB_sushmitha_lgbm": {
+      "tp": 898,
+      "tp_in_top5_test_fraud_merchants": 578
+    },
+    "trackA_sushmitha_lgbm": {
+      "tp": 842,
+      "tp_in_top5_test_fraud_merchants": 507
+    },
+    "trackB_atavci_xgb_logistic": {
+      "tp": 860,
+      "tp_in_top5_test_fraud_merchants": 534
+    },
+    "trackA_atavci_xgb_logistic": {
+      "tp": 845,
+      "tp_in_top5_test_fraud_merchants": 513
+    },
+    "pr14_mapped_hgb": {
+      "tp": 786,
+      "tp_in_top5_test_fraud_merchants": 486
+    },
+    "prod_rules": {
+      "tp": 701,
+      "tp_in_top5_test_fraud_merchants": 436
+    }
+  },
+  "top5_test_fraud": 710,
+  "test_fraud_merchants": 28,
+  "bootstrap": {
+    "customer:v2_merchant-minus-trackB_sushmitha_lgbm": {
+      "difference": "A_minus_B",
+      "block_count": 4079,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.005000216016338128,
+        "ci95_low": 0.0009958578270221786,
+        "ci95_high": 0.009610505177802155,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -3.42,
+        "ci95_low": -15.0,
+        "ci95_high": 8.025000000000006,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "customer:v2_merchant_step_causal-minus-trackB_sushmitha_lgbm": {
+      "difference": "A_minus_B",
+      "block_count": 4079,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0041224615861303535,
+        "ci95_low": -0.0004197347399172907,
+        "ci95_high": 0.008469148544893806,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": 0.295,
+        "ci95_low": -9.0,
+        "ci95_high": 12.0,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "customer:v2_merchant-minus-v2_merchant_step_causal": {
+      "difference": "A_minus_B",
+      "block_count": 4079,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0008777544302077745,
+        "ci95_low": -0.002069500975845509,
+        "ci95_high": 0.004431483322777158,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -3.715,
+        "ci95_low": -12.0,
+        "ci95_high": 4.0,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "customer:v2_enriched_sqrt-minus-trackA_atavci_xgb_logistic": {
+      "difference": "A_minus_B",
+      "block_count": 4079,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0008600151259474298,
+        "ci95_low": -0.0034728305292253264,
+        "ci95_high": 0.0055578942810466546,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -3.885,
+        "ci95_low": -18.0,
+        "ci95_high": 13.025000000000006,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "customer:v2_enriched_sqrt-minus-trackA_sushmitha_lgbm": {
+      "difference": "A_minus_B",
+      "block_count": 4079,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0037304854873755153,
+        "ci95_low": 0.00023421240338741836,
+        "ci95_high": 0.007808587819890792,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -1.49,
+        "ci95_low": -15.0,
+        "ci95_high": 13.0,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "customer:v2_merchant-minus-trackB_atavci_xgb_logistic": {
+      "difference": "A_minus_B",
+      "block_count": 4079,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0368751964576933,
+        "ci95_low": 0.028576021885028537,
+        "ci95_high": 0.04698889792565996,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": 34.71,
+        "ci95_low": 11.975000000000001,
+        "ci95_high": 60.025000000000006,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "step:v2_merchant-minus-trackB_sushmitha_lgbm": {
+      "difference": "A_minus_B",
+      "block_count": 30,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.005267603825440896,
+        "ci95_low": 0.002490897732864883,
+        "ci95_high": 0.008728332456335672,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -5.935,
+        "ci95_low": -15.024999999999999,
+        "ci95_high": 4.050000000000011,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "step:v2_merchant_step_causal-minus-trackB_sushmitha_lgbm": {
+      "difference": "A_minus_B",
+      "block_count": 30,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0044127134744531525,
+        "ci95_low": 0.001204901908447148,
+        "ci95_high": 0.008585465463336262,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -0.68,
+        "ci95_low": -10.024999999999999,
+        "ci95_high": 11.0,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "step:v2_merchant-minus-v2_merchant_step_causal": {
+      "difference": "A_minus_B",
+      "block_count": 30,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0008548903509877437,
+        "ci95_low": -0.0019813039150374883,
+        "ci95_high": 0.004024779658596157,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -5.255,
+        "ci95_low": -12.0,
+        "ci95_high": 2.0,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "step:v2_enriched_sqrt-minus-trackA_atavci_xgb_logistic": {
+      "difference": "A_minus_B",
+      "block_count": 30,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.0006970316892126338,
+        "ci95_low": -0.002856898600461921,
+        "ci95_high": 0.004484382670220485,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -7.58,
+        "ci95_low": -17.0,
+        "ci95_high": 2.0,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "step:v2_enriched_sqrt-minus-trackA_sushmitha_lgbm": {
+      "difference": "A_minus_B",
+      "block_count": 30,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.003719154613284308,
+        "ci95_low": 1.3659196196780382e-05,
+        "ci95_high": 0.008456466652981885,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": -4.51,
+        "ci95_low": -14.0,
+        "ci95_high": 5.0,
+        "includes_zero": true,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    },
+    "step:v2_merchant-minus-trackB_atavci_xgb_logistic": {
+      "difference": "A_minus_B",
+      "block_count": 30,
+      "budget_rate": 0.008256518067309938,
+      "ap": {
+        "mean": 0.037109529864593524,
+        "ci95_low": 0.030738910910283995,
+        "ci95_high": 0.044880173198244326,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      },
+      "tp_at_scaled_budget": {
+        "mean": 33.255,
+        "ci95_low": 17.0,
+        "ci95_high": 50.025000000000006,
+        "includes_zero": false,
+        "n_boot": 200,
+        "seed": 20261017
+      }
+    }
+  }
+}

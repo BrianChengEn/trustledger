@@ -1,0 +1,680 @@
+TrustLedger BankSim 公開模型對照
+狀態：實測完成。這份文字只報告已寫入分數檔的測量。
+
+一句結論
+在同一份 BankSim、同一時間切分、同一個 919 筆審查預算下，
+帶有商家歷史詐欺率的 TrustLedger v2_merchant 點估計最高（Average Precision 0.958485）。
+把訓練列的標籤洩漏拿掉之後，step-causal 版本是 0.957628。
+最強的公開完整管線是 0xSushmitha 的 LightGBM，Track B Average Precision 0.953491。
+兩者的 Average Precision 差距在預先聲明的 0.01 接近帶裡。
+顧客區塊與 step 區塊的信賴區間對「是否分得出來」給了不同答案，
+所以這次不宣稱 TrustLedger 明確贏過這條公開管線。
+在同一組、不含商家詐欺率也不含身份代碼的特徵上，
+v2_enriched_sqrt 與 atavci 的 XGBoost logistic 打成平手。
+大的差距來自商家身份，不是學習器品牌。
+
+
+這次實驗是什麼
+
+資料是 BankSim，本機檔案 /tmp/tl-eval-data/banks.csv。
+594,643 筆交易，7,200 件詐欺，step 0–179。原始檔不進 git。
+授權是 CC BY-NC-SA 4.0。
+
+切分沿用 PR #15，而且在任何新的公開模型看到 test 分數之前就凍結在 contract.py：
+
+TRAIN     steps 0–119    374,914 筆    4,800 件詐欺
+SELECT    steps 120–134   53,722 筆      600 件詐欺
+CONFIRM   steps 135–149   54,701 筆      600 件詐欺
+TEST      steps 150–179  111,306 筆    1,200 件詐欺
+
+steps 150–179 已經在 PR #14 與 PR #15 看過。
+這次是可重現的架構對照。它是已被檢視過的 test 切分上的比較。
+超參數在看這次 test 分數之前就凍結。公開模型的超參數來自原碼，
+沒有用 SELECT、CONFIRM 或 TEST 的標籤來選模型。
+
+主要排序鍵是完整 test 的 Average Precision（PR-AUC）點估計，由高到低。
+預先聲明：Average Precision 差距在 0.01 以內，先稱為接近，
+除非成對 bootstrap 的兩個區塊方法都把 0 排除在外。
+Bootstrap 的平均數不重排榜單。
+操作點是風險分數最高的 919 筆。平手時金額高的在前，再相同則列索引小的在前。
+Accuracy 不用來選贏家。110,106 / 111,306 列是正常交易，
+所以每個模型的 Accuracy 都落在 0.9936 到 0.9971。
+
+
+PART A — 公開模型
+
+短名單只有兩份可執行、而且架構確實不同的 BankSim 來源。
+沒有任何一份接到本契約後仍是 FAITHFUL。
+FAITHFUL 的意思是：接到已凍結的時間切分之後，仍逐字沿用原流程。
+原文要嘛在切分前就對全表編碼，要嘛使用這份檔案上不存在的 step 切點。
+
+入選 1。atavci / turkayavci，2019-03-15。
+來源：
+https://github.com/atavci/fraud-detection-on-banksim-data/blob/master/Fraud_Detection_bank_sim.py
+Kaggle 頁：
+https://www.kaggle.com/code/turkayavci/fraud-detection-on-bank-payments/notebook
+這次 Kaggle 頁只回傳標題，cell 內文沒有讀到。實作以 GitHub 腳本為準。
+架構：KNeighborsClassifier、RandomForestClassifier、
+XGBClassifier(objective=binary:hinge)，再 VotingClassifier(voting=soft)。
+權重 [1, 4, 1]，順序是 KNN、RF、XGB。
+特徵：丟掉兩個 zip。customer、age、gender、merchant、category
+在整個 frame 上做 pandas category code，然後才做打亂的分層切分
+（test_size=0.3、random_state=42）。保留 step 與 amount。
+超參數寫死在腳本裡。RF 是 n_estimators=100、max_depth=8、
+class_weight=balanced、random_state=42。
+XGB 是 max_depth=6、learning_rate=0.05、n_estimators=400、
+其餘正規化與抽樣參數見 discovery/SHORTLIST.txt。
+本契約的改寫：代碼只在 TRAIN 出現過的值上編，沒看過的值是 -1。
+切分改成上面的時間切分。這兩點使它成為 ADAPTED。
+binary:logistic 是契約預先聲明的排序改寫，用來產生連續分數。
+它不是看過 test 之後才加的。hinge 仍照原文訓練，而且分開報告。
+
+入選 2。0xSushmitha，2025-08-28，commit c2be9659。
+來源：
+https://github.com/0xSushmitha/Fraud-detection-in-financial-Transactions
+訓練碼在 src/banksim_fraud/model.py。
+架構：5 個 LGBMClassifier，n_estimators=300、learning_rate=0.07、
+num_leaves=63、verbose=-1、random_state=200+k。
+只對訓練列做 undersample，詐欺數 / 正常數 = 0.05。
+分數是 5 個 predict_proba 的平均。
+註解寫的 1:50 與 sampling_strategy=0.05 不一致。0.05 是約 1:20。
+這次跟隨 0.05，抽樣用 NumPy Generator，不是 imblearn 的同一條亂數流。
+他們的 README 寫 step<=600 訓練、step>600 測試，又把 step 寫成小時 1–740。
+這份 canonical BankSim 的 step 只有 0–179，那個切點不存在。
+features.py 的 rolling 視窗含當前列，沒有 README 寫的 shift(1)。
+本契約的視窗不含當前列，也不含未來列。zip 是常數，已省略。
+age、gender、category 的 one-hot 用 drop_first，類別順序是訓練集出現順序。
+is_night = (step % 24) <= 5 是他們把 step 當小時留下的欄位。
+這份檔案的 step 是日序，所以這個欄位沒有實體時間意義，仍照他們的定義保留，並標明。
+這些改動使它成為 ADAPTED。
+Optuna 搜索與 SMOTE 變體沒有採用。SMOTE 變體在切分前就擬合，不入榜。
+
+沒有第三名。
+aravind-sundaresan/Graph-ML-Fraud-Detection 有執行輸出，
+但是 merchant one-hot 與 PCA 在全資料上擬合、沒有種子、還依賴 Neo4j。
+不入榜。其餘公開頁面缺少可執行碼、用了別的資料集，
+或公布的 FP/FN 彼此矛盾。名單與排除理由在 discovery/SHORTLIST.txt。
+沒有為了湊滿 5 個模型而放入弱基線。
+
+保真度
+- atavci RF、XGBoost hinge、XGBoost logistic：ADAPTED。
+- atavci soft vote：APPROXIMATION。
+  時間門檻沒有強制略過 KNN。
+  Track A 探測 0.529 秒，外推 552 秒。
+  Track B 探測 0.027 秒，外推 28 秒。
+  門檻是探測超過 60 秒，或外推超過 600 秒。
+  訓練腳本仍沒有在 374,914 筆訓練列上擬合 KNeighborsClassifier。
+  存下來的 ensemble 是 (4 * RF 機率 + 1 * logistic XGB 機率) / 5。
+  原文權重是 [1, 4, 1]，分母應為 6，而且第一項是 KNN。
+  這個近似把 RF 的權重從 4/6 改成 4/5。train_seconds 記 0，
+  因為它重用已經訓練好的 RF 與 XGB，不是一個零成本模型。
+  原文公布的 ensemble F1 0.77 低於單獨 XGBoost 的 0.82。
+  在我們的 Track B 上，近似 ensemble 的 Average Precision 0.892527
+  也低於 logistic XGBoost 的 0.921597。
+  補上 KNN 不太可能改變榜首。這次沒有補跑，也沒有覆蓋這份近似。
+- 0xSushmitha LightGBM：ADAPTED。
+- TrustLedger 四個舊模型：TRUSTLEDGER_REPRODUCTION。
+- v2_merchant_step_causal 與 v2_merchant_expanding：LEAKAGE_VARIANT。
+  它們不是 PR #15 的逐字重現。
+
+
+PART B — 實驗是否公平
+
+16 個模型的 test 人口都是 111,306 列、1,200 件詐欺、919 筆警報。
+獨立審計把 y、amount、step、customer、merchant、category 的指紋對過。
+16 份檔案的六個指紋相同。assemble.py 的 alignment_problems 是空的。
+contract.evaluate 與審計程式各自重算的 Average Precision 差額是 0。
+
+兩條軌道沒有混在同一句話裡當同一個比較。
+
+Track A，特徵對齊。
+每個模型拿到同一組欄位：v2 enriched 數值欄、類別 CDF、
+金額相對類別中位數、native category one-hot。
+沒有 merchant fraud rate，沒有 age、gender、zip，也沒有原始 customer 或 merchant id。
+模型仍可依自己的架構做轉換。atavci 與 Sushmitha 在這條軌道上
+使用他們自己的學習器與抽樣，特徵集合則換成這組欄位。
+
+Track B，公開完整管線。
+atavci 使用 step、amount，以及 customer、age、gender、merchant、category 的訓練前綴代碼。
+Sushmitha 另外使用過去視窗、顧客與商家的累計次數，以及上面的 is_night。
+身份代碼在 Track B 是允許的。它們不是目標編碼。
+代碼只在訓練列上擬合。
+
+洩漏限制
+- 沒有模型讀到當前列的 fraud 標籤來當特徵。
+- 沒有模型用 SELECT、CONFIRM、TEST 的標籤來編 test 特徵。
+  凍結商家率若被塞進這三個切分的標籤，test 列會全部改變。
+  這是反事實。實際凍結特徵沒有用到它們。
+- Sushmitha 的歷史視窗不含當前列與未來列。
+- step-causal 商家率在 step t 的訓練列只用 step < t。同一步的標籤互不可見。
+- expanding 是另一個資訊集，單獨成列，不拿來覆蓋重現結果。
+
+TrustLedger 六個 JSON sidecar 沒有 leakage_status 欄位。
+審計因此對它們記了 6 項 missing_leakage_status，程式退出碼 2。
+完整性檢查通過。這是欄位缺口，不是分數錯誤。
+洩漏結論寫在 trustledger/audit.json，沒有回改已經審計過的 sidecar 數字。
+
+模型選擇
+公開超參數凍結自原碼。TrustLedger 的 HGB 凍結自 PR #15：
+max_iter 80、learning_rate 0.08、max_leaf_nodes 31、min_samples_leaf 40、
+l2_regularization 0.1、random_state 20261017。
+權重：pr14 是 balanced，v2_enriched_sqrt 是 sqrt，
+v2_merchant 與兩個修正版是 none。
+沒有模型在這次 test 上再做搜索。
+公開模型沒有被故意換成較弱的預設值。
+SELECT 與 CONFIRM 有算出分數，沒有用來改贏家。
+以 Track B Sushmitha 為例，SELECT Average Precision 0.954703，
+CONFIRM 0.947459。那兩個切分只有約 5.4 萬列，
+仍切 919 筆時，審查率比 test 高，F1 不能跟 test 的 F1 比。
+
+
+PART C — 實測榜單
+
+人口：test 111,306 列，詐欺 1,200，正常 110,106，警報 919。
+排序鍵：Average Precision。TN = 110106 - FP。
+Hinge 的 unique scores 是 2，ranking_possible 是 false。
+它們的 Average Precision 不是排序指標。操作點仍用金額與索引來打破平手。
+
+名次  模型                              軌道  保真度                      AP        TP   FP   FN     F1      ROC-AUC
+ 1    v2_merchant                       —    重現                       0.958485  892   27  308  0.8419  0.999372
+ 2    v2_merchant_step_causal           —    洩漏修正                   0.957628  896   23  304  0.8457  0.999342
+ 3    v2_merchant_expanding             —    另一個資訊集               0.956777  897   22  303  0.8466  0.999336
+ 4    trackB_sushmitha_lgbm             B    ADAPTED                    0.953491  898   21  302  0.8476  0.999170
+ 5    trackB_atavci_xgb_logistic        B    ADAPTED                    0.921597  860   59  340  0.8117  0.998620
+ 6    trackB_atavci_soft_vote_approx    B    APPROXIMATION              0.892527  843   76  357  0.7957  0.997775
+ 7    v2_enriched_sqrt                  —    重現                       0.885260  837   82  363  0.7900  0.997063
+ 8    trackA_atavci_xgb_logistic        A    ADAPTED                    0.884441  845   74  355  0.7975  0.996924
+ 9    trackA_sushmitha_lgbm             A    ADAPTED                    0.881686  842   77  358  0.7947  0.996738
+10    trackA_atavci_soft_vote_approx    A    APPROXIMATION              0.869837  847   72  353  0.7994  0.996108
+11    trackB_atavci_rf                  B    ADAPTED                    0.861441  810  109  390  0.7645  0.997337
+12    trackA_atavci_rf                  A    ADAPTED                    0.846738  814  105  386  0.7683  0.995685
+13    pr14_mapped_hgb                   —    重現                       0.815393  786  133  414  0.7419  0.994916
+14    trackB_atavci_xgb_hinge           B    ADAPTED，分數只有 0/1      0.682104  861   58  339  0.8126  0.863056
+15    trackA_atavci_xgb_hinge           A    ADAPTED，分數只有 0/1      0.638780  833   86  367  0.7862  0.853314
+16    prod_rules                        —    重現                       0.450077  701  218  499  0.6616  0.791093
+
+四個舊模型與 PR #15 的 framework_v2.json 完全一致：
+Average Precision 差額 0，TP、FP、FN、TN 都相同。
+prod_rules            AP 0.4500770793   TP 701  FP 218  TN 109888  FN 499
+pr14_mapped_hgb       AP 0.8153928294   TP 786  FP 133  TN 109973  FN 414
+v2_enriched_sqrt      AP 0.8852597834   TP 837  FP  82  TN 110024  FN 363
+v2_merchant           AP 0.9584845166   TP 892  FP  27  TN 110079  FN 308
+
+Precision / Recall，同一 919 筆操作點：
+v2_merchant                 0.970620 / 0.743333
+v2_merchant_step_causal     0.974973 / 0.746667
+v2_merchant_expanding       0.976061 / 0.747500
+trackB_sushmitha_lgbm       0.977149 / 0.748333
+trackB_atavci_xgb_logistic  0.935800 / 0.716667
+v2_enriched_sqrt            0.910773 / 0.697500
+trackA_atavci_xgb_logistic  0.919478 / 0.704167
+pr14_mapped_hgb             0.855277 / 0.655000
+prod_rules                  0.762786 / 0.584167
+
+Accuracy、Balanced Accuracy、FPR，同一操作點。
+FPR 的分母是 110,106 筆正常交易。
+v2_merchant                 acc 0.996990   bal 0.871544   fpr 0.000245
+v2_merchant_step_causal     acc 0.997062   bal 0.873229   fpr 0.000209
+trackB_sushmitha_lgbm       acc 0.997098   bal 0.874071   fpr 0.000191
+trackB_atavci_xgb_logistic  acc 0.996415   bal 0.858065   fpr 0.000536
+v2_enriched_sqrt            acc 0.996002   bal 0.848378   fpr 0.000745
+trackA_atavci_xgb_logistic  acc 0.996146   bal 0.851747   fpr 0.000672
+pr14_mapped_hgb             acc 0.995086   bal 0.826896   fpr 0.001208
+prod_rules                  acc 0.993558   bal 0.791093   fpr 0.001980
+完整 16 列在 leaderboard.json。
+
+事先指定的五個名稱
+
+BEST OVERALL BENCHMARK MODEL
+點估計是 v2_merchant，Average Precision 0.958485，TP 892。
+拿來引用架構時，用 v2_merchant_step_causal，Average Precision 0.957628，TP 896。
+理由在 PART D：訓練特徵含有該列自己的標籤與較晚的訓練標籤。
+test 特徵與凍結版相同。分數沒有因此垮掉。
+它與 trackB_sushmitha_lgbm 的 Average Precision 差距約 0.004 到 0.005，
+落在 0.01 以內。919 筆上的 TP 是 896 對 898，F1 是 0.8457 對 0.8476。
+顧客區塊的 Average Precision 信賴區間含 0。
+step 區塊的 Average Precision 信賴區間不含 0。
+兩種方法不一致，所以不宣稱統計上分得出來。
+兩邊的 TP 信賴區間都含 0。
+結論：這兩個系統接近。Sushmitha 在這個操作點的點估計略高。
+
+BEST MODEL WITHOUT MERCHANT FRAUD RATES
+trackB_sushmitha_lgbm，Average Precision 0.953491，TP 898。
+它沒有顯式的商家詐欺率欄位。
+它仍使用 customer 與 merchant 的身份代碼，以及只用過去的歷史次數。
+它不是一個「沒有身份」的模型。
+
+BEST FEATURE-PARITY MODEL
+點估計是 v2_enriched_sqrt，Average Precision 0.885260。
+下一名是 trackA_atavci_xgb_logistic，0.884441，差距 0.000819。
+顧客區塊與 step 區塊的 Average Precision 與 TP 信賴區間都含 0。
+兩者打成平手。排序鍵若必須點名一個，就是 v2_enriched_sqrt。
+這不表示 HistGradientBoosting 勝過 XGBoost。
+v2_enriched_sqrt 對 trackA LightGBM 的 Average Precision 高約 0.0037，
+兩個區塊的 Average Precision 信賴區間都不含 0，TP 信賴區間都含 0。
+差距仍在 0.01 以內。操作點上沒有分出來。
+對 Track A Random Forest 的點估計差距約 0.0385，超過 0.01。
+這一對沒有跑 bootstrap。
+
+BEST COMPUTATIONALLY EFFICIENT MODEL
+在 Average Precision 高於 0.90 的模型裡，
+trackB_atavci_xgb_logistic：訓練約 2.83 秒，預測約 0.75 秒，
+特徵約 0.36 秒，Average Precision 0.921597。
+規則幾乎不花時間，Average Precision 0.450077，不放進這個名稱。
+soft vote 的 train_seconds 是 0，因為它沒有再訓練。
+TrustLedger 的 HGB 擬合大約 2 秒，但是共用的特徵建構是 23.385 秒。
+
+BEST PRACTICAL TRUSTLEDGER CANDIDATE
+若產品限制是示範流程不使用商家詐欺率，也不使用原始 merchant / customer id，
+候選仍是 v2_enriched_sqrt。
+它在同一組對齊特徵上與最強的公開模型打成平手。
+不要把 v2_merchant 接進示範。
+影子分數不應覆蓋 needs_human，也不應覆蓋 rules.py。
+這次沒有改生產決策、前端或 API。
+
+
+不確定性
+
+方法寫在 contract.paired_block_bootstrap。
+n_boot=200，seed=20261017。
+差是 A 減 B。每次重抽把警報預算乘上 919/111306，而不是固定 919。
+顧客區塊 4,079 個。它忽略時間相依。
+step 區塊 30 個。它比較粗。
+兩種方法不一致時，不從單一方法宣稱顯著。
+
+A 減 B，Average Precision 的 95% 區間。含 0 就記「含 0」。
+
+顧客區塊
+v2_merchant − Sushmitha B
+  平均 0.005000，區間 [0.000996, 0.009611]，不含 0
+  TP 平均 -3.42，區間 [-15.0, 8.0]，含 0
+step-causal − Sushmitha B
+  平均 0.004122，區間 [-0.000420, 0.008469]，含 0
+  TP 平均 0.30，區間 [-9.0, 12.0]，含 0
+v2_merchant − step-causal
+  平均 0.000878，區間 [-0.002070, 0.004431]，含 0
+  TP 平均 -3.72，區間 [-12.0, 4.0]，含 0
+v2_enriched_sqrt − Track A XGB logistic
+  平均 0.000860，區間 [-0.003473, 0.005558]，含 0
+  TP 平均 -3.89，區間 [-18.0, 13.0]，含 0
+v2_enriched_sqrt − Track A LightGBM
+  平均 0.003730，區間 [0.000234, 0.007809]，不含 0
+  TP 平均 -1.49，區間 [-15.0, 13.0]，含 0
+v2_merchant − Track B XGB logistic
+  平均 0.036875，區間 [0.028576, 0.046989]，不含 0
+  TP 平均 34.71，區間 [12.0, 60.0]，不含 0
+
+step 區塊
+v2_merchant − Sushmitha B
+  平均 0.005268，區間 [0.002491, 0.008728]，不含 0
+  TP 平均 -5.94，區間 [-15.0, 4.1]，含 0
+step-causal − Sushmitha B
+  平均 0.004413，區間 [0.001205, 0.008585]，不含 0
+  TP 平均 -0.68，區間 [-10.0, 11.0]，含 0
+v2_merchant − step-causal
+  平均 0.000855，區間 [-0.001981, 0.004025]，含 0
+  TP 平均 -5.26，區間 [-12.0, 2.0]，含 0
+v2_enriched_sqrt − Track A XGB logistic
+  平均 0.000697，區間 [-0.002857, 0.004484]，含 0
+  TP 平均 -7.58，區間 [-17.0, 2.0]，含 0
+v2_enriched_sqrt − Track A LightGBM
+  平均 0.003719，區間 [0.000014, 0.008456]，不含 0
+  TP 平均 -4.51，區間 [-14.0, 5.0]，含 0
+v2_merchant − Track B XGB logistic
+  平均 0.037110，區間 [0.030739, 0.044880]，不含 0
+  TP 平均 33.26，區間 [17.0, 50.0]，不含 0
+
+分得出來的一對，是 v2_merchant 對 Track B XGB logistic。
+Average Precision 約高 0.037，919 筆的 TP 約多 33 到 35。
+兩種區塊、Average Precision 與 TP，區間都不含 0。
+這一對是「顯式商家詐欺率的 HGB」對「允許身份代碼、沒有詐欺率欄位的 XGBoost」。
+它不是「HGB 這個品牌勝過 XGBoost」。
+
+沒有做 bootstrap、但點估計差距明顯超過 0.01 的對照：
+v2_enriched_sqrt 對 Track A RF，約 0.0385。
+v2_enriched_sqrt 對 pr14，約 0.0699。
+Track B Sushmitha 對 Track A Sushmitha，約 0.0718。
+規則對其他模型。
+這些沒有跑區間。點估計差距已經大於接近帶。
+
+
+錯誤型態
+
+金額切片在看錯誤之前就定好：[0, 20)、[20, 250)、>=250。
+列數 / 詐欺數：40,965 / 45，69,435 / 454，906 / 701。
+下面是 919 筆裡抓到的詐欺 / 該切片的 FP。
+
+模型                         [0,20)     [20,250)     >=250
+v2_merchant                 16 / 2     235 / 20     641 / 5
+v2_merchant_step_causal     14 / 1     231 / 19     651 / 3
+trackB_sushmitha_lgbm       10 / 0     211 / 13     677 / 8
+v2_enriched_sqrt             4 / 3     180 / 63     653 / 16
+trackA_sushmitha_lgbm        8 / 5     176 / 55     658 / 17
+trackA_atavci_xgb_logistic  11 / 6     173 / 52     661 / 16
+trackB_atavci_xgb_logistic   3 / 2     161 / 39     696 / 18
+pr14_mapped_hgb              0 / 0     133 / 72     653 / 61
+prod_rules                   0 / 7       0 / 6     701 / 205
+
+小額詐欺 45 件，每個模型都漏掉大多數。
+中額 454 件是商家率有幫助的地方：v2_merchant 抓 235，sqrt 抓 180。
+高額 701 件裡，金額本身就很有資訊。
+規則抓到全部 701，同時有 205 個高額 FP。
+Track B XGB logistic 抓到 696，FP 18。
+Sushmitha B 抓到 677，FP 8。
+商家率模型在高額並不是最高，它們的優勢在中額與少數類別。
+
+919 筆裡的詐欺重疊。只算 1,200 件 test 詐欺。
+v2_merchant 與 Sushmitha B：兩邊 822，只有商家率 70，只有 LightGBM 76，都沒有 232。
+step-causal 與 Sushmitha B：829 / 67 / 69 / 235。
+v2_merchant 與 step-causal：848 / 44 / 48 / 260。
+v2_merchant 與 Track B XGB logistic：774 / 118 / 86 / 222。
+v2_merchant 與 sqrt：757 / 135 / 80 / 228。
+sqrt 與 Track A XGB logistic：811 / 26 / 34 / 329。
+sqrt 與 Track A LightGBM：808 / 29 / 34 / 329。
+sqrt 與 pr14：733 / 104 / 53 / 310。
+Sushmitha B 與 Sushmitha A：785 / 113 / 57 / 245。
+商家率與 Sushmitha B 抓到的詐欺大部分重疊，兩邊仍各有約 70 件對方沒抓到。
+改善不是單純的巢狀包含。
+
+類別。test 詐欺數，以及 919 筆裡的 TP。
+只列有詐欺的類別。零詐欺類別是 contents、food、transportation。
+
+類別                    詐欺   商家率   sqrt   pr14   SushB   XGBA   XGBB
+es_health               284    227    168    192    206    168    190
+es_sportsandtoys        302    250    226    185    258    236    229
+es_wellnessandbeauty    144     80     86     75     83     83     81
+es_hotelservices        102     85     72     70     83     72     81
+es_travel                92     74     81     87     86     88     88
+es_leisure               74     74     74     61     73     73     74
+es_hyper                 48     17     27     15     12     21     21
+es_otherservices         40     28     33     29     33     33     29
+es_home                  36     18     23     26     23     23     24
+es_tech                  34     19     23     27     25     24     25
+es_barsandrestaurants    26     10     15      8      5     15      8
+es_fashion               18     10      9     11     11      9     10
+
+商家率相對 sqrt 的增加，主要在 es_health（+59）、es_sportsandtoys（+24）、
+es_hotelservices（+13）。
+商家率在 travel、home、tech、hyper 上較少。
+Sushmitha B 的 sports TP 是 258，高於商家率的 250。
+health 是 206，低於商家率的 227。
+
+商家集中度
+test 裡出現詐欺的 merchant 有 28 個。
+前 5 名就占 710 / 1,200 件 test 詐欺。
+v2_merchant 的 892 個 TP 裡有 580 個落在這 5 個商家。
+step-causal 是 579 / 896。Sushmitha B 是 578 / 898。
+sqrt 是 503 / 837。規則是 436 / 701。
+排名會受到少數商家影響。這點已寫進 PART D 的泛化限制。
+
+
+成本
+
+TrustLedger 共用特徵建構 23.385 秒。峰值 RSS 1,045,102,592 bytes，約 997 MB。
+各模型再加的時間，單位秒：
+
+模型                         特徵      擬合      預測
+prod_rules                 0.000     0.000     0.010
+pr14_mapped_hgb            0.014     1.682     0.084
+v2_enriched_sqrt           0.114     2.061     0.120
+v2_merchant                0.085     1.775     0.107
+v2_merchant_step_causal    0.397     1.943     0.134
+v2_merchant_expanding      0.589     2.081     0.117
+
+公開模型。特徵時間是整表，訓練與預測是該模型自己的。
+峰值 RSS 約 1,106 MB，記在 Sushmitha sidecar 的 peak_rss_mb。
+n_jobs=4。BLAS / OpenMP 執行緒設成 1。
+
+模型                              特徵     訓練     預測      複雜度
+trackA 共用                       0.127    —        —        28 欄
+trackB atavci 矩陣                0.355    —        —         7 欄
+trackB Sushmitha 矩陣             1.850    —        —        37 欄
+trackB_atavci_xgb_logistic        0.355    2.825    0.752    400 棵，深度 6
+trackB_atavci_rf                  0.355    2.501    0.111    100 棵，深度 8
+trackB_sushmitha_lgbm             1.850    8.008    3.717    5 個，300 棵，63 葉
+trackA_atavci_xgb_logistic        0.127    5.352    0.869    同上，欄位較寬
+trackA_sushmitha_lgbm             0.127    6.992    4.521    同上，欄位是 Track A
+trackA_atavci_rf                  0.127    6.524    0.123    同上
+
+沒有保存 joblib 或 booster。分數是 float64 npz 加 JSON。
+
+
+公布數字與我們的重現，分開看
+
+下面左欄是原作者印出來的數字。右欄是我們在時間切分上的測量。
+兩欄的切分、特徵與門檻都不同。右欄沒有「打敗左欄」的意思。
+
+作者            模型                  他們公布的數字                         他們的切分                     我們的測量                         比較是否等價
+atavci 2019     KNN                   P 0.83 R 0.61 F1 0.70                 打亂 30%，自然盛行率            沒有完整訓練                      不等價。KNN 未擬合。
+atavci 2019     XGBoost hinge         P 0.89 R 0.76 F1 0.82                 同上。support 2,160             Track B：919 筆 TP 861 FP 58      不等價。我們的 F1 是固定 919 筆。
+                                      accuracy 註解 0.9963059088641371      混淆矩陣與 P/R 一致              F1 0.8126。AP 0.682104            他們沒有印 Average Precision。
+                                                                            ROC 圖例沒有印出數字              unique scores = 2
+atavci 2019     Random Forest         表上 F1 0.82，P 0.24，R 0.98          同上                          Track B AP 0.861441               不等價。
+                                      混淆矩陣 [[169552,6681],[39,2121]]                                   TP 810 FP 109 F1 0.7645
+                                      矩陣的調和平均約 0.39，與印出的 0.82 不一致
+                                      短名單照表引用 0.82，沒有改寫
+atavci 2019     soft vote             P 0.73 R 0.81 F1 0.77                 同上                          Track B 近似 AP 0.892527          不等價，而且我們缺 KNN。
+                                                                            混淆矩陣與 P/R 一致              TP 843 FP 76 F1 0.7957
+0xSushmitha     LGB-EU 0.05           AUPRC 0.9577828623757437              他們的分位數切分加 Optuna       Track B AP 0.953491               不等價。
+2025-08-28                            AUROC 0.9992777241964758              README 的 step<=600 不存在     ROC-AUC 0.999170
+                                      README 四捨五入 0.9578 / 0.9993       特徵在切分前就在全表上計算       919 筆 TP 898 FP 21
+                                                                            最佳 Optuna 參數沒有存進倉庫
+
+來源 URL 見 PART A。
+atavci README 的數字是沒有 SMOTE 的那一組。
+我們沒有宣稱勝過這些公布百分比。
+
+
+PART D — v2_merchant 可不可信
+
+訓練程序裡，標籤洩漏是真的。
+test 分數不是靠把 test 標籤送進特徵做出來的。
+
+original_frozen 是 PR #15 的商家率。
+公式是 (該商家訓練期詐欺數 + 20 * 全域率) / (該商家訓練筆數 + 20)。
+聚合用全部 steps 0–119，然後填回每一列，包含提供這些標籤的訓練列。
+
+1. 訓練列自己的標籤有進入特徵。
+   拿掉該列再算，374,914 列的差距都大於 0。
+   平均絕對差 1.9636312546803278e-05。
+   詐欺列平均絕對差 0.0008757162664799481。
+   最大絕對差 0.013641193354449077。
+   單列的影響很小。收縮與商家筆數把它壓住了。
+
+2. 較晚的訓練標籤有進入特徵。
+   371,371 / 374,914 列會變。
+   平均絕對差 0.0021280282910159445。
+   最大絕對差 0.7779909302800466。
+   訓練特徵是樂觀的。模型在擬合時看得到後來才發生的訓練期詐欺。
+
+3. SELECT、CONFIRM、TEST 的標籤沒有進入凍結率。
+   與只用 steps 0–119 重算的率，最大絕對差是 0.0。
+   select_labels_included、confirm_labels_included、test_labels_included 都是 0。
+
+4. step-causal 的 test 特徵與凍結率相同，最大絕對差 0.0。
+   訓練特徵不同，最大絕對差 0.8320817163569871，374,914 列都不同。
+   同一步的標籤互不可見。
+   因此 0.957628 與 0.958485 的差異來自分別用兩套訓練特徵去擬合，
+   test 當下看到的商家率向量是同一套 steps 0–119 聚合。
+   兩個區塊的 Average Precision 與 TP 信賴區間都含 0。
+   0.958 不是 test 列洩漏製造出來的數字。
+   引用架構時仍用 step-causal，因為訓練程序比較乾淨。
+   0.958485 保留為 PR #15 的逐字重現，不把它從表上刪掉。
+
+5. expanding 的 test 特徵不同。
+   每一列只用已經結束的較早 step。
+   test 列看得到 steps 120–149，也看得到更早的 test step。
+   與凍結率不同的 test 列是 111,306，最大絕對差 0.1795012931979003。
+   Average Precision 0.956777，TP 897。
+   這是另一個資訊集。它不是洩漏修正，也不是 PR #15 的重現。
+   它的點估計還略低於凍結版。
+
+6. BankSim 沒有標籤延遲欄位。
+   凍結版假設 steps 0–119 的標籤在 step 120 之前都已知道。
+   expanding 假設一個標籤在該 step 結束時可知、下一步之前可知。
+   兩種修正都不讓同一步的標籤互相看見。
+   這是假設，不是資料裡的事實。
+
+7. 這個切分不能評估沒見過的商家。
+   test 未見過的 merchant id：0。
+   落在未見過商家的 test 列：0。
+   訓練筆數少於 20 的 test 列：4，其中詐欺 0。
+   訓練筆數至少 20 的 test 詐欺：1,200。
+   訓練裡 50 個 merchant id 有 30 個出現過詐欺。
+   前 5 名商家占訓練詐欺的 0.5975。
+   不要把這個結果寫成新商家泛化。
+
+商家率貢獻了多少
+v2_merchant 0.958485 減 v2_enriched_sqrt 0.885260，約 0.0732。
+同一套 HGB、同一個切分，差在商家率欄位與權重（sqrt 對 none）。
+Track B Sushmitha 0.953491 減 Track A Sushmitha 0.881686，約 0.0718。
+同一族學習器，差在身份代碼與過去歷史。
+atavci logistic 的代碼本身，Track B 0.921597 減 Track A 0.884441，約 0.0372。
+沒有 rolling 視窗。
+三個對照指到同一件事：商家身份帶著大的增益。
+學習器在對齊特徵上的差距落在噪音裡。
+
+v2_enriched_sqrt 還有沒有競爭力
+有。在不使用商家詐欺率、也不使用身份代碼時，它與最強的公開模型打成平手。
+它相對 pr14 的 Average Precision 高約 0.070。這一對沒有跑區間，
+點估計差距大於 0.01。
+它相對規則的差距更大。規則在金額低於 250 的詐欺上 TP 是 0。
+
+
+PART E — 結論
+
+TrustLedger 有沒有勝過重現出來的公開架構
+
+在完整管線上，點估計的第一名是 v2_merchant。
+洩漏修正後的 step-causal 仍略高於 Sushmitha Track B，
+差距約 0.004，在 0.01 以內，而且兩種區塊方法不一致。
+不宣稱明確獲勝。
+對 atavci 的 Track B XGBoost logistic，差距是明確的：
+Average Precision 約高 0.037，919 筆約多 32 到 35 件 TP。
+這份優勢綁在商家詐欺率上。
+
+在特徵對齊的軌道上，TrustLedger 沒有勝過公開模型。
+v2_enriched_sqrt 與 atavci XGBoost logistic 打成平手。
+
+技術差異
+- 商家歷史詐欺率，或身份代碼加過去歷史，解釋了大約 0.04 到 0.07 的 Average Precision。
+- HistGradientBoosting、XGBoost、LightGBM 在同一組對齊特徵上接近。
+- 規則只靠金額門檻與 24 小時同商家同金額重複。
+  它抓到全部金額 >=250 的詐欺，也因此填進大量高額正常交易。
+- Hinge 沒有連續分數。操作點因金額平手而接近 logistic，
+  ROC-AUC 則掉到約 0.86。
+- 高額詐欺大家都抓得到很多。中額與 es_health、es_sportsandtoys
+  是商家率與 Sushmitha 歷史拉開差距的地方。
+- 小額詐欺仍然大多漏掉。
+- 前 5 個商家占了 710 / 1,200 件 test 詐欺。結果對商家組成敏感。
+
+證據支持的架構
+若允許重複出現的商家，而且接受歷史詐欺率或身份代碼：
+step-causal 的商家率 HGB，與 Sushmitha 的身份加歷史 LightGBM，
+是同一性能帶。兩者都強。
+若示範流程不使用商家詐欺率與原始身份：
+v2_enriched_sqrt 是目前證據支持的 TrustLedger 候選。
+它與同一特徵上的 XGBoost logistic 打成平手。
+不要把「我們的模型贏了 Kaggle」寫進對外說明。
+對外能說的是：在這份已被看過的時間切分上，
+商家身份決定大的差距，對齊特徵之後現有 HGB 與強的公開 booster 相當。
+
+
+PART F — 執行
+
+四個 Subagent 都有實際跑完。它們用獨立 git clone，
+分支名都叫 research/public-benchmark。
+那些 commit 在 clone 裡，不會移動 parent。
+parent 是把檔案複製回來之後再交一次。
+
+Subagent A，公開模型搜尋。
+ID 01a14d6c-8ec1-7701-a6e5-b1462a32c363。
+工作樹：
+/Users/brian/.grok/worktrees/projects-trustledger/subagent-01a14d6c-8ec1-7701-a6e5-b1462a32c363
+記錄的牆鐘時間 739 秒。
+clone commit 8cd8bae6a1f01aeddee6aaa05936017f5260ee34。
+交付 discovery/SHORTLIST.txt。沒有改 contract.py。
+
+Subagent B，公開模型重現與訓練。
+ID 01a14d6c-8ec5-7c51-840e-9b768679377e。
+工作樹：
+/Users/brian/.grok/worktrees/projects-trustledger/subagent-01a14d6c-8ec5-7c51-840e-9b768679377e
+記錄的牆鐘時間 1,081 秒。
+clone commit 4c53d749eb6b94654037d1bb61ba9f581f5466a4。
+交付 public/train_public.py、NOTES.txt、SUMMARY.json，以及 10 個模型的 npz 與 JSON。
+失敗數 0。沒有在 SELECT、CONFIRM、TEST 上調參。
+
+Subagent C，TrustLedger 基線與洩漏審計。
+ID 01a14d6c-8ec5-7c51-840e-9b889a4946c4。
+工作樹：
+/Users/brian/.grok/worktrees/projects-trustledger/subagent-01a14d6c-8ec5-7c51-840e-9b889a4946c4
+記錄的牆鐘時間 886 秒。
+clone commit 14c562c930f900fef5a8eba10054f1fe75037d2b。
+四個舊模型都是 MATCH。另訓練 step-causal 與 expanding。
+沒有改生產碼，沒有留下 joblib。
+
+Subagent D，獨立審計。
+ID 01a14d6c-8ec5-7c51-840e-9b9ffbe88b6e。
+工作樹：
+/Users/brian/.grok/worktrees/projects-trustledger/subagent-01a14d6c-8ec5-7c51-840e-9b9ffbe88b6e
+記錄的牆鐘時間 1,049 秒。
+clone commit e94b840ccdf0123bb250e9efd24ccc24a356dd2a。
+交付 audit/audit_predictions.py 與 SELF_CHECK.txt。SELF_CHECK 結果是 PASS。
+協調者之後用真實的 16 個分數再跑一次審計。
+
+協調者
+契約凍結 commit de05437f6cb6a3ed452478eab63b89e338b6ce2e。
+檔案是 evaluation/research/benchmark/contract.py 與 PROTOCOL.txt。
+之後才把四個 Subagent 的產物複製到 parent，
+重算 leaderboard.json，寫入 uncertainty.json，
+並對 /tmp/tl-flat-scores 跑審計。
+成對 bootstrap 由協調者的分析腳本計算，131.19 秒，退出碼 0。
+審計程式這次沒有帶 --pair，所以 AUDIT.txt 的 bootstrap 段是空的。
+區間以 uncertainty.json 為準。
+這份 FINDINGS.txt 與分數在同一個 parent commit。
+SHA 以 git log -1 這份檔案為準。
+
+跑過的檢查
+- contract.py 的 self_check：印出 contract self_check ok。
+- assemble.py：models 16，alignment_problems 0。
+- 審計完整性：通過。16 個模型的人口、指紋、Average Precision 差額都吻合。
+- 審計退出碼 2：六個 TrustLedger sidecar 缺少 leakage_status。
+- D 的合成 self-check：PASS。這次沒有重跑合成 self-check。
+- scripts/check.sh：沒有跑。它不覆蓋這份研究碼。
+  生產程式、前端、API 契約都沒有改。不要把後端測試寫成通過。
+
+環境
+研究用的 Python 是 /tmp/tl-research-venv/bin/python，3.9.6。
+numpy 2.0.2，scikit-learn 1.6.1，xgboost 2.1.4，lightgbm 4.6.0。
+catboost 沒有安裝。
+xgboost 與 lightgbm 需要 libomp。這台機器用 Homebrew 的 keg-only libomp 23.1.3。
+這是機器依賴，不是 repo 變更。
+沒有把這些套件裝進 backend/.venv。
+沒有呼叫 Gemini、Jev、Backboard、Nessie。沒有花 API 額度。
+
+檔案
+evaluation/research/benchmark/contract.py
+evaluation/research/benchmark/PROTOCOL.txt
+evaluation/research/benchmark/FINDINGS.txt
+evaluation/research/benchmark/REPRODUCE.txt
+evaluation/research/benchmark/assemble.py
+evaluation/research/benchmark/leaderboard.json
+evaluation/research/benchmark/uncertainty.json
+evaluation/research/benchmark/discovery/SHORTLIST.txt
+evaluation/research/benchmark/public/train_public.py
+evaluation/research/benchmark/public/NOTES.txt
+evaluation/research/benchmark/public/SUMMARY.json
+evaluation/research/benchmark/public/scores/*
+evaluation/research/benchmark/trustledger/reproduce.py
+evaluation/research/benchmark/trustledger/NOTES.txt
+evaluation/research/benchmark/trustledger/audit.json
+evaluation/research/benchmark/trustledger/scores/*
+evaluation/research/benchmark/audit/audit_predictions.py
+evaluation/research/benchmark/audit/AUDIT.txt
+evaluation/research/benchmark/audit/audit_report.json
+evaluation/research/benchmark/audit/SELF_CHECK.txt
+
+沒有提交原始 BankSim、.env、joblib、booster、CSV 或 markdown。
+沒有合併到 main。沒有改 PR #14 或 PR #15 的歷史。
+
+這份研究碼與報告由 Grok 協助產生。

@@ -18,6 +18,7 @@ The v0.3.1 update integrates Ian’s updated frontend (`ianthechou`, `9c40b01`) 
 | SQLite synthetic data, confirmations and consented category memory | Implemented; JSON remains an offline fixture only |
 | Consented memory affects the next analysis | Implemented on `main` |
 | Jev through Backboard | Explicitly configured POST analyses may attempt inference. HTTP 402 preserves rules and reports request-specific degraded mode; GET/confirmation stays rules-only |
+| Gemini explanations | Explicit case action in the main or scoped customer workspace; privacy-safe summary only. Missing key uses a rules template; failed calls use a labelled fallback. Explanations do not change decisions or memory. |
 | Direct TypeSafe API | Not selected and not called |
 | Backboard persistent memory | Implemented and checked live. No key uses SQLite and labels it `local-fallback`. A key alone does not flip health to `backboard-live` |
 | Capital One Nessie | Shared Overview/Admin customer workspace; structured SQLite account and movement cache, per-collection freshness/failure; eight Admin queries with typed SQLite projections; explicit baseline CLI retained |

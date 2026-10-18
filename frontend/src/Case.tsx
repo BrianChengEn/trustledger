@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
-import {labels, money, type Alert, type Transaction} from './api';
+import {labels, money, request, type Explanation, type Alert, type Transaction} from './api';
 import {Icon} from './icons';
-import {alertHints, fullDate, isPriorEvidence, memoryCategory, memorySentence, memoryStore, outcomeCopy, prettyCategory} from './lib';
+import {alertHints, explanationModeCopy, fullDate, isPriorEvidence, memoryCategory, memorySentence, memoryStore, outcomeCopy, prettyCategory} from './lib';
 import {usePreview} from './preview';
 import {alertIcons, statusText} from './Today';
 import {categoryIcon} from './Activity';
@@ -27,6 +27,51 @@ function Evidence({alert}: {alert: Alert}) {
     </div>
     <p className="quiet">A rule match is not a fraud probability. It means the pattern was found; whether it is a problem is your call.</p>
   </>;
+}
+
+function ExplanationPanel({tx}: {tx: Transaction}) {
+  const {prefix, ready} = useWorkspace();
+  const [run, setRun] = useState<{state: 'idle'} | {state: 'loading'} | {state: 'done'; result: Explanation} | {state: 'failed'}>({state: 'idle'});
+  useEffect(() => { setRun({state: 'idle'}); }, [tx.id]);
+  async function load() {
+    if (!ready) return;
+    setRun({state: 'loading'});
+    try {
+      const result = await request<Explanation>(
+        prefix + '/transactions/' + encodeURIComponent(tx.id) + '/explanation', {method: 'POST'}, 20000);
+      setRun({state: 'done', result});
+    } catch { setRun({state: 'failed'}); }
+  }
+  const done = run.state === 'done' ? run.result : null;
+  const copy = done ? explanationModeCopy(done.explanation_mode, done.from_cache) : null;
+  return <div className="explain">
+    <p>Ask for a plain-language explanation of this rules result. Nothing is sent until you press the button, and the alert itself does not change.</p>
+    {run.state === 'loading' && <div className="airun" role="status"><span className="spinner" aria-hidden="true"/>
+      <div><b>Preparing an explanation</b><p>This can take a few seconds. The rules result above stays as it is.</p></div></div>}
+    {run.state === 'failed' && <Callout tone="warn" icon="alertTriangle" title="Explanation request failed" role="alert">
+      The alert, evidence, and your decision are unchanged. You can try again.</Callout>}
+    {done && copy && <div className="result">
+      <Callout tone={copy.tone} icon={done.explanation_mode === 'gemini-live' ? 'sparkles' : 'shieldCheck'} title={copy.title} role="status">{copy.detail}</Callout>
+      <dl>
+        <dt>Why it was flagged</dt><dd>{done.why_flagged}</dd>
+        <dt>Evidence used</dt><dd>{done.supporting_evidence}</dd>
+        <dt>What the warning means</dt><dd>{done.what_it_means}</dd>
+        <dt>What to check</dt><dd>{done.what_to_check}</dd>
+        <dt>What you can do</dt><dd><ul className="evidence">{done.next_steps.map(step => <li key={step}><span>{step}</span></li>)}</ul></dd>
+      </dl>
+      <details>
+        <summary>What an explanation is allowed to use</summary>
+        <p className="quiet">{done.sent_to_provider
+          ? 'This request sent only the summary below to Gemini.'
+          : 'Gemini was not called for this response. This is the only summary an explanation is allowed to use.'}</p>
+        <pre className="json" aria-label="Explanation summary sent or prepared">{JSON.stringify(done.shared, null, 2)}</pre>
+      </details>
+    </div>}
+    <div className="actions">
+      <button className="ai" disabled={!ready || run.state === 'loading'} onClick={() => void load()}>
+        <Icon name="sparkles" size={16}/>{run.state === 'loading' ? 'Preparing…' : done ? 'Explain again' : 'Explain this alert'}</button>
+    </div>
+  </div>;
 }
 
 function AiStep({tx, run, stale, fieldCount, onRun, enabled}: {
@@ -135,7 +180,7 @@ function Decision({alert, tx, enabled}: {alert: Alert; tx: Transaction; enabled:
 
 /** The case file: one transaction explained in depth, with evidence, optional AI and the human decision. */
 export default function Case({id, from}: {id: string; from?: string}) {
-  const {transactions, alerts, runs, analyze, memoryKey, memories, loaded, ready, go, href} = useWorkspace();
+  const {transactions, alerts, runs, analyze, memoryKey, memories, loaded, ready, revision, go, href} = useWorkspace();
   const tx = transactions.find(t => t.id === id);
   const alert = alerts.find(a => a.transaction_id === id);
   const {preview} = usePreview(tx?.id, memoryKey);
@@ -166,7 +211,8 @@ export default function Case({id, from}: {id: string; from?: string}) {
     </aside>
     <div className="steps">
       <Step n={1} title="Why it was flagged" tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
-        {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still run an AI second opinion.</p>}
+        {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still ask for a plain-language explanation or run an AI second opinion.</p>}
+        <ExplanationPanel key={revision} tx={tx}/>
       </Step>
       <Step n={2} title="AI second opinion" tag={<Chip tone="ai" icon="sparkles">Optional</Chip>}>
         <AiStep tx={tx} run={ready ? run : undefined} stale={run?.state === 'done' && run.memoryKey !== memoryKey}
