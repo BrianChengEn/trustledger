@@ -87,7 +87,7 @@ The rules engine sets `confidence=1.0` when a deterministic rule matches. That n
 |---|---|---|---|---|---|
 | Backboard System One, selected Jev route | `httpx` async `POST /threads/messages` | `BACKBOARD_API_KEY` | [System One](https://docs.backboard.io/concepts/system-one). `llm_provider=typesafe`, `model_name=jev-latest`, `stream=false` | Brian | IMPLEMENTED. Live only when the key is set and the response parses |
 | Direct TypeSafe API | Not called | `JEV_API_KEY` is loaded and unused. Official SDK name is `TYPESAFE_API_KEY` | `POST https://api.typesafe.ai/v1/systemone` | Brian | Optional route, not selected |
-| Backboard memory | `backboard_client.add_memory` still raises `NotImplementedError` | `BACKBOARD_ASSISTANT_ID` is not read | [Memory](https://docs.backboard.io/concepts/memory). Default `memory=off` when the parameter is omitted | Brian | MOCK / STUB for memory. Inference does not pass `memory` |
+| Backboard memory | `httpx` explicit CRUD with a durable SQLite consent/job/index; one stored assistant per demo owner | `BACKBOARD_API_KEY`. `BACKBOARD_ASSISTANT_ID` is not read | [Memory](https://docs.backboard.io/concepts/memory), [SDK memory](https://docs.backboard.io/sdk/memory). Inference explicitly sets `memory=off` | Brian | IMPLEMENTED, mocked in CI; no key stays `local-fallback`. Uncertain writes stay pending with no automatic POST retry |
 
 `docs/.env.example` sets `JEV_BASE_URL=https://jev-ai.org/api/v1`. The running client does not read or request that host.
 
@@ -97,10 +97,10 @@ The rules engine sets `confidence=1.0` when a deterministic rule matches. That n
 
 | Service | Integration | Credential | Where | Owner | Status |
 |---|---|---|---|---|---|
-| Capital One Nessie sandbox | `NessieNotConfigured` | `NESSIE_API_KEY`, unused | `backend/app/adapters/nessie.py` | Kenny | MOCK / STUB |
-| Synthetic fixture | 8 authored transactions | None | `fixtures/synthetic-transactions.json`, loaded by `backend/app/adapters/synthetic.py` | Kenny | IMPLEMENTED |
+| Capital One Nessie sandbox | Six allowlisted Admin reads and explicit baseline CLI; dashboard mapper remains an extension point | `NESSIE_API_KEY`, backend only | `backend/app/adapters/nessie.py`, `seed_nessie.py` | Kenny | IMPLEMENTED separately from synthetic dashboard; isolated CI |
+| Synthetic baseline | 8 authored transactions in normalized SQLite, initialized once per owner | None | `backend/app/adapters/synthetic.py`, `backend/app/core/store.py` | Kenny | IMPLEMENTED; JSON files are offline compatibility goldens |
 
-Public product page: [api.nessieisreal.com](http://api.nessieisreal.com/). The request schema, current base URL, and key placement are UNVERIFIED in this repository because no client calls Nessie. `docs/.env.example` contains `NESSIE_BASE_URL=https://prod-api.nessieisreal.com`. Settings ignore that variable.
+Public product page: [api.nessieisreal.com](http://api.nessieisreal.com/). The client pins the sandbox origin and backend-only key handling. Admin exposes safe projections/local resource codes and persists status/time metadata only. This update did not repeat historical live sandbox verification; dashboard data remains synthetic.
 
 There is no Nessie SDK in Python or JavaScript dependencies. A third-party JavaScript SDK exists upstream and is not used here.
 
@@ -108,8 +108,8 @@ There is no Nessie SDK in Python or JavaScript dependencies. A third-party JavaS
 
 | Store | Purpose | Where | Owner | Key | Status |
 |---|---|---|---|---|---|
-| SQLite file `backend/data/trustledger-demo.db` | Confirmations and memory sentences for `demo-user-001` | `backend/app/core/store.py` | Benson | No | LOCAL FALLBACK |
-| JSON fixture | Source transactions | `fixtures/synthetic-transactions.json` | Kenny | No | IMPLEMENTED |
+| SQLite file `backend/data/trustledger-demo.db` | Canonical synthetic rows, normalized import fixtures, confirmations, memory index/jobs, assistant/resource maps, metadata history and seed progress | `backend/app/core/store.py`, `backend/app/adapters/nessie_fixture.py` | Benson / Kenny | No | Runtime data store. Remote memory rows are labelled `backboard` only after parsed success; legacy raw history is securely cleaned on startup |
+| JSON fixtures | Offline compatibility/generator checks only | `fixtures/`, `python3 scripts/generate_synthetic_data.py --check` | Kenny | No | Retained golden files; runtime does not load them |
 
 `backend/data/` and `*.db` are gitignored. Tests use a temporary database. `DATABASE_URL` in `docs/.env.example` is not read. The setting that exists is `database_path`.
 

@@ -129,6 +129,11 @@ paths:
       responses:
         '204': { description: Deleted }
         '404': { $ref: '#/components/responses/NotFound' }
+        '502':
+          description: Remote memory deletion failed; local memory is preserved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
   /api/v1/admin/nessie/query:
     post:
       operationId: queryNessie

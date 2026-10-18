@@ -147,6 +147,7 @@ try {
   await page.getByRole('button',{name:'Overview & transactions',exact:true}).click();
   await page.getByRole('button',{name:/Possible duplicate/}).click();
   await page.getByRole('heading',{name:'Privacy Inspector'}).waitFor();
+  assert.match(await page.locator('label.check').innerText(),/sent to Backboard if configured, or saved in the local fallback/);
   assert(!(await page.locator('label.check input').isChecked()));
   await page.locator('label.check input').check();
   await page.getByRole('button',{name:'This is normal',exact:true}).click();
