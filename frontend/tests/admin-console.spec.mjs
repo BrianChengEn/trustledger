@@ -9,6 +9,10 @@ import {chromium} from 'playwright';
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const temp = mkdtempSync(join(tmpdir(), 'trustledger-admin-'));
 const children = [];
+const FRONTEND_PORT = process.env.E2E_ADMIN_FRONTEND_PORT || '5174';
+const BACKEND_PORT = process.env.E2E_ADMIN_BACKEND_PORT || '8123';
+const BASE = `http://127.0.0.1:${FRONTEND_PORT}`;
+const API = `http://127.0.0.1:${BACKEND_PORT}`;
 function start(command, args, env = {}) {
   const child = spawn(command, args, {cwd: root, env: {...process.env, ...env}, stdio: 'pipe'});
   let logs = '';
@@ -29,14 +33,14 @@ const errors = [];
 const apiStates = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js',
-    'frontend', '--host', '127.0.0.1', '--port', '5174'],
-    {API_PROXY_TARGET: 'http://127.0.0.1:8123'});
+    'frontend', '--host', '127.0.0.1', '--port', FRONTEND_PORT],
+    {API_PROXY_TARGET: API});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH: 'backend',
-      TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: 'http://127.0.0.1:5174'});
+      TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: BASE,
+      E2E_ADMIN_BACKEND_PORT: BACKEND_PORT});
   const connectedBackend = children.at(-1);
-  await Promise.all([ready('http://127.0.0.1:5174', frontendLogs),
-    ready('http://127.0.0.1:8123/api/v1/health', backendLogs)]);
+  await Promise.all([ready(BASE, frontendLogs), ready(API + '/api/v1/health', backendLogs)]);
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
     existsSync('/Applications/Google Chrome.app') ? {channel: 'chrome'} : {})});
@@ -70,7 +74,7 @@ try {
     const next = await browser.newPage({viewport: {width:1440,height:1000},reducedMotion:'reduce'});
     next.setDefaultTimeout(5000);
     // Same-origin through the Vite proxy so the sign-in cookie is sent; the browser session is an admin.
-    const signedIn = await next.request.post('http://127.0.0.1:5174/api/v1/auth/login',
+    const signedIn = await next.request.post(BASE + '/api/v1/auth/login',
       {data: {role: 'admin', passcode: 'browser-admin-pass'}});
     assert.equal(signedIn.status(), 200, 'test admin sign-in');
     next.on('pageerror', error => errors.push(error.message));
@@ -112,7 +116,7 @@ try {
     await target.evaluate(() => sessionStorage.setItem('e2e-init', '1'));
   }
   page = await appPage();
-  await page.goto('http://127.0.0.1:5174');
+  await page.goto(BASE);
   await page.getByRole('button',{name:'Preview as user',exact:true}).click();
   await page.getByRole('link', {name: /^Today/}).waitFor();
   await page.locator('.startcard').waitFor();
@@ -149,7 +153,7 @@ try {
   const account = accountResult.response_body[0].resource_id;
   assert.match(customer, /^customer_[0-9a-f]{32}$/);
   assert.match(account, /^acct_[0-9a-f]{32}$/);
-  const overview = await (await page.request.post('http://127.0.0.1:5174/api/v1/workspace/refresh', {data:{}})).json();
+  const overview = await (await page.request.post(BASE + '/api/v1/workspace/refresh', {data:{}})).json();
   for (const row of overview.accounts) {
     assert(accountResult.response_body.some(account=>account.resource_id===row.account_token));
     assert.equal(overview.transactions.filter(tx=>tx.account_token===row.account_token&&tx.kind==='transfer').length,10);
@@ -221,7 +225,7 @@ try {
   await page.locator('#Q-FUNC').selectOption('accounts.get');
   assert.equal(await page.locator('#Q-ID').evaluate(element=>element.tagName),'SELECT');
   assert(await page.locator('#Q-RUN').isDisabled());
-  const metadata = await (await page.request.get('http://127.0.0.1:5174/api/v1/admin/nessie/history')).json();
+  const metadata = await (await page.request.get(BASE + '/api/v1/admin/nessie/history')).json();
   assert(metadata.items.every(row=>!('response_body' in row)&&!('resource_id' in row)));
   await page.locator('#NAV-H').click();
   await page.locator('#H-MORE').click();
@@ -485,16 +489,16 @@ try {
   await new Promise(resolve=>{connectedBackend.once('exit',resolve);connectedBackend.kill('SIGTERM');});
   const syntheticLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'synthetic',
-      DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
+      DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:BASE, E2E_ADMIN_BACKEND_PORT:BACKEND_PORT});
   const syntheticBackend = children.at(-1);
-  await ready('http://127.0.0.1:8123/api/v1/health',syntheticLogs);
+  await ready(API + '/api/v1/health',syntheticLogs);
   // The restarted synthetic server gets a fresh context, with no previous faults or connections.
   page = await appPage();
-  await userGoto(page, 'http://127.0.0.1:5174/#/activity');
+  await userGoto(page, BASE + '/#/activity');
   await page.reload();
   await page.getByText('Synthetic demo data.',{exact:true}).waitFor();
   assert.equal(await page.locator('.txtable tbody tr').count(),18);
-  const offline = await (await page.request.post('http://127.0.0.1:5174/api/v1/workspace/refresh', {data:{}})).json();
+  const offline = await (await page.request.post(BASE + '/api/v1/workspace/refresh', {data:{}})).json();
   assert.equal(offline.data_mode,'synthetic');
   assert.equal(offline.transactions.filter(row=>row.kind==='transfer').length,10);
   await toToday();
@@ -561,7 +565,7 @@ try {
       ...snapshot.transactions[index % snapshot.transactions.length],id:'txn_page_'+index}));
     await route.fulfill({response,json:snapshot});
   });
-  await userGoto(page, 'http://127.0.0.1:5174/#/activity');
+  await userGoto(page, BASE + '/#/activity');
   await page.reload();
   await page.locator('.txtable tbody tr').nth(99).waitFor({state:'attached'});
   await checkLedgerPages();
@@ -569,10 +573,10 @@ try {
   phone.on('pageerror',error=>errors.push(error.message));
   await phone.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)
     ? route.continue() : route.abort());
-  const phoneIn = await phone.request.post('http://127.0.0.1:5174/api/v1/auth/login',
+  const phoneIn = await phone.request.post(BASE + '/api/v1/auth/login',
     {data: {role: 'user', passcode: 'browser-user-pass'}});
   assert.equal(phoneIn.status(), 200, 'test user sign-in');
-  await phone.goto('http://127.0.0.1:5174/#/activity');
+  await phone.goto(BASE + '/#/activity');
   await phone.locator('.txtable tbody tr').nth(17).waitFor({state:'attached'});
   assert.equal(await phone.locator('html').getAttribute('data-stage'),null);
   assert(await phone.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
@@ -703,14 +707,14 @@ try {
   const accountLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'account-demo',
       DEMO_ACCOUNT_TOKEN:userAccount, DATABASE_PATH:join(temp,'account-user.db'),
-      FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
-  await ready('http://127.0.0.1:8123/api/v1/health',accountLogs);
+      FRONTEND_ORIGIN:BASE, E2E_ADMIN_BACKEND_PORT:BACKEND_PORT});
+  await ready(API + '/api/v1/health',accountLogs);
   page = await appPage();
-  await userGoto(page, 'http://127.0.0.1:5174/#/activity');
+  await userGoto(page, BASE + '/#/activity');
   await page.getByText('Synthetic demo data.',{exact:true}).waitFor();
   await page.waitForFunction(()=>document.querySelectorAll('.txtable tbody tr').length===100);
-  const view = await (await page.request.post('http://127.0.0.1:5174/api/v1/workspace/refresh',{data:{}})).json();
-  const source = await (await page.request.get('http://127.0.0.1:5174/api/v1/data-sources/nessie/transactions?limit=100&account_token='+userAccount)).json();
+  const view = await (await page.request.post(BASE + '/api/v1/workspace/refresh',{data:{}})).json();
+  const source = await (await page.request.get(BASE + '/api/v1/data-sources/nessie/transactions?limit=100&account_token='+userAccount)).json();
   assert.equal(view.data_mode,'synthetic');
   assert.deepEqual(view.transactions.map(row=>row.id).sort(),source.items.map(row=>row.id).sort());
   assert(view.transactions.every(row=>row.account_token===userAccount && row.date_only && row.currency==='USD'));

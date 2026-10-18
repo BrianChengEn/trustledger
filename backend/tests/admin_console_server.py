@@ -4,6 +4,7 @@ import httpx
 import uvicorn
 import hashlib
 import csv
+import os
 
 from app.adapters.nessie import NessieClient
 from app.adapters.nessie_fixture import load_baseline
@@ -98,4 +99,4 @@ for _ in range(52):
            "resource_id": None, "requested_at": "2026-10-17T10:00:00+00:00", "duration_ms": 1,
            "http_status": 200, "body_format": "json", "response_body": [], "transport_error": None})
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8123, log_level="warning")
+    uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get('E2E_ADMIN_BACKEND_PORT', '8123')), log_level="warning")

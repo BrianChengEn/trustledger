@@ -25,17 +25,21 @@ async function ready(url, logs) {
   }
   throw new Error(`Service did not start: ${logs()}`);
 }
-const BASE = 'http://127.0.0.1:5175';
+const FRONTEND_PORT = process.env.E2E_AUTH_FRONTEND_PORT || '5175';
+const BACKEND_PORT = process.env.E2E_AUTH_BACKEND_PORT || '8124';
+const BASE = `http://127.0.0.1:${FRONTEND_PORT}`;
+const API = `http://127.0.0.1:${BACKEND_PORT}`;
 let browser;
 const errors = [];
 try {
-  const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js', 'frontend', '--host', '127.0.0.1', '--port', '5175'],
-    {API_PROXY_TARGET: 'http://127.0.0.1:8124'});
+  const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js', 'frontend', '--host', '127.0.0.1', '--port', FRONTEND_PORT],
+    {API_PROXY_TARGET: API});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'), ['-c',
     'import runpy,sys; sys.argv=["x"]; ns=runpy.run_path("backend/tests/admin_console_server.py", run_name="loaded"); '
-    + 'import uvicorn; uvicorn.run(ns["app"], host="127.0.0.1", port=8124, log_level="warning")'],
-  {PYTHONPATH: 'backend', TRANSACTION_PROVIDER: 'synthetic', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: BASE});
-  await Promise.all([ready(BASE, frontendLogs), ready('http://127.0.0.1:8124/api/v1/health', backendLogs)]);
+    + 'import os,uvicorn; uvicorn.run(ns["app"], host="127.0.0.1", port=int(os.environ["E2E_AUTH_BACKEND_PORT"]), log_level="warning")'],
+  {PYTHONPATH: 'backend', TRANSACTION_PROVIDER: 'synthetic', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: BASE,
+    E2E_AUTH_BACKEND_PORT: BACKEND_PORT});
+  await Promise.all([ready(BASE, frontendLogs), ready(API + '/api/v1/health', backendLogs)]);
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
     existsSync('/Applications/Google Chrome.app') ? {channel: 'chrome'} : {})});
