@@ -66,6 +66,6 @@ def test_explanation_is_not_a_public_endpoint_or_analysis_field(client, monkeypa
     assert response.status_code == 200
     assert "explanation" not in response.json()
     paths = client.app.openapi()["paths"]
-    assert len(paths) == 23
-    assert sum(len(operations) for operations in paths.values()) == 25
+    assert len(paths) == 26
+    assert sum(len(operations) for operations in paths.values()) == 28
     assert not any("explain" in path for path in paths)

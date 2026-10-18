@@ -1,10 +1,14 @@
-from fastapi import FastAPI, Request
+import secrets
+
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException
 
 from app.adapters.nessie import NessieClient
 from app.adapters.synthetic import load_transactions
+from app.api.auth import router as auth_router
+from app.core.auth import require_session, require_admin_when_enforced
 from app.api.admin_nessie import router as admin_router
 from app.api.routes import customer_router, router
 from app.api.workspace import router as workspace_router
@@ -17,10 +21,12 @@ from app.core.transactions import ProviderError, TransactionNotFound
 def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="TrustLedger synthetic development API", version="0.3.1")
     app.state.settings = settings or Settings()
+    app.state.generated_session_secret = secrets.token_bytes(32)
     app.state.store = Store(app.state.settings.database_path)
     load_transactions(app.state.store, app.state.settings.demo_user_id)
     app.state.nessie = NessieClient(app.state.settings.nessie_api_key.get_secret_value())
-    origins = list({app.state.settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"})
+    origins = list({app.state.settings.frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173",
+                    "http://localhost:5176", "http://127.0.0.1:5176"})
     # Last added is outermost: response headers -> request guard -> CORS -> routes.
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
                        allow_methods=["GET", "POST", "DELETE"], allow_headers=["Content-Type"])
@@ -41,6 +47,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if (request.url.path.startswith("/api/v1/admin/nessie") and isinstance(exc.detail, str)
                 and exc.detail in admin_codes.get(exc.status_code, set())):
             code = exc.detail
+        gate_codes = {401: {"auth_required", "invalid_credentials"},
+                      403: {"admin_only"}, 429: {"too_many_attempts"}}
+        if isinstance(exc.detail, str) and exc.detail in gate_codes.get(exc.status_code, set()):
+            code = exc.detail
         return error_response(request.scope, exc.status_code, code, "Request could not be completed.")
 
     @app.exception_handler(ProviderError)
@@ -56,8 +66,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # Pydantic errors can include raw input; never return them here.
         return error_response(request.scope, 422, "invalid_request", "Request does not match the API contract.")
 
-    app.include_router(router)
-    app.include_router(customer_router)
+    app.include_router(auth_router)
+    app.include_router(router, dependencies=[Depends(require_session)])
+    app.include_router(customer_router, dependencies=[Depends(require_admin_when_enforced)])
     app.include_router(workspace_router)
     app.include_router(admin_router)
     return app

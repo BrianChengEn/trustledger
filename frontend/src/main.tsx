@@ -10,6 +10,8 @@ import {applyTheme, storedTheme, type ThemeChoice} from './theme';
 import {stagger} from './ui';
 import {WorkspaceProvider, useWorkspace} from './workspace';
 import WorkspaceView from './WorkspaceView';
+import {AuthProvider, useAuth} from './auth';
+import Login from './Login';
 import './styles.css';
 
 // Keep one scale for each viewport; content changes stay inside their own panels.
@@ -98,7 +100,11 @@ function ThemeSwitch() {
 }
 
 function Shell() {
-  const route = useRoute();
+  const {session, logout} = useAuth();
+  const admin = session.role === 'admin';
+  const requestedRoute = useRoute();
+  const route = !admin && (requestedRoute.view === 'sources' || requestedRoute.customer)
+    ? {view: 'today' as const} : requestedRoute;
   const {alerts, transactions, memories} = useWorkspace();
   const [menu, setMenu] = useState<Route['view'] | null>(null);
   // The group that was just clicked stays closed until the pointer leaves it, so a click never leaves a menu covering the page.
@@ -169,7 +175,7 @@ function Shell() {
       <a className="logo" href="#/today" aria-label="TrustLedger home"><span className="logomark"><Icon name="shieldCheck" size={20} weight={1.4}/></span>
         <span>TrustLedger<small>Synthetic demo</small></span></a>
       <nav aria-label="Main">
-        {nav.map(n => {
+        {nav.filter(n => admin || n.view !== 'sources').map(n => {
           const m = menus[n.view]; const isOpen = menu === n.view;
           return <div key={n.view} className="navgroup"
             onMouseEnter={() => { setQuiet(q => q === n.view ? q : null); if (quiet !== n.view) setMenu(m ? n.view : null); }}
@@ -200,14 +206,22 @@ function Shell() {
       </nav>
       <ThemeSwitch/>
       <StatusMenu/>
+      <span>{admin ? 'Admin' : 'User'}</span><button onClick={() => void logout()}>Sign out</button>
     </header>
     <main id="main">
       <WorkspaceView route={sources ? {view: 'sources'} : route}/>
-      <div hidden={!sources} className="adminview"><SourcesIntro/><Admin active={sources}/></div>
+      {admin && <div hidden={!sources} className="adminview"><SourcesIntro/><Admin active={sources}/></div>}
     </main>
     <footer className="foot">Synthetic data only · no real accounts · rules decide, you confirm · AI-assisted code, credited in the submission.</footer>
     </div>
   </div>;
 }
 
-createRoot(document.getElementById('root')!).render(<React.StrictMode><WorkspaceProvider><Shell/></WorkspaceProvider></React.StrictMode>);
+function App() {
+  const {session, loading} = useAuth();
+  if (loading) return <p role="status">Connecting…</p>;
+  if (!session.authenticated) return <Login/>;
+  return <WorkspaceProvider key={session.role}><Shell/></WorkspaceProvider>;
+}
+
+createRoot(document.getElementById('root')!).render(<React.StrictMode><AuthProvider><App/></AuthProvider></React.StrictMode>);

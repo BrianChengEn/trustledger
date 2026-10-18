@@ -49,7 +49,9 @@ def test_all_public_operations(contract, client):
         url = path.replace("{transaction_id}", "txn_syn_004").replace(
             "{alert_id}", "alert_txn_syn_004").replace("{memory_id}", memory_id or "missing")
         kwargs = {}
-        if path.endswith("/analyses"):
+        if path.endswith('/auth/login'):
+            kwargs['json'] = {'role': 'user', 'passcode': ''}
+        elif path.endswith("/analyses"):
             kwargs["json"] = {"transaction_id": "txn_syn_004"}
         elif path.endswith("/confirmations"):
             kwargs["json"] = {"decision": "normal", "consent_to_memory": True}

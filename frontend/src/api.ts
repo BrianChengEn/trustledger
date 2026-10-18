@@ -1,3 +1,9 @@
+export type Role = 'user'|'admin';
+export interface Session {
+  authenticated: boolean; role: Role|null; login_required: boolean;
+  admin_available: boolean; demo_edit_enabled: boolean;
+}
+export const UNAUTHORIZED_EVENT = 'trustledger:unauthorized';
 export interface Transaction {
   id: string; occurred_at: string; amount: number; currency: 'USD'; direction: 'debit'|'credit'|'unknown';
   merchant_display: string; merchant_category: string; source: 'synthetic'|'nessie';
@@ -46,6 +52,7 @@ export async function request<T>(path: string, options?: RequestInit, timeoutMs 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const code: string|null = typeof body?.error?.code === 'string' ? body.error.code : null;
+    if (response.status === 401 && code === 'auth_required') window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     throw new ApiError(code ? `Request failed: ${code}` : `API returned ${response.status}`, response.status, code);
   }
   return response.status === 204 ? undefined as T : response.json();

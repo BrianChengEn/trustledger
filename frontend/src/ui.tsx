@@ -25,7 +25,7 @@ export function Seg<T extends string>({label, value, options, onChange}: {
   const index = Math.max(0, options.findIndex(o => o.key === value));
   // The highlight slides to the chosen option (see .seg::before).
   return <div className="seg" role="group" aria-label={label} style={{'--n': options.length, '--i': index} as CSSProperties}>
-    {options.map(o => <button key={o.key} aria-pressed={value === o.key} onClick={() => onChange(o.key)}>
+    {options.map(o => <button type="button" key={o.key} aria-pressed={value === o.key} onClick={() => onChange(o.key)}>
       {o.label}{o.count !== undefined && <span>{o.count}</span>}</button>)}
   </div>;
 }

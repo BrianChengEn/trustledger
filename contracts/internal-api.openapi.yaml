@@ -8,6 +8,41 @@ info:
 servers:
   - url: http://127.0.0.1:8000
 paths:
+  /api/v1/auth/me:
+    get:
+      operationId: getDemoSession
+      responses:
+        '200':
+          description: Local demo session, without secrets.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionView' }
+  /api/v1/auth/login:
+    post:
+      operationId: loginDemo
+      description: Local synthetic demo only. Both roles accept blank passcodes by default; configured passcodes require an exact match.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Signed HttpOnly session cookie issued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionView' }
+        '401': { description: Invalid credentials }
+        '429': { description: Too many attempts }
+  /api/v1/auth/logout:
+    post:
+      operationId: logoutDemo
+      responses:
+        '200':
+          description: Session cookie cleared.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionView' }
   /api/v1/health:
     get:
       operationId: getHealth
@@ -1225,6 +1260,23 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }
   schemas:
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [role]
+      properties:
+        role: { type: string, enum: [user, admin] }
+        passcode: { type: string, maxLength: 64, default: '' }
+    SessionView:
+      type: object
+      additionalProperties: false
+      required: [authenticated, role, login_required, admin_available, demo_edit_enabled]
+      properties:
+        authenticated: { type: boolean }
+        role: { type: [string, 'null'], enum: [user, admin, null] }
+        login_required: { type: boolean }
+        admin_available: { type: boolean }
+        demo_edit_enabled: { type: boolean }
     HealthResponse:
       type: object
       additionalProperties: false

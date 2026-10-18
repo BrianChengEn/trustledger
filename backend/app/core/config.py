@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     jev_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     backboard_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
 
+    # Local demo only: blank passcodes allow blank sign-in for either role.
+    require_login: bool = False
+    demo_user_passcode: SecretStr = Field(default=SecretStr(""), repr=False)
+    demo_admin_passcode: SecretStr = Field(default=SecretStr(""), repr=False)
+    session_secret: SecretStr = Field(default=SecretStr(""), repr=False)
+    session_ttl_minutes: int = Field(default=480, ge=5, le=1440)
+
     @field_validator("frontend_origin")
     @classmethod
     def exact_frontend_origin(cls, value: str) -> str:

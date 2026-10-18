@@ -484,3 +484,21 @@ pre.json { margin: 0; padding: 12px; border-radius: 12px; background: var(--code
   .qside small { max-width: 90px; }
   .admin-query > .panel, #V-HISTORY, .flowpanel, .payloadpanel, .memlist { overflow: visible; }
 }
+
+.loginframe { align-items: stretch; }
+.loginframe .splash { margin: auto; }
+.loginmain { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px; align-items: center; padding: 28px calc(var(--gutter) + 20px); overflow: hidden; }
+.loginintro { display: flex; flex-direction: column; gap: 16px; }
+.loginintro h1 { font-size: 38px; line-height: 1.12; letter-spacing: -.02em; }
+.loginintro ul { list-style: none; display: grid; gap: 14px; }
+.loginintro li { display: flex; gap: 12px; align-items: flex-start; color: var(--muted); font-size: 15px; }
+.loginintro li b { color: var(--ink); }
+.loginform { gap: 12px; padding: 26px 28px; }
+.loginform label { font-size: 13px; font-weight: 600; }
+.loginform input { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
+.loginform .primary { justify-content: center; margin-top: 4px; }
+.loginproblem { color: var(--danger); font-size: 13px; }
+.loginnote { margin-top: 2px; }
+
+
+@media (max-width: 699px) { .loginmain { grid-template-columns: 1fr; gap: 16px; padding: 20px; overflow: auto; } .loginintro h1 { font-size: 26px; } }

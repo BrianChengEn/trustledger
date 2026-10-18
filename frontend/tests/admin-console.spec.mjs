@@ -29,7 +29,7 @@ const errors = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js',
     'frontend', '--host', '127.0.0.1', '--port', '5174'],
-    {VITE_API_BASE_URL: 'http://127.0.0.1:8123'});
+    {VITE_API_BASE_URL: '', API_PROXY_TARGET: 'http://127.0.0.1:8123'});
   const backendLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH: 'backend',
       TRANSACTION_PROVIDER: 'nessie', DATABASE_PATH: join(temp, 'test.db'), FRONTEND_ORIGIN: 'http://127.0.0.1:5174'});
@@ -70,6 +70,9 @@ try {
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(
     new URL(route.request().url()).hostname) ? route.continue() : route.abort());
   await page.goto('http://127.0.0.1:5174');
+  await page.getByRole('button', {name: 'Admin', exact: true}).click();
+  assert.equal(await page.getByLabel('Passcode').inputValue(), '');
+  await page.getByRole('button', {name: 'Sign in', exact: true}).click();
   await page.getByRole('link', {name: /^Today/}).waitFor();
   await page.locator('.startcard').waitFor();
   await page.locator('#NAV-ADMIN').hover();
@@ -510,6 +513,8 @@ try {
   await phone.route('**/*',route=>['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname)
     ? route.continue() : route.abort());
   await phone.goto('http://127.0.0.1:5174/#/activity');
+  await phone.getByRole('button', {name: 'User', exact: true}).click();
+  await phone.getByRole('button', {name: 'Sign in', exact: true}).click();
   await phone.locator('.txtable tbody tr').nth(17).waitFor({state:'attached'});
   assert.equal(await phone.locator('html').getAttribute('data-stage'),null);
   assert(await phone.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
