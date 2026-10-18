@@ -211,7 +211,7 @@ export default function Case({id, from}: {id: string; from?: string}) {
           <p>{s.label}. Context only; it does not hide alerts. <a href={href({view: 'memory'})}>Manage in Memory</a></p></div></div>; })()}
     </aside>
     <div className="steps">
-      <Step n={1} title="Why it was flagged" tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
+      <Step n={1} title={alert ? 'Why it was flagged' : 'What was checked'} tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
         {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still ask for a plain-language explanation or run an AI second opinion.</p>}
         <ExplanationPanel key={revision} tx={tx}/>
       </Step>

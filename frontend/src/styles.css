@@ -190,11 +190,9 @@ button.ghost { background: transparent; }
 .menutext small { font-size: 12.5px; line-height: 1.4; }
 
 /* App frame: the window never scrolls. Every page is a flex column that divides the height it is given. */
-.app { height: 100%; display: flex; justify-content: center; padding: 26px 48px; overflow: hidden; }
+.app { height: 100%; display: flex; justify-content: stretch; padding: 0; overflow: hidden; }
 /* The whole UI is one rounded window floating in the middle, with space around it on every side. */
-.frame { position: relative; flex: 0 1 1280px; min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 32px;
-  background: color-mix(in srgb, var(--surface) 74%, var(--bg));
-  border: 1px solid var(--line); box-shadow: 0 50px 100px -50px rgb(0 0 0 / .55), 0 1px 0 rgb(255 255 255 / .05) inset; }
+.frame { position: relative; flex: 1 1 auto; min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 main { position: relative; flex: 1; min-height: 0; width: 100%; padding: 28px var(--gutter) 6px; display: flex; flex-direction: column; overflow: hidden; }
 .foot { flex: none; text-align: center; color: var(--muted); font-size: 12px; padding: 6px var(--gutter) 18px; opacity: .85; }
 .loading { color: var(--muted); padding: 40px 0; text-align: center; }
@@ -328,7 +326,7 @@ td { padding: 6px 10px; border-bottom: 1px solid var(--line-soft); vertical-alig
 .memnote { display: flex; gap: 10px; padding: 6px 12px; border-radius: 12px; background: var(--brand-soft); font-size: 12.5px; max-width: 420px; }
 .memnote .icon { color: var(--brand); margin-top: 2px; flex: none; }
 .memnote p { color: var(--muted); margin: 0; }
-.steps { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+.steps { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; }
 .steps > .step:nth-child(1) { grid-column: 1; grid-row: 1; }
 .steps > .step:nth-child(2) { grid-column: 1; grid-row: 2; }
 .steps > .step:nth-child(3) { grid-column: 2; grid-row: 1 / span 2; }
@@ -559,3 +557,11 @@ pre.json { margin: 0; padding: 12px; border-radius: 12px; background: var(--code
 .wnote { font-size: 12px; }
 .wcol b { font-variant-numeric: tabular-nums; }
 .startcard .amt, .startcard [class*="big"] { font-variant-numeric: tabular-nums; }
+
+/* ---- No big card: the page is full width. Long boxes scroll inside themselves; the page never does. ---- */
+html[data-stage] .topbar, html[data-stage] main, html[data-stage] .foot { padding-inline: max(var(--gutter), calc((100% - 1280px) / 2)); }
+.topbar { border-bottom: 1px solid var(--line-soft); }
+[data-paged], .stepbody, .flowpanel, .payloadpanel, .demoform, .gallerylist, .adminview .panel.fill {
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+[data-paged]::-webkit-scrollbar, .stepbody::-webkit-scrollbar, .flowpanel::-webkit-scrollbar, .payloadpanel::-webkit-scrollbar, .demoform::-webkit-scrollbar { width: 8px; }
+[data-paged]::-webkit-scrollbar-thumb, .stepbody::-webkit-scrollbar-thumb, .flowpanel::-webkit-scrollbar-thumb, .payloadpanel::-webkit-scrollbar-thumb, .demoform::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
