@@ -1,0 +1,8 @@
+[Unit]
+Description=Renew TrustLedger short-lived IP certificate
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/trustledger-renew-certificate
