@@ -1,0 +1,2857 @@
+{
+  "amount_slices": {
+    "pr14_mapped_hgb": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 133,
+        "false_positives": 72,
+        "fraud": 454,
+        "missed_fraud": 321,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 653,
+        "false_positives": 61,
+        "fraud": 701,
+        "missed_fraud": 48,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "prod_rules": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 7,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 0,
+        "false_positives": 6,
+        "fraud": 454,
+        "missed_fraud": 454,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 701,
+        "false_positives": 205,
+        "fraud": 701,
+        "missed_fraud": 0,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_atavci_rf": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 150,
+        "false_positives": 56,
+        "fraud": 454,
+        "missed_fraud": 304,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 664,
+        "false_positives": 49,
+        "fraud": 701,
+        "missed_fraud": 37,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_atavci_soft_vote_approx": [
+      {
+        "detected_fraud": 1,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 44,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 176,
+        "false_positives": 46,
+        "fraud": 454,
+        "missed_fraud": 278,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 670,
+        "false_positives": 26,
+        "fraud": 701,
+        "missed_fraud": 31,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_atavci_xgb_hinge": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 168,
+        "false_positives": 65,
+        "fraud": 454,
+        "missed_fraud": 286,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 665,
+        "false_positives": 21,
+        "fraud": 701,
+        "missed_fraud": 36,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_atavci_xgb_logistic": [
+      {
+        "detected_fraud": 11,
+        "false_positives": 6,
+        "fraud": 45,
+        "missed_fraud": 34,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 173,
+        "false_positives": 52,
+        "fraud": 454,
+        "missed_fraud": 281,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 661,
+        "false_positives": 16,
+        "fraud": 701,
+        "missed_fraud": 40,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackA_sushmitha_lgbm": [
+      {
+        "detected_fraud": 8,
+        "false_positives": 5,
+        "fraud": 45,
+        "missed_fraud": 37,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 176,
+        "false_positives": 55,
+        "fraud": 454,
+        "missed_fraud": 278,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 658,
+        "false_positives": 17,
+        "fraud": 701,
+        "missed_fraud": 43,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_rf": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 128,
+        "false_positives": 75,
+        "fraud": 454,
+        "missed_fraud": 326,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 682,
+        "false_positives": 34,
+        "fraud": 701,
+        "missed_fraud": 19,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_soft_vote_approx": [
+      {
+        "detected_fraud": 0,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 45,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 149,
+        "false_positives": 45,
+        "fraud": 454,
+        "missed_fraud": 305,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 694,
+        "false_positives": 31,
+        "fraud": 701,
+        "missed_fraud": 7,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_xgb_hinge": [
+      {
+        "detected_fraud": 1,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 44,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 167,
+        "false_positives": 40,
+        "fraud": 454,
+        "missed_fraud": 287,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 693,
+        "false_positives": 18,
+        "fraud": 701,
+        "missed_fraud": 8,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_atavci_xgb_logistic": [
+      {
+        "detected_fraud": 3,
+        "false_positives": 2,
+        "fraud": 45,
+        "missed_fraud": 42,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 161,
+        "false_positives": 39,
+        "fraud": 454,
+        "missed_fraud": 293,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 696,
+        "false_positives": 18,
+        "fraud": 701,
+        "missed_fraud": 5,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "trackB_sushmitha_lgbm": [
+      {
+        "detected_fraud": 10,
+        "false_positives": 0,
+        "fraud": 45,
+        "missed_fraud": 35,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 211,
+        "false_positives": 13,
+        "fraud": 454,
+        "missed_fraud": 243,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 677,
+        "false_positives": 8,
+        "fraud": 701,
+        "missed_fraud": 24,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "v2_enriched_sqrt": [
+      {
+        "detected_fraud": 4,
+        "false_positives": 3,
+        "fraud": 45,
+        "missed_fraud": 41,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 180,
+        "false_positives": 63,
+        "fraud": 454,
+        "missed_fraud": 274,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 653,
+        "false_positives": 16,
+        "fraud": 701,
+        "missed_fraud": 48,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "v2_merchant": [
+      {
+        "detected_fraud": 16,
+        "false_positives": 2,
+        "fraud": 45,
+        "missed_fraud": 29,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 235,
+        "false_positives": 20,
+        "fraud": 454,
+        "missed_fraud": 219,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 641,
+        "false_positives": 5,
+        "fraud": 701,
+        "missed_fraud": 60,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "v2_merchant_expanding": [
+      {
+        "detected_fraud": 13,
+        "false_positives": 1,
+        "fraud": 45,
+        "missed_fraud": 32,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 235,
+        "false_positives": 18,
+        "fraud": 454,
+        "missed_fraud": 219,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 649,
+        "false_positives": 3,
+        "fraud": 701,
+        "missed_fraud": 52,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ],
+    "v2_merchant_step_causal": [
+      {
+        "detected_fraud": 14,
+        "false_positives": 1,
+        "fraud": 45,
+        "missed_fraud": 31,
+        "rows": 40965,
+        "slice": "[0,20)"
+      },
+      {
+        "detected_fraud": 231,
+        "false_positives": 19,
+        "fraud": 454,
+        "missed_fraud": 223,
+        "rows": 69435,
+        "slice": "[20,250)"
+      },
+      {
+        "detected_fraud": 651,
+        "false_positives": 3,
+        "fraud": 701,
+        "missed_fraud": 50,
+        "rows": 906,
+        "slice": ">=250"
+      }
+    ]
+  },
+  "bootstrap": null,
+  "budget": 919,
+  "close_pairs": [
+    {
+      "abs_ap_gap": 0.0008561052026407889,
+      "model_a": "v2_merchant",
+      "model_b": "v2_merchant_step_causal",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.0017071866343484343,
+      "model_a": "v2_merchant",
+      "model_b": "v2_merchant_expanding",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.004993148938576497,
+      "model_a": "v2_merchant",
+      "model_b": "trackB_sushmitha_lgbm",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.0008510814317076454,
+      "model_a": "v2_merchant_step_causal",
+      "model_b": "v2_merchant_expanding",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.004137043735935708,
+      "model_a": "v2_merchant_step_causal",
+      "model_b": "trackB_sushmitha_lgbm",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.003285962304228063,
+      "model_a": "v2_merchant_expanding",
+      "model_b": "trackB_sushmitha_lgbm",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.007266732504957796,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "v2_enriched_sqrt",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.008085723485980911,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "trackA_atavci_xgb_logistic",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.0008189909810231155,
+      "model_a": "v2_enriched_sqrt",
+      "model_b": "trackA_atavci_xgb_logistic",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.003573935414161733,
+      "model_a": "v2_enriched_sqrt",
+      "model_b": "trackA_sushmitha_lgbm",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.0027549444331386175,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "trackA_sushmitha_lgbm",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    },
+    {
+      "abs_ap_gap": 0.00839631545313746,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackB_atavci_rf",
+      "note": "AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。"
+    }
+  ],
+  "expect_banks": true,
+  "failures": [],
+  "holdout_statement": "steps 150–179 已經在 PR #14 與 PR #15 看過。這次是可重現的對照實驗，不是未被看過的盲測。",
+  "integrity_ok": true,
+  "leaderboard": [
+    {
+      "FN": 308,
+      "FP": 27,
+      "TN": 110079,
+      "TP": 892,
+      "alerts": 919,
+      "average_precision": 0.9584845166158367,
+      "model": "v2_merchant",
+      "rank": 1,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9993716774441597,
+      "score_unique_values": 4163
+    },
+    {
+      "FN": 304,
+      "FP": 23,
+      "TN": 110083,
+      "TP": 896,
+      "alerts": 919,
+      "average_precision": 0.9576284114131959,
+      "model": "v2_merchant_step_causal",
+      "rank": 2,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.999341668483098,
+      "score_unique_values": 7202
+    },
+    {
+      "FN": 303,
+      "FP": 22,
+      "TN": 110084,
+      "TP": 897,
+      "alerts": 919,
+      "average_precision": 0.9567773299814882,
+      "model": "v2_merchant_expanding",
+      "rank": 3,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.999335946724066,
+      "score_unique_values": 7376
+    },
+    {
+      "FN": 302,
+      "FP": 21,
+      "TN": 110085,
+      "TP": 898,
+      "alerts": 919,
+      "average_precision": 0.9534913676772602,
+      "model": "trackB_sushmitha_lgbm",
+      "rank": 4,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9991703827826518,
+      "score_unique_values": 111079
+    },
+    {
+      "FN": 340,
+      "FP": 59,
+      "TN": 110047,
+      "TP": 860,
+      "alerts": 919,
+      "average_precision": 0.9215974681908374,
+      "model": "trackB_atavci_xgb_logistic",
+      "rank": 5,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9986201516417513,
+      "score_unique_values": 36032
+    },
+    {
+      "FN": 357,
+      "FP": 76,
+      "TN": 110030,
+      "TP": 843,
+      "alerts": 919,
+      "average_precision": 0.8925265158960306,
+      "model": "trackB_atavci_soft_vote_approx",
+      "rank": 6,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9977745271223488,
+      "score_unique_values": 38251
+    },
+    {
+      "FN": 363,
+      "FP": 82,
+      "TN": 110024,
+      "TP": 837,
+      "alerts": 919,
+      "average_precision": 0.8852597833910728,
+      "model": "v2_enriched_sqrt",
+      "rank": 7,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9970628606373251,
+      "score_unique_values": 8991
+    },
+    {
+      "FN": 355,
+      "FP": 74,
+      "TN": 110032,
+      "TP": 845,
+      "alerts": 919,
+      "average_precision": 0.8844407924100497,
+      "model": "trackA_atavci_xgb_logistic",
+      "rank": 8,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9969243426031884,
+      "score_unique_values": 65025
+    },
+    {
+      "FN": 358,
+      "FP": 77,
+      "TN": 110029,
+      "TP": 842,
+      "alerts": 919,
+      "average_precision": 0.8816858479769111,
+      "model": "trackA_sushmitha_lgbm",
+      "rank": 9,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9967378177998172,
+      "score_unique_values": 110248
+    },
+    {
+      "FN": 353,
+      "FP": 72,
+      "TN": 110034,
+      "TP": 847,
+      "alerts": 919,
+      "average_precision": 0.8698371938595477,
+      "model": "trackA_atavci_soft_vote_approx",
+      "rank": 10,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9961077355760206,
+      "score_unique_values": 68975
+    },
+    {
+      "FN": 390,
+      "FP": 109,
+      "TN": 109997,
+      "TP": 810,
+      "alerts": 919,
+      "average_precision": 0.8614408784064103,
+      "model": "trackB_atavci_rf",
+      "rank": 11,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9973366649713306,
+      "score_unique_values": 12088
+    },
+    {
+      "FN": 386,
+      "FP": 105,
+      "TN": 110001,
+      "TP": 814,
+      "alerts": 919,
+      "average_precision": 0.8467384237840266,
+      "model": "trackA_atavci_rf",
+      "rank": 12,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9956850027851949,
+      "score_unique_values": 15462
+    },
+    {
+      "FN": 414,
+      "FP": 133,
+      "TN": 109973,
+      "TP": 786,
+      "alerts": 919,
+      "average_precision": 0.8153928294023746,
+      "model": "pr14_mapped_hgb",
+      "rank": 13,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.9949155094484708,
+      "score_unique_values": 10688
+    },
+    {
+      "FN": 339,
+      "FP": 58,
+      "TN": 110048,
+      "TP": 861,
+      "alerts": 919,
+      "average_precision": 0.6821036729871625,
+      "model": "trackB_atavci_xgb_hinge",
+      "rank": 14,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.8630563275389169,
+      "score_unique_values": 2
+    },
+    {
+      "FN": 367,
+      "FP": 86,
+      "TN": 110020,
+      "TP": 833,
+      "alerts": 919,
+      "average_precision": 0.6387804529426814,
+      "model": "trackA_atavci_xgb_hinge",
+      "rank": 15,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.8533140564546892,
+      "score_unique_values": 2
+    },
+    {
+      "FN": 499,
+      "FP": 218,
+      "TN": 109888,
+      "TP": 701,
+      "alerts": 919,
+      "average_precision": 0.45007707926977253,
+      "model": "prod_rules",
+      "rank": 16,
+      "ranking_key": "full_test_average_precision",
+      "roc_auc": 0.7910933781991898,
+      "score_unique_values": 2
+    }
+  ],
+  "leaderboard_blocked": false,
+  "model_count": 16,
+  "models": [
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 414,
+        "FP": 133,
+        "TN": 109973,
+        "TP": 786,
+        "accuracy": 0.9950856198228307,
+        "alerts": 919,
+        "average_precision": 0.8153928294023746,
+        "balanced_accuracy": 0.8268960365466005,
+        "f1": 0.7418593676262388,
+        "fpr": 0.001207926906798903,
+        "n": 111306,
+        "precision": 0.8552774755168662,
+        "recall": 0.655,
+        "review_budget": 919,
+        "roc_auc": 0.9949155094484708,
+        "score_unique_values": 10688
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 414,
+        "FP": 133,
+        "TN": 109973,
+        "TP": 786,
+        "accuracy": 0.9950856198228307,
+        "alerts": 919,
+        "average_precision": 0.8153928294023746,
+        "balanced_accuracy": 0.8268960365466005,
+        "f1": 0.7418593676262388,
+        "fpr": 0.001207926906798903,
+        "n": 111306,
+        "precision": 0.8552774755168662,
+        "recall": 0.655,
+        "review_budget": 919,
+        "roc_auc": 0.9949155094484708,
+        "score_unique_values": 10688
+      },
+      "metric_differences": {},
+      "model": "pr14_mapped_hgb",
+      "path": "/tmp/tl-flat-scores/pr14_mapped_hgb.npz",
+      "previously_reported": {
+        "ap_abs_diff": 0.0,
+        "fn_match": true,
+        "fp_match": true,
+        "measured_average_precision": 0.8153928294023746,
+        "reported_average_precision": 0.8153928294023746,
+        "tn_match": true,
+        "tp_match": true
+      },
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 499,
+        "FP": 218,
+        "TN": 109888,
+        "TP": 701,
+        "accuracy": 0.993558298744003,
+        "alerts": 919,
+        "average_precision": 0.45007707926977253,
+        "balanced_accuracy": 0.7910933781991898,
+        "f1": 0.6616328456819254,
+        "fpr": 0.0019799102682869236,
+        "n": 111306,
+        "precision": 0.7627856365614799,
+        "recall": 0.5841666666666666,
+        "review_budget": 919,
+        "roc_auc": 0.7910933781991898,
+        "score_unique_values": 2
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 499,
+        "FP": 218,
+        "TN": 109888,
+        "TP": 701,
+        "accuracy": 0.993558298744003,
+        "alerts": 919,
+        "average_precision": 0.45007707926977253,
+        "balanced_accuracy": 0.7910933781991898,
+        "f1": 0.6616328456819254,
+        "fpr": 0.0019799102682869236,
+        "n": 111306,
+        "precision": 0.7627856365614799,
+        "recall": 0.5841666666666666,
+        "review_budget": 919,
+        "roc_auc": 0.7910933781991898,
+        "score_unique_values": 2
+      },
+      "metric_differences": {},
+      "model": "prod_rules",
+      "path": "/tmp/tl-flat-scores/prod_rules.npz",
+      "previously_reported": {
+        "ap_abs_diff": 0.0,
+        "fn_match": true,
+        "fp_match": true,
+        "measured_average_precision": 0.45007707926977253,
+        "reported_average_precision": 0.45007707926977253,
+        "tn_match": true,
+        "tp_match": true
+      },
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 386,
+        "FP": 105,
+        "TN": 110001,
+        "TP": 814,
+        "accuracy": 0.9955887373546799,
+        "alerts": 919,
+        "average_precision": 0.8467384237840266,
+        "balanced_accuracy": 0.8386898534139828,
+        "f1": 0.7682869277961303,
+        "fpr": 0.0009536265053675549,
+        "n": 111306,
+        "precision": 0.8857453754080522,
+        "recall": 0.6783333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9956850027851949,
+        "score_unique_values": 15462
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 386,
+        "FP": 105,
+        "TN": 110001,
+        "TP": 814,
+        "accuracy": 0.9955887373546799,
+        "alerts": 919,
+        "average_precision": 0.8467384237840266,
+        "balanced_accuracy": 0.8386898534139828,
+        "f1": 0.7682869277961303,
+        "fpr": 0.0009536265053675549,
+        "n": 111306,
+        "precision": 0.8857453754080522,
+        "recall": 0.6783333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9956850027851949,
+        "score_unique_values": 15462
+      },
+      "metric_differences": {},
+      "model": "trackA_atavci_rf",
+      "path": "/tmp/tl-flat-scores/trackA_atavci_rf.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 353,
+        "FP": 72,
+        "TN": 110034,
+        "TP": 847,
+        "accuracy": 0.9961816973029307,
+        "alerts": 919,
+        "average_precision": 0.8698371938595477,
+        "balanced_accuracy": 0.8525897090076835,
+        "f1": 0.7994336951392166,
+        "fpr": 0.0006539153179663233,
+        "n": 111306,
+        "precision": 0.9216539717083787,
+        "recall": 0.7058333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9961077355760206,
+        "score_unique_values": 68975
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 353,
+        "FP": 72,
+        "TN": 110034,
+        "TP": 847,
+        "accuracy": 0.9961816973029307,
+        "alerts": 919,
+        "average_precision": 0.8698371938595477,
+        "balanced_accuracy": 0.8525897090076835,
+        "f1": 0.7994336951392166,
+        "fpr": 0.0006539153179663233,
+        "n": 111306,
+        "precision": 0.9216539717083787,
+        "recall": 0.7058333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9961077355760206,
+        "score_unique_values": 68975
+      },
+      "metric_differences": {},
+      "model": "trackA_atavci_soft_vote_approx",
+      "path": "/tmp/tl-flat-scores/trackA_atavci_soft_vote_approx.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 367,
+        "FP": 86,
+        "TN": 110020,
+        "TP": 833,
+        "accuracy": 0.9959301385370061,
+        "alerts": 919,
+        "average_precision": 0.6387804529426814,
+        "balanced_accuracy": 0.8466928005739924,
+        "f1": 0.7862199150542709,
+        "fpr": 0.0007810655186819974,
+        "n": 111306,
+        "precision": 0.9064200217627857,
+        "recall": 0.6941666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.8533140564546892,
+        "score_unique_values": 2
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 367,
+        "FP": 86,
+        "TN": 110020,
+        "TP": 833,
+        "accuracy": 0.9959301385370061,
+        "alerts": 919,
+        "average_precision": 0.6387804529426814,
+        "balanced_accuracy": 0.8466928005739924,
+        "f1": 0.7862199150542709,
+        "fpr": 0.0007810655186819974,
+        "n": 111306,
+        "precision": 0.9064200217627857,
+        "recall": 0.6941666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.8533140564546892,
+        "score_unique_values": 2
+      },
+      "metric_differences": {},
+      "model": "trackA_atavci_xgb_hinge",
+      "path": "/tmp/tl-flat-scores/trackA_atavci_xgb_hinge.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 355,
+        "FP": 74,
+        "TN": 110032,
+        "TP": 845,
+        "accuracy": 0.99614576033637,
+        "alerts": 919,
+        "average_precision": 0.8844407924100497,
+        "balanced_accuracy": 0.8517472935171562,
+        "f1": 0.7975460122699386,
+        "fpr": 0.0006720796323542768,
+        "n": 111306,
+        "precision": 0.9194776931447225,
+        "recall": 0.7041666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9969243426031884,
+        "score_unique_values": 65025
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 355,
+        "FP": 74,
+        "TN": 110032,
+        "TP": 845,
+        "accuracy": 0.99614576033637,
+        "alerts": 919,
+        "average_precision": 0.8844407924100497,
+        "balanced_accuracy": 0.8517472935171562,
+        "f1": 0.7975460122699386,
+        "fpr": 0.0006720796323542768,
+        "n": 111306,
+        "precision": 0.9194776931447225,
+        "recall": 0.7041666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9969243426031884,
+        "score_unique_values": 65025
+      },
+      "metric_differences": {},
+      "model": "trackA_atavci_xgb_logistic",
+      "path": "/tmp/tl-flat-scores/trackA_atavci_xgb_logistic.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 358,
+        "FP": 77,
+        "TN": 110029,
+        "TP": 842,
+        "accuracy": 0.9960918548865291,
+        "alerts": 919,
+        "average_precision": 0.8816858479769111,
+        "balanced_accuracy": 0.8504836702813652,
+        "f1": 0.7947144879660216,
+        "fpr": 0.000699326103936207,
+        "n": 111306,
+        "precision": 0.9162132752992383,
+        "recall": 0.7016666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9967378177998172,
+        "score_unique_values": 110248
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 358,
+        "FP": 77,
+        "TN": 110029,
+        "TP": 842,
+        "accuracy": 0.9960918548865291,
+        "alerts": 919,
+        "average_precision": 0.8816858479769111,
+        "balanced_accuracy": 0.8504836702813652,
+        "f1": 0.7947144879660216,
+        "fpr": 0.000699326103936207,
+        "n": 111306,
+        "precision": 0.9162132752992383,
+        "recall": 0.7016666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9967378177998172,
+        "score_unique_values": 110248
+      },
+      "metric_differences": {},
+      "model": "trackA_sushmitha_lgbm",
+      "path": "/tmp/tl-flat-scores/trackA_sushmitha_lgbm.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 390,
+        "FP": 109,
+        "TN": 109997,
+        "TP": 810,
+        "accuracy": 0.9955168634215585,
+        "alerts": 919,
+        "average_precision": 0.8614408784064103,
+        "balanced_accuracy": 0.8370050224329283,
+        "f1": 0.7645115620575744,
+        "fpr": 0.0009899551341434618,
+        "n": 111306,
+        "precision": 0.8813928182807399,
+        "recall": 0.675,
+        "review_budget": 919,
+        "roc_auc": 0.9973366649713306,
+        "score_unique_values": 12088
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 390,
+        "FP": 109,
+        "TN": 109997,
+        "TP": 810,
+        "accuracy": 0.9955168634215585,
+        "alerts": 919,
+        "average_precision": 0.8614408784064103,
+        "balanced_accuracy": 0.8370050224329283,
+        "f1": 0.7645115620575744,
+        "fpr": 0.0009899551341434618,
+        "n": 111306,
+        "precision": 0.8813928182807399,
+        "recall": 0.675,
+        "review_budget": 919,
+        "roc_auc": 0.9973366649713306,
+        "score_unique_values": 12088
+      },
+      "metric_differences": {},
+      "model": "trackB_atavci_rf",
+      "path": "/tmp/tl-flat-scores/trackB_atavci_rf.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 357,
+        "FP": 76,
+        "TN": 110030,
+        "TP": 843,
+        "accuracy": 0.9961098233698094,
+        "alerts": 919,
+        "average_precision": 0.8925265158960306,
+        "balanced_accuracy": 0.8509048780266288,
+        "f1": 0.7956583294006607,
+        "fpr": 0.0006902439467422302,
+        "n": 111306,
+        "precision": 0.9173014145810664,
+        "recall": 0.7025,
+        "review_budget": 919,
+        "roc_auc": 0.9977745271223488,
+        "score_unique_values": 38251
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 357,
+        "FP": 76,
+        "TN": 110030,
+        "TP": 843,
+        "accuracy": 0.9961098233698094,
+        "alerts": 919,
+        "average_precision": 0.8925265158960306,
+        "balanced_accuracy": 0.8509048780266288,
+        "f1": 0.7956583294006607,
+        "fpr": 0.0006902439467422302,
+        "n": 111306,
+        "precision": 0.9173014145810664,
+        "recall": 0.7025,
+        "review_budget": 919,
+        "roc_auc": 0.9977745271223488,
+        "score_unique_values": 38251
+      },
+      "metric_differences": {},
+      "model": "trackB_atavci_soft_vote_approx",
+      "path": "/tmp/tl-flat-scores/trackB_atavci_soft_vote_approx.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 339,
+        "FP": 58,
+        "TN": 110048,
+        "TP": 861,
+        "accuracy": 0.9964332560688552,
+        "alerts": 919,
+        "average_precision": 0.6821036729871625,
+        "balanced_accuracy": 0.8584866174413747,
+        "f1": 0.8126474752241624,
+        "fpr": 0.0005267651172506494,
+        "n": 111306,
+        "precision": 0.9368879216539717,
+        "recall": 0.7175,
+        "review_budget": 919,
+        "roc_auc": 0.8630563275389169,
+        "score_unique_values": 2
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 339,
+        "FP": 58,
+        "TN": 110048,
+        "TP": 861,
+        "accuracy": 0.9964332560688552,
+        "alerts": 919,
+        "average_precision": 0.6821036729871625,
+        "balanced_accuracy": 0.8584866174413747,
+        "f1": 0.8126474752241624,
+        "fpr": 0.0005267651172506494,
+        "n": 111306,
+        "precision": 0.9368879216539717,
+        "recall": 0.7175,
+        "review_budget": 919,
+        "roc_auc": 0.8630563275389169,
+        "score_unique_values": 2
+      },
+      "metric_differences": {},
+      "model": "trackB_atavci_xgb_hinge",
+      "path": "/tmp/tl-flat-scores/trackB_atavci_xgb_hinge.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 340,
+        "FP": 59,
+        "TN": 110047,
+        "TP": 860,
+        "accuracy": 0.9964152875855748,
+        "alerts": 919,
+        "average_precision": 0.9215974681908374,
+        "balanced_accuracy": 0.858065409696111,
+        "f1": 0.8117036337895234,
+        "fpr": 0.0005358472744446261,
+        "n": 111306,
+        "precision": 0.9357997823721437,
+        "recall": 0.7166666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9986201516417513,
+        "score_unique_values": 36032
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 340,
+        "FP": 59,
+        "TN": 110047,
+        "TP": 860,
+        "accuracy": 0.9964152875855748,
+        "alerts": 919,
+        "average_precision": 0.9215974681908374,
+        "balanced_accuracy": 0.858065409696111,
+        "f1": 0.8117036337895234,
+        "fpr": 0.0005358472744446261,
+        "n": 111306,
+        "precision": 0.9357997823721437,
+        "recall": 0.7166666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.9986201516417513,
+        "score_unique_values": 36032
+      },
+      "metric_differences": {},
+      "model": "trackB_atavci_xgb_logistic",
+      "path": "/tmp/tl-flat-scores/trackB_atavci_xgb_logistic.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 302,
+        "FP": 21,
+        "TN": 110085,
+        "TP": 898,
+        "accuracy": 0.9970980899502273,
+        "alerts": 919,
+        "average_precision": 0.9534913676772602,
+        "balanced_accuracy": 0.8740713040161299,
+        "f1": 0.8475696083058046,
+        "fpr": 0.00019072530107351097,
+        "n": 111306,
+        "precision": 0.9771490750816104,
+        "recall": 0.7483333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9991703827826518,
+        "score_unique_values": 111079
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 302,
+        "FP": 21,
+        "TN": 110085,
+        "TP": 898,
+        "accuracy": 0.9970980899502273,
+        "alerts": 919,
+        "average_precision": 0.9534913676772602,
+        "balanced_accuracy": 0.8740713040161299,
+        "f1": 0.8475696083058046,
+        "fpr": 0.00019072530107351097,
+        "n": 111306,
+        "precision": 0.9771490750816104,
+        "recall": 0.7483333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9991703827826518,
+        "score_unique_values": 111079
+      },
+      "metric_differences": {},
+      "model": "trackB_sushmitha_lgbm",
+      "path": "/tmp/tl-flat-scores/trackB_sushmitha_lgbm.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 363,
+        "FP": 82,
+        "TN": 110024,
+        "TP": 837,
+        "accuracy": 0.9960020124701274,
+        "alerts": 919,
+        "average_precision": 0.8852597833910728,
+        "balanced_accuracy": 0.848377631555047,
+        "f1": 0.7899952807928267,
+        "fpr": 0.0007447368899060905,
+        "n": 111306,
+        "precision": 0.9107725788900979,
+        "recall": 0.6975,
+        "review_budget": 919,
+        "roc_auc": 0.9970628606373251,
+        "score_unique_values": 8991
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 363,
+        "FP": 82,
+        "TN": 110024,
+        "TP": 837,
+        "accuracy": 0.9960020124701274,
+        "alerts": 919,
+        "average_precision": 0.8852597833910728,
+        "balanced_accuracy": 0.848377631555047,
+        "f1": 0.7899952807928267,
+        "fpr": 0.0007447368899060905,
+        "n": 111306,
+        "precision": 0.9107725788900979,
+        "recall": 0.6975,
+        "review_budget": 919,
+        "roc_auc": 0.9970628606373251,
+        "score_unique_values": 8991
+      },
+      "metric_differences": {},
+      "model": "v2_enriched_sqrt",
+      "path": "/tmp/tl-flat-scores/v2_enriched_sqrt.npz",
+      "previously_reported": {
+        "ap_abs_diff": 0.0,
+        "fn_match": true,
+        "fp_match": true,
+        "measured_average_precision": 0.8852597833910728,
+        "reported_average_precision": 0.8852597833910728,
+        "tn_match": true,
+        "tp_match": true
+      },
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 308,
+        "FP": 27,
+        "TN": 110079,
+        "TP": 892,
+        "accuracy": 0.9969902790505454,
+        "alerts": 919,
+        "average_precision": 0.9584845166158367,
+        "balanced_accuracy": 0.8715440575445479,
+        "f1": 0.8419065596979707,
+        "fpr": 0.0002452182442373713,
+        "n": 111306,
+        "precision": 0.970620239390642,
+        "recall": 0.7433333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9993716774441597,
+        "score_unique_values": 4163
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 308,
+        "FP": 27,
+        "TN": 110079,
+        "TP": 892,
+        "accuracy": 0.9969902790505454,
+        "alerts": 919,
+        "average_precision": 0.9584845166158367,
+        "balanced_accuracy": 0.8715440575445479,
+        "f1": 0.8419065596979707,
+        "fpr": 0.0002452182442373713,
+        "n": 111306,
+        "precision": 0.970620239390642,
+        "recall": 0.7433333333333333,
+        "review_budget": 919,
+        "roc_auc": 0.9993716774441597,
+        "score_unique_values": 4163
+      },
+      "metric_differences": {},
+      "model": "v2_merchant",
+      "path": "/tmp/tl-flat-scores/v2_merchant.npz",
+      "previously_reported": {
+        "ap_abs_diff": 0.0,
+        "fn_match": true,
+        "fp_match": true,
+        "measured_average_precision": 0.9584845166158367,
+        "reported_average_precision": 0.9584845166158367,
+        "tn_match": true,
+        "tp_match": true
+      },
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 303,
+        "FP": 22,
+        "TN": 110084,
+        "TP": 897,
+        "accuracy": 0.997080121466947,
+        "alerts": 919,
+        "average_precision": 0.9567773299814882,
+        "balanced_accuracy": 0.8736500962708662,
+        "f1": 0.8466257668711656,
+        "fpr": 0.00019980745826748768,
+        "n": 111306,
+        "precision": 0.9760609357997824,
+        "recall": 0.7475,
+        "review_budget": 919,
+        "roc_auc": 0.999335946724066,
+        "score_unique_values": 7376
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 303,
+        "FP": 22,
+        "TN": 110084,
+        "TP": 897,
+        "accuracy": 0.997080121466947,
+        "alerts": 919,
+        "average_precision": 0.9567773299814882,
+        "balanced_accuracy": 0.8736500962708662,
+        "f1": 0.8466257668711656,
+        "fpr": 0.00019980745826748768,
+        "n": 111306,
+        "precision": 0.9760609357997824,
+        "recall": 0.7475,
+        "review_budget": 919,
+        "roc_auc": 0.999335946724066,
+        "score_unique_values": 7376
+      },
+      "metric_differences": {},
+      "model": "v2_merchant_expanding",
+      "path": "/tmp/tl-flat-scores/v2_merchant_expanding.npz",
+      "previously_reported": null,
+      "rows": 111306
+    },
+    {
+      "alerts": 919,
+      "contract_metrics": {
+        "FN": 304,
+        "FP": 23,
+        "TN": 110083,
+        "TP": 896,
+        "accuracy": 0.9970621529836666,
+        "alerts": 919,
+        "average_precision": 0.9576284114131959,
+        "balanced_accuracy": 0.8732288885256025,
+        "f1": 0.8456819254365268,
+        "fpr": 0.0002088896154614644,
+        "n": 111306,
+        "precision": 0.9749727965179543,
+        "recall": 0.7466666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.999341668483098,
+        "score_unique_values": 7202
+      },
+      "fingerprints": {
+        "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+        "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+        "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+        "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+        "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+        "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+      },
+      "finite_score": true,
+      "fraud": 1200,
+      "independent_metrics": {
+        "FN": 304,
+        "FP": 23,
+        "TN": 110083,
+        "TP": 896,
+        "accuracy": 0.9970621529836666,
+        "alerts": 919,
+        "average_precision": 0.9576284114131959,
+        "balanced_accuracy": 0.8732288885256025,
+        "f1": 0.8456819254365268,
+        "fpr": 0.0002088896154614644,
+        "n": 111306,
+        "precision": 0.9749727965179543,
+        "recall": 0.7466666666666667,
+        "review_budget": 919,
+        "roc_auc": 0.999341668483098,
+        "score_unique_values": 7202
+      },
+      "metric_differences": {},
+      "model": "v2_merchant_step_causal",
+      "path": "/tmp/tl-flat-scores/v2_merchant_step_causal.npz",
+      "previously_reported": null,
+      "rows": 111306
+    }
+  ],
+  "notes": [],
+  "ok": false,
+  "overlap": [
+    {
+      "both": 653,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "prod_rules",
+      "neither": 366,
+      "only_a": 133,
+      "only_b": 48
+    },
+    {
+      "both": 718,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackA_atavci_rf",
+      "neither": 318,
+      "only_a": 68,
+      "only_b": 96
+    },
+    {
+      "both": 739,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackA_atavci_soft_vote_approx",
+      "neither": 306,
+      "only_a": 47,
+      "only_b": 108
+    },
+    {
+      "both": 735,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackA_atavci_xgb_hinge",
+      "neither": 316,
+      "only_a": 51,
+      "only_b": 98
+    },
+    {
+      "both": 735,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackA_atavci_xgb_logistic",
+      "neither": 304,
+      "only_a": 51,
+      "only_b": 110
+    },
+    {
+      "both": 727,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackA_sushmitha_lgbm",
+      "neither": 299,
+      "only_a": 59,
+      "only_b": 115
+    },
+    {
+      "both": 708,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackB_atavci_rf",
+      "neither": 312,
+      "only_a": 78,
+      "only_b": 102
+    },
+    {
+      "both": 734,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 305,
+      "only_a": 52,
+      "only_b": 109
+    },
+    {
+      "both": 734,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 287,
+      "only_a": 52,
+      "only_b": 127
+    },
+    {
+      "both": 739,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 293,
+      "only_a": 47,
+      "only_b": 121
+    },
+    {
+      "both": 738,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 254,
+      "only_a": 48,
+      "only_b": 160
+    },
+    {
+      "both": 733,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 310,
+      "only_a": 53,
+      "only_b": 104
+    },
+    {
+      "both": 703,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "v2_merchant",
+      "neither": 225,
+      "only_a": 83,
+      "only_b": 189
+    },
+    {
+      "both": 716,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "v2_merchant_expanding",
+      "neither": 233,
+      "only_a": 70,
+      "only_b": 181
+    },
+    {
+      "both": 714,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "pr14_mapped_hgb",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 232,
+      "only_a": 72,
+      "only_b": 182
+    },
+    {
+      "both": 664,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackA_atavci_rf",
+      "neither": 349,
+      "only_a": 37,
+      "only_b": 150
+    },
+    {
+      "both": 670,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackA_atavci_soft_vote_approx",
+      "neither": 322,
+      "only_a": 31,
+      "only_b": 177
+    },
+    {
+      "both": 665,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackA_atavci_xgb_hinge",
+      "neither": 331,
+      "only_a": 36,
+      "only_b": 168
+    },
+    {
+      "both": 661,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackA_atavci_xgb_logistic",
+      "neither": 315,
+      "only_a": 40,
+      "only_b": 184
+    },
+    {
+      "both": 658,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackA_sushmitha_lgbm",
+      "neither": 315,
+      "only_a": 43,
+      "only_b": 184
+    },
+    {
+      "both": 682,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackB_atavci_rf",
+      "neither": 371,
+      "only_a": 19,
+      "only_b": 128
+    },
+    {
+      "both": 694,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 350,
+      "only_a": 7,
+      "only_b": 149
+    },
+    {
+      "both": 693,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 331,
+      "only_a": 8,
+      "only_b": 168
+    },
+    {
+      "both": 696,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 335,
+      "only_a": 5,
+      "only_b": 164
+    },
+    {
+      "both": 677,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 278,
+      "only_a": 24,
+      "only_b": 221
+    },
+    {
+      "both": 653,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 315,
+      "only_a": 48,
+      "only_b": 184
+    },
+    {
+      "both": 641,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "v2_merchant",
+      "neither": 248,
+      "only_a": 60,
+      "only_b": 251
+    },
+    {
+      "both": 649,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "v2_merchant_expanding",
+      "neither": 251,
+      "only_a": 52,
+      "only_b": 248
+    },
+    {
+      "both": 651,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "prod_rules",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 254,
+      "only_a": 50,
+      "only_b": 245
+    },
+    {
+      "both": 795,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackA_atavci_soft_vote_approx",
+      "neither": 334,
+      "only_a": 19,
+      "only_b": 52
+    },
+    {
+      "both": 761,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackA_atavci_xgb_hinge",
+      "neither": 314,
+      "only_a": 53,
+      "only_b": 72
+    },
+    {
+      "both": 767,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackA_atavci_xgb_logistic",
+      "neither": 308,
+      "only_a": 47,
+      "only_b": 78
+    },
+    {
+      "both": 764,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackA_sushmitha_lgbm",
+      "neither": 308,
+      "only_a": 50,
+      "only_b": 78
+    },
+    {
+      "both": 732,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackB_atavci_rf",
+      "neither": 308,
+      "only_a": 82,
+      "only_b": 78
+    },
+    {
+      "both": 762,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 305,
+      "only_a": 52,
+      "only_b": 81
+    },
+    {
+      "both": 759,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 284,
+      "only_a": 55,
+      "only_b": 102
+    },
+    {
+      "both": 767,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 293,
+      "only_a": 47,
+      "only_b": 93
+    },
+    {
+      "both": 755,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 243,
+      "only_a": 59,
+      "only_b": 143
+    },
+    {
+      "both": 762,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 311,
+      "only_a": 52,
+      "only_b": 75
+    },
+    {
+      "both": 736,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "v2_merchant",
+      "neither": 230,
+      "only_a": 78,
+      "only_b": 156
+    },
+    {
+      "both": 743,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "v2_merchant_expanding",
+      "neither": 232,
+      "only_a": 71,
+      "only_b": 154
+    },
+    {
+      "both": 742,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_rf",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 232,
+      "only_a": 72,
+      "only_b": 154
+    },
+    {
+      "both": 802,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackA_atavci_xgb_hinge",
+      "neither": 322,
+      "only_a": 45,
+      "only_b": 31
+    },
+    {
+      "both": 818,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackA_atavci_xgb_logistic",
+      "neither": 326,
+      "only_a": 29,
+      "only_b": 27
+    },
+    {
+      "both": 802,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackA_sushmitha_lgbm",
+      "neither": 313,
+      "only_a": 45,
+      "only_b": 40
+    },
+    {
+      "both": 741,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackB_atavci_rf",
+      "neither": 284,
+      "only_a": 106,
+      "only_b": 69
+    },
+    {
+      "both": 775,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 285,
+      "only_a": 72,
+      "only_b": 68
+    },
+    {
+      "both": 780,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 272,
+      "only_a": 67,
+      "only_b": 81
+    },
+    {
+      "both": 789,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 282,
+      "only_a": 58,
+      "only_b": 71
+    },
+    {
+      "both": 791,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 246,
+      "only_a": 56,
+      "only_b": 107
+    },
+    {
+      "both": 808,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 324,
+      "only_a": 39,
+      "only_b": 29
+    },
+    {
+      "both": 767,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "v2_merchant",
+      "neither": 228,
+      "only_a": 80,
+      "only_b": 125
+    },
+    {
+      "both": 775,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "v2_merchant_expanding",
+      "neither": 231,
+      "only_a": 72,
+      "only_b": 122
+    },
+    {
+      "both": 773,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_soft_vote_approx",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 230,
+      "only_a": 74,
+      "only_b": 123
+    },
+    {
+      "both": 804,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "trackA_atavci_xgb_logistic",
+      "neither": 326,
+      "only_a": 29,
+      "only_b": 41
+    },
+    {
+      "both": 796,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "trackA_sushmitha_lgbm",
+      "neither": 321,
+      "only_a": 37,
+      "only_b": 46
+    },
+    {
+      "both": 731,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "trackB_atavci_rf",
+      "neither": 288,
+      "only_a": 102,
+      "only_b": 79
+    },
+    {
+      "both": 764,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 288,
+      "only_a": 69,
+      "only_b": 79
+    },
+    {
+      "both": 767,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 273,
+      "only_a": 66,
+      "only_b": 94
+    },
+    {
+      "both": 778,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 285,
+      "only_a": 55,
+      "only_b": 82
+    },
+    {
+      "both": 779,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 248,
+      "only_a": 54,
+      "only_b": 119
+    },
+    {
+      "both": 802,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 332,
+      "only_a": 31,
+      "only_b": 35
+    },
+    {
+      "both": 756,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "v2_merchant",
+      "neither": 231,
+      "only_a": 77,
+      "only_b": 136
+    },
+    {
+      "both": 765,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "v2_merchant_expanding",
+      "neither": 235,
+      "only_a": 68,
+      "only_b": 132
+    },
+    {
+      "both": 763,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_hinge",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 234,
+      "only_a": 70,
+      "only_b": 133
+    },
+    {
+      "both": 813,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "trackA_sushmitha_lgbm",
+      "neither": 326,
+      "only_a": 32,
+      "only_b": 29
+    },
+    {
+      "both": 726,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "trackB_atavci_rf",
+      "neither": 271,
+      "only_a": 119,
+      "only_b": 84
+    },
+    {
+      "both": 760,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 272,
+      "only_a": 85,
+      "only_b": 83
+    },
+    {
+      "both": 765,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 259,
+      "only_a": 80,
+      "only_b": 96
+    },
+    {
+      "both": 778,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 273,
+      "only_a": 67,
+      "only_b": 82
+    },
+    {
+      "both": 791,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 248,
+      "only_a": 54,
+      "only_b": 107
+    },
+    {
+      "both": 811,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 329,
+      "only_a": 34,
+      "only_b": 26
+    },
+    {
+      "both": 770,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "v2_merchant",
+      "neither": 233,
+      "only_a": 75,
+      "only_b": 122
+    },
+    {
+      "both": 775,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "v2_merchant_expanding",
+      "neither": 233,
+      "only_a": 70,
+      "only_b": 122
+    },
+    {
+      "both": 774,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_atavci_xgb_logistic",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 233,
+      "only_a": 71,
+      "only_b": 122
+    },
+    {
+      "both": 725,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "trackB_atavci_rf",
+      "neither": 273,
+      "only_a": 117,
+      "only_b": 85
+    },
+    {
+      "both": 760,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 275,
+      "only_a": 82,
+      "only_b": 83
+    },
+    {
+      "both": 765,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 262,
+      "only_a": 77,
+      "only_b": 96
+    },
+    {
+      "both": 780,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 278,
+      "only_a": 62,
+      "only_b": 80
+    },
+    {
+      "both": 785,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 245,
+      "only_a": 57,
+      "only_b": 113
+    },
+    {
+      "both": 808,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 329,
+      "only_a": 34,
+      "only_b": 29
+    },
+    {
+      "both": 766,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "v2_merchant",
+      "neither": 232,
+      "only_a": 76,
+      "only_b": 126
+    },
+    {
+      "both": 774,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "v2_merchant_expanding",
+      "neither": 235,
+      "only_a": 68,
+      "only_b": 123
+    },
+    {
+      "both": 773,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackA_sushmitha_lgbm",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 235,
+      "only_a": 69,
+      "only_b": 123
+    },
+    {
+      "both": 800,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "trackB_atavci_soft_vote_approx",
+      "neither": 347,
+      "only_a": 10,
+      "only_b": 43
+    },
+    {
+      "both": 774,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 303,
+      "only_a": 36,
+      "only_b": 87
+    },
+    {
+      "both": 781,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 311,
+      "only_a": 29,
+      "only_b": 79
+    },
+    {
+      "both": 754,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 246,
+      "only_a": 56,
+      "only_b": 144
+    },
+    {
+      "both": 723,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 276,
+      "only_a": 87,
+      "only_b": 114
+    },
+    {
+      "both": 719,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "v2_merchant",
+      "neither": 217,
+      "only_a": 91,
+      "only_b": 173
+    },
+    {
+      "both": 727,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "v2_merchant_expanding",
+      "neither": 220,
+      "only_a": 83,
+      "only_b": 170
+    },
+    {
+      "both": 727,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_rf",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 221,
+      "only_a": 83,
+      "only_b": 169
+    },
+    {
+      "both": 811,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "trackB_atavci_xgb_hinge",
+      "neither": 307,
+      "only_a": 32,
+      "only_b": 50
+    },
+    {
+      "both": 824,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 321,
+      "only_a": 19,
+      "only_b": 36
+    },
+    {
+      "both": 788,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 247,
+      "only_a": 55,
+      "only_b": 110
+    },
+    {
+      "both": 758,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 278,
+      "only_a": 85,
+      "only_b": 79
+    },
+    {
+      "both": 754,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "v2_merchant",
+      "neither": 219,
+      "only_a": 89,
+      "only_b": 138
+    },
+    {
+      "both": 760,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "v2_merchant_expanding",
+      "neither": 220,
+      "only_a": 83,
+      "only_b": 137
+    },
+    {
+      "both": 760,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_soft_vote_approx",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 221,
+      "only_a": 83,
+      "only_b": 136
+    },
+    {
+      "both": 822,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_hinge",
+      "model_b": "trackB_atavci_xgb_logistic",
+      "neither": 301,
+      "only_a": 39,
+      "only_b": 38
+    },
+    {
+      "both": 810,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_hinge",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 251,
+      "only_a": 51,
+      "only_b": 88
+    },
+    {
+      "both": 761,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_hinge",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 263,
+      "only_a": 100,
+      "only_b": 76
+    },
+    {
+      "both": 773,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_hinge",
+      "model_b": "v2_merchant",
+      "neither": 220,
+      "only_a": 88,
+      "only_b": 119
+    },
+    {
+      "both": 775,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_hinge",
+      "model_b": "v2_merchant_expanding",
+      "neither": 217,
+      "only_a": 86,
+      "only_b": 122
+    },
+    {
+      "both": 774,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_hinge",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 217,
+      "only_a": 87,
+      "only_b": 122
+    },
+    {
+      "both": 803,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_logistic",
+      "model_b": "trackB_sushmitha_lgbm",
+      "neither": 245,
+      "only_a": 57,
+      "only_b": 95
+    },
+    {
+      "both": 775,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_logistic",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 278,
+      "only_a": 85,
+      "only_b": 62
+    },
+    {
+      "both": 774,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_logistic",
+      "model_b": "v2_merchant",
+      "neither": 222,
+      "only_a": 86,
+      "only_b": 118
+    },
+    {
+      "both": 778,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_logistic",
+      "model_b": "v2_merchant_expanding",
+      "neither": 221,
+      "only_a": 82,
+      "only_b": 119
+    },
+    {
+      "both": 778,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_atavci_xgb_logistic",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 222,
+      "only_a": 82,
+      "only_b": 118
+    },
+    {
+      "both": 776,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_sushmitha_lgbm",
+      "model_b": "v2_enriched_sqrt",
+      "neither": 241,
+      "only_a": 122,
+      "only_b": 61
+    },
+    {
+      "both": 822,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_sushmitha_lgbm",
+      "model_b": "v2_merchant",
+      "neither": 232,
+      "only_a": 76,
+      "only_b": 70
+    },
+    {
+      "both": 829,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_sushmitha_lgbm",
+      "model_b": "v2_merchant_expanding",
+      "neither": 234,
+      "only_a": 69,
+      "only_b": 68
+    },
+    {
+      "both": 829,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "trackB_sushmitha_lgbm",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 235,
+      "only_a": 69,
+      "only_b": 67
+    },
+    {
+      "both": 757,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "v2_enriched_sqrt",
+      "model_b": "v2_merchant",
+      "neither": 228,
+      "only_a": 80,
+      "only_b": 135
+    },
+    {
+      "both": 768,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "v2_enriched_sqrt",
+      "model_b": "v2_merchant_expanding",
+      "neither": 234,
+      "only_a": 69,
+      "only_b": 129
+    },
+    {
+      "both": 767,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "v2_enriched_sqrt",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 234,
+      "only_a": 70,
+      "only_b": 129
+    },
+    {
+      "both": 843,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "v2_merchant",
+      "model_b": "v2_merchant_expanding",
+      "neither": 254,
+      "only_a": 49,
+      "only_b": 54
+    },
+    {
+      "both": 848,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "v2_merchant",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 260,
+      "only_a": 44,
+      "only_b": 48
+    },
+    {
+      "both": 890,
+      "budget": 919,
+      "fraud": 1200,
+      "model_a": "v2_merchant_expanding",
+      "model_b": "v2_merchant_step_causal",
+      "neither": 297,
+      "only_a": 7,
+      "only_b": 6
+    }
+  ],
+  "ranking_rule": "榜單只按完整 test 的 Average Precision 點估計排序。Bootstrap 的平均數不是排序鍵，也不用來重排榜單。",
+  "role": "independent BankSim metric audit",
+  "score_dir": "/tmp/tl-flat-scores",
+  "shared_fingerprints": {
+    "amount": "2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35",
+    "category": "30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4",
+    "customer": "74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335",
+    "merchant": "4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853",
+    "step": "429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0",
+    "y": "da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75"
+  },
+  "suspicions": [
+    {
+      "code": "missing_leakage_status",
+      "detail": "JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。",
+      "model": "pr14_mapped_hgb"
+    },
+    {
+      "code": "missing_leakage_status",
+      "detail": "JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。",
+      "model": "prod_rules"
+    },
+    {
+      "code": "missing_leakage_status",
+      "detail": "JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。",
+      "model": "v2_enriched_sqrt"
+    },
+    {
+      "code": "missing_leakage_status",
+      "detail": "JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。",
+      "model": "v2_merchant"
+    },
+    {
+      "code": "missing_leakage_status",
+      "detail": "JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。",
+      "model": "v2_merchant_expanding"
+    },
+    {
+      "code": "missing_leakage_status",
+      "detail": "JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。",
+      "model": "v2_merchant_step_causal"
+    }
+  ]
+}

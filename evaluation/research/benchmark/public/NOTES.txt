@@ -1,0 +1,57 @@
+TrustLedger BankSim 公開模型重現
+
+這不是未被看過的盲測。steps 150–179 已經在 PR #14 和 PR #15 看過。
+這次是可重現的對照，不是獨立、未接觸的 holdout。
+超參數使用凍結的 contract.py，沒有用 select、confirm 或 test 的標籤來選。
+模型只在 steps 0–119 的訓練列上擬合。
+
+狀態：complete
+人口檢查：通過。 train 374914 筆、4800 件詐欺； select 53722、600； confirm 54701、600； test 111306、1200。
+
+軌道
+- Track A 使用 contract.parity_parts。沒有 merchant fraud rate，也沒有身份代碼、age、gender、zip 或原始 id。
+- Track B 的 atavci 使用 contract.atavci_matrix。代碼只在訓練列出現過的值上編，沒看過的值是 -1。這不是 target encoding。Track B 比較接近 2019 筆記本，但切分與 codebook 不同，所以是 ADAPTED，不是逐字重現。
+- Track B 的 0xSushmitha 使用 contract.sushmitha_matrix。歷史視窗不含當前列，也不含未來列。
+- Track A 的 LightGBM 用的是 Track A 特徵，不是 Sushmitha 的 customer / merchant 代碼。抽樣程序仍是他們的 5 模型平均。
+
+模型
+- RandomForest 是 ADAPTED。參數是 n_estimators 100、max_depth 8、class_weight balanced、random_state 42。
+- XGBoost logistic 是預先聲明的排序改寫，不是看過 test 之後才選的。分數用 predict_proba 的正類機率。
+- XGBoost hinge 是原文 objective。若 predict_proba 丟出例外或只回 0/1，分數改存 predict()，ranking_possible 為 false，不假造連續機率。
+- soft vote 是 APPROXIMATION。KNN 與 hinge objective 都不在這個 ensemble 裡。分數是 (4 * RF 機率 + 1 * logistic XGB 機率) / 5。
+- LightGBM 是 ADAPTED。5 個模型的 random_state 是 200 到 204。只對訓練列做 undersample，詐欺數 / 正常數 = 0.05。抽樣是 NumPy，不是 imblearn 的同一個亂數流。測試分數是 5 個機率的平均。
+
+0xSushmitha README 公布的 AUPRC 0.9578 不是這次對照的結果。
+他們的 step<=600 切分在這份 steps 0–179 的檔案上不存在。
+這份輸出沒有 TrustLedger 模型的分數，所以不排勝者。
+
+n_jobs 固定為 4。BLAS / OpenMP 設成 1，避免和模型的 4 個執行緒疊加。
+xgboost 2.1.4 的 tree_method 沿用程式庫預設 auto，因為契約沒有凍結這個欄位。
+沒有把模型二進位、joblib booster 或 CSV 寫進這個目錄。
+
+特徵計時（秒）
+- trackA: 0.127 [594643, 28]
+- trackB_atavci: 0.355 [594643, 7]
+- trackB_sushmitha: 1.850 [594643, 37]
+
+KNN 探測
+每個軌道最多用 20,000 筆訓練列與 2,000 筆 test 列計時，上限 60 秒。外推是 (374914 / 探測訓練列) * (111306 / 探測 test 列) * 探測秒數。探測超過 60 秒，或外推超過 600 秒，就略過 KNN。沒有在全部 374,914 筆訓練列上擬合 KNeighborsClassifier。探測沒有用來選超參數，也沒有讀 test 標籤。
+- A: skip=False elapsed=0.529211584 extrapolated=552.1023358187773 reason=time gate passed, but KNeighborsClassifier is still not fit on the full training set
+- B: skip=False elapsed=0.026779792000000024 extrapolated=27.93813696251407 reason=time gate passed, but KNeighborsClassifier is still not fit on the full training set
+兩個軌道的探測都低於 60 秒，外推到 374,914 乘 111,306 也都沒有超過 600 秒，所以時間門檻沒有強制略過 KNN。
+即使如此，這次沒有在全部 374,914 筆訓練列上擬合 KNeighborsClassifier。儲存的 soft vote 仍是 (4 * RF 機率 + 1 * logistic XGB 機率) / 5。KNN 與 hinge objective 都不在這個 ensemble 裡。
+
+已完成的模型
+- trackA_atavci_rf track=A fidelity=ADAPTED test_ap=0.8467384237840266 TP=814 FP=105 FN=386 train_seconds=6.524226833 ranking_possible=True score_source=predict_proba
+- trackB_atavci_rf track=B fidelity=ADAPTED test_ap=0.8614408784064103 TP=810 FP=109 FN=390 train_seconds=2.5005973330000018 ranking_possible=True score_source=predict_proba
+- trackA_atavci_xgb_logistic track=A fidelity=ADAPTED test_ap=0.8844407924100497 TP=845 FP=74 FN=355 train_seconds=5.351970292000004 ranking_possible=True score_source=predict_proba
+- trackB_atavci_xgb_logistic track=B fidelity=ADAPTED test_ap=0.9215974681908374 TP=860 FP=59 FN=340 train_seconds=2.82509125 ranking_possible=True score_source=predict_proba
+- trackA_atavci_xgb_hinge track=A fidelity=ADAPTED test_ap=0.6387804529426814 TP=833 FP=86 FN=367 train_seconds=5.995414250000003 ranking_possible=False score_source=predict
+- trackB_atavci_xgb_hinge track=B fidelity=ADAPTED test_ap=0.6821036729871625 TP=861 FP=58 FN=339 train_seconds=3.282412208999993 ranking_possible=False score_source=predict
+- trackA_atavci_soft_vote_approx track=A fidelity=APPROXIMATION test_ap=0.8698371938595477 TP=847 FP=72 FN=353 train_seconds=0.0 ranking_possible=True score_source=weighted_probability_average
+- trackB_atavci_soft_vote_approx track=B fidelity=APPROXIMATION test_ap=0.8925265158960306 TP=843 FP=76 FN=357 train_seconds=0.0 ranking_possible=True score_source=weighted_probability_average
+- trackA_sushmitha_lgbm track=A fidelity=ADAPTED test_ap=0.8816858479769111 TP=842 FP=77 FN=358 train_seconds=6.991617082999994 ranking_possible=True score_source=mean_predict_proba
+- trackB_sushmitha_lgbm track=B fidelity=ADAPTED test_ap=0.9534913676772602 TP=898 FP=21 FN=302 train_seconds=8.008427166000004 ranking_possible=True score_source=mean_predict_proba
+
+失敗
+沒有模型失敗。

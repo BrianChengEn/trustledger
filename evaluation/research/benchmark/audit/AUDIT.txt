@@ -1,0 +1,329 @@
+TrustLedger BankSim 獨立審計
+steps 150–179 已經在 PR #14 與 PR #15 看過。這次是可重現的對照實驗，不是未被看過的盲測。
+榜單只按完整 test 的 Average Precision 點估計排序。Bootstrap 的平均數不是排序鍵，也不用來重排榜單。
+
+分數目錄：/tmp/tl-flat-scores
+模型數：16
+expect_banks：True
+審查預算：919
+完整性：通過
+可疑結果：6 項
+
+可疑結果
+- missing_leakage_status pr14_mapped_hgb
+  JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。
+- missing_leakage_status prod_rules
+  JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。
+- missing_leakage_status v2_enriched_sqrt
+  JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。
+- missing_leakage_status v2_merchant
+  JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。
+- missing_leakage_status v2_merchant_expanding
+  JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。
+- missing_leakage_status v2_merchant_step_causal
+  JSON sidecar 沒有 leakage_status，無法判斷特徵是否含有訓練標籤。
+
+完整性失敗
+- （無）
+
+資料對齊
+- y：da9d0315541c062bd29f2614ccf168a05fe34fbd8139aa0abfad3eaf9921ba75
+- amount：2bb0cf2363080efbd22eb68d45b3b71035d932e9d55f5a65c18c09afe1f28e35
+- step：429c2feb00a7e33faa81e12af764be3f4789b71a38b0087bf7cd27d2160e93b0
+- customer：74a48f363a4457259b59856fa7f65067a752f9f7d3063fe89cd9305277ecf335
+- merchant：4a70b5debf2d2d0b0cbaf8a482bc74a9d158a4a8c46f802e1ef1e2f22c785853
+- category：30798c53c4284f2d701e7f3e43d27422803f03e484e4d9d1268a0b5cc9bb2fb4
+
+各模型指標
+- pr14_mapped_hgb
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.8153928294，獨立 AP 0.8153928294，ROC AUC 0.9949155094
+  TP 786 FP 133 TN 109973 FN 414，unique scores 10688
+  先前 PR #15 舊數字只供對照，不是這次測量： AP 0.8153928294
+- prod_rules
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.4500770793，獨立 AP 0.4500770793，ROC AUC 0.7910933782
+  TP 701 FP 218 TN 109888 FN 499，unique scores 2
+  先前 PR #15 舊數字只供對照，不是這次測量： AP 0.4500770793
+- trackA_atavci_rf
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.8467384238，獨立 AP 0.8467384238，ROC AUC 0.9956850028
+  TP 814 FP 105 TN 110001 FN 386，unique scores 15462
+- trackA_atavci_soft_vote_approx
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.8698371939，獨立 AP 0.8698371939，ROC AUC 0.9961077356
+  TP 847 FP 72 TN 110034 FN 353，unique scores 68975
+- trackA_atavci_xgb_hinge
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.6387804529，獨立 AP 0.6387804529，ROC AUC 0.8533140565
+  TP 833 FP 86 TN 110020 FN 367，unique scores 2
+- trackA_atavci_xgb_logistic
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.8844407924，獨立 AP 0.8844407924，ROC AUC 0.9969243426
+  TP 845 FP 74 TN 110032 FN 355，unique scores 65025
+- trackA_sushmitha_lgbm
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.881685848，獨立 AP 0.881685848，ROC AUC 0.9967378178
+  TP 842 FP 77 TN 110029 FN 358，unique scores 110248
+- trackB_atavci_rf
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.8614408784，獨立 AP 0.8614408784，ROC AUC 0.997336665
+  TP 810 FP 109 TN 109997 FN 390，unique scores 12088
+- trackB_atavci_soft_vote_approx
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.8925265159，獨立 AP 0.8925265159，ROC AUC 0.9977745271
+  TP 843 FP 76 TN 110030 FN 357，unique scores 38251
+- trackB_atavci_xgb_hinge
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.682103673，獨立 AP 0.682103673，ROC AUC 0.8630563275
+  TP 861 FP 58 TN 110048 FN 339，unique scores 2
+- trackB_atavci_xgb_logistic
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.9215974682，獨立 AP 0.9215974682，ROC AUC 0.9986201516
+  TP 860 FP 59 TN 110047 FN 340，unique scores 36032
+- trackB_sushmitha_lgbm
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.9534913677，獨立 AP 0.9534913677，ROC AUC 0.9991703828
+  TP 898 FP 21 TN 110085 FN 302，unique scores 111079
+- v2_enriched_sqrt
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.8852597834，獨立 AP 0.8852597834，ROC AUC 0.9970628606
+  TP 837 FP 82 TN 110024 FN 363，unique scores 8991
+  先前 PR #15 舊數字只供對照，不是這次測量： AP 0.8852597834
+- v2_merchant
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.9584845166，獨立 AP 0.9584845166，ROC AUC 0.9993716774
+  TP 892 FP 27 TN 110079 FN 308，unique scores 4163
+  先前 PR #15 舊數字只供對照，不是這次測量： AP 0.9584845166
+- v2_merchant_expanding
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.95677733，獨立 AP 0.95677733，ROC AUC 0.9993359467
+  TP 897 FP 22 TN 110084 FN 303，unique scores 7376
+- v2_merchant_step_causal
+  列數 111306，詐欺數 1200，alerts 919
+  contract AP 0.9576284114，獨立 AP 0.9576284114，ROC AUC 0.9993416685
+  TP 896 FP 23 TN 110083 FN 304，unique scores 7202
+
+榜單（完整 test 點估計）
+1. v2_merchant  AP 0.9584845166  TP 892  FP 27  FN 308
+2. v2_merchant_step_causal  AP 0.9576284114  TP 896  FP 23  FN 304
+3. v2_merchant_expanding  AP 0.95677733  TP 897  FP 22  FN 303
+4. trackB_sushmitha_lgbm  AP 0.9534913677  TP 898  FP 21  FN 302
+5. trackB_atavci_xgb_logistic  AP 0.9215974682  TP 860  FP 59  FN 340
+6. trackB_atavci_soft_vote_approx  AP 0.8925265159  TP 843  FP 76  FN 357
+7. v2_enriched_sqrt  AP 0.8852597834  TP 837  FP 82  FN 363
+8. trackA_atavci_xgb_logistic  AP 0.8844407924  TP 845  FP 74  FN 355
+9. trackA_sushmitha_lgbm  AP 0.881685848  TP 842  FP 77  FN 358
+10. trackA_atavci_soft_vote_approx  AP 0.8698371939  TP 847  FP 72  FN 353
+11. trackB_atavci_rf  AP 0.8614408784  TP 810  FP 109  FN 390
+12. trackA_atavci_rf  AP 0.8467384238  TP 814  FP 105  FN 386
+13. pr14_mapped_hgb  AP 0.8153928294  TP 786  FP 133  FN 414
+14. trackB_atavci_xgb_hinge  AP 0.682103673  TP 861  FP 58  FN 339
+15. trackA_atavci_xgb_hinge  AP 0.6387804529  TP 833  FP 86  FN 367
+16. prod_rules  AP 0.4500770793  TP 701  FP 218  FN 499
+排序鍵是 full_test_average_precision，不是 bootstrap 平均數。
+
+AP 接近的配對
+- v2_merchant vs v2_merchant_step_causal，|AP| = 0.0008561052026。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- v2_merchant vs v2_merchant_expanding，|AP| = 0.001707186634。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- v2_merchant vs trackB_sushmitha_lgbm，|AP| = 0.004993148939。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- v2_merchant_step_causal vs v2_merchant_expanding，|AP| = 0.0008510814317。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- v2_merchant_step_causal vs trackB_sushmitha_lgbm，|AP| = 0.004137043736。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- v2_merchant_expanding vs trackB_sushmitha_lgbm，|AP| = 0.003285962304。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- trackB_atavci_soft_vote_approx vs v2_enriched_sqrt，|AP| = 0.007266732505。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- trackB_atavci_soft_vote_approx vs trackA_atavci_xgb_logistic，|AP| = 0.008085723486。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- v2_enriched_sqrt vs trackA_atavci_xgb_logistic，|AP| = 0.000818990981。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- v2_enriched_sqrt vs trackA_sushmitha_lgbm，|AP| = 0.003573935414。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- trackA_atavci_xgb_logistic vs trackA_sushmitha_lgbm，|AP| = 0.002754944433。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+- trackA_atavci_soft_vote_approx vs trackB_atavci_rf，|AP| = 0.008396315453。AP 差距在 0.01 以內，先視為接近。點估計順序保持不變。
+
+成對 bootstrap
+- 這次沒有指定 --pair。
+
+詐欺重疊（top budget 裡的詐欺件數）
+- pr14_mapped_hgb vs prod_rules：both 653，only_a 133，only_b 48，neither 366，詐欺合計 1200
+- pr14_mapped_hgb vs trackA_atavci_rf：both 718，only_a 68，only_b 96，neither 318，詐欺合計 1200
+- pr14_mapped_hgb vs trackA_atavci_soft_vote_approx：both 739，only_a 47，only_b 108，neither 306，詐欺合計 1200
+- pr14_mapped_hgb vs trackA_atavci_xgb_hinge：both 735，only_a 51，only_b 98，neither 316，詐欺合計 1200
+- pr14_mapped_hgb vs trackA_atavci_xgb_logistic：both 735，only_a 51，only_b 110，neither 304，詐欺合計 1200
+- pr14_mapped_hgb vs trackA_sushmitha_lgbm：both 727，only_a 59，only_b 115，neither 299，詐欺合計 1200
+- pr14_mapped_hgb vs trackB_atavci_rf：both 708，only_a 78，only_b 102，neither 312，詐欺合計 1200
+- pr14_mapped_hgb vs trackB_atavci_soft_vote_approx：both 734，only_a 52，only_b 109，neither 305，詐欺合計 1200
+- pr14_mapped_hgb vs trackB_atavci_xgb_hinge：both 734，only_a 52，only_b 127，neither 287，詐欺合計 1200
+- pr14_mapped_hgb vs trackB_atavci_xgb_logistic：both 739，only_a 47，only_b 121，neither 293，詐欺合計 1200
+- pr14_mapped_hgb vs trackB_sushmitha_lgbm：both 738，only_a 48，only_b 160，neither 254，詐欺合計 1200
+- pr14_mapped_hgb vs v2_enriched_sqrt：both 733，only_a 53，only_b 104，neither 310，詐欺合計 1200
+- pr14_mapped_hgb vs v2_merchant：both 703，only_a 83，only_b 189，neither 225，詐欺合計 1200
+- pr14_mapped_hgb vs v2_merchant_expanding：both 716，only_a 70，only_b 181，neither 233，詐欺合計 1200
+- pr14_mapped_hgb vs v2_merchant_step_causal：both 714，only_a 72，only_b 182，neither 232，詐欺合計 1200
+- prod_rules vs trackA_atavci_rf：both 664，only_a 37，only_b 150，neither 349，詐欺合計 1200
+- prod_rules vs trackA_atavci_soft_vote_approx：both 670，only_a 31，only_b 177，neither 322，詐欺合計 1200
+- prod_rules vs trackA_atavci_xgb_hinge：both 665，only_a 36，only_b 168，neither 331，詐欺合計 1200
+- prod_rules vs trackA_atavci_xgb_logistic：both 661，only_a 40，only_b 184，neither 315，詐欺合計 1200
+- prod_rules vs trackA_sushmitha_lgbm：both 658，only_a 43，only_b 184，neither 315，詐欺合計 1200
+- prod_rules vs trackB_atavci_rf：both 682，only_a 19，only_b 128，neither 371，詐欺合計 1200
+- prod_rules vs trackB_atavci_soft_vote_approx：both 694，only_a 7，only_b 149，neither 350，詐欺合計 1200
+- prod_rules vs trackB_atavci_xgb_hinge：both 693，only_a 8，only_b 168，neither 331，詐欺合計 1200
+- prod_rules vs trackB_atavci_xgb_logistic：both 696，only_a 5，only_b 164，neither 335，詐欺合計 1200
+- prod_rules vs trackB_sushmitha_lgbm：both 677，only_a 24，only_b 221，neither 278，詐欺合計 1200
+- prod_rules vs v2_enriched_sqrt：both 653，only_a 48，only_b 184，neither 315，詐欺合計 1200
+- prod_rules vs v2_merchant：both 641，only_a 60，only_b 251，neither 248，詐欺合計 1200
+- prod_rules vs v2_merchant_expanding：both 649，only_a 52，only_b 248，neither 251，詐欺合計 1200
+- prod_rules vs v2_merchant_step_causal：both 651，only_a 50，only_b 245，neither 254，詐欺合計 1200
+- trackA_atavci_rf vs trackA_atavci_soft_vote_approx：both 795，only_a 19，only_b 52，neither 334，詐欺合計 1200
+- trackA_atavci_rf vs trackA_atavci_xgb_hinge：both 761，only_a 53，only_b 72，neither 314，詐欺合計 1200
+- trackA_atavci_rf vs trackA_atavci_xgb_logistic：both 767，only_a 47，only_b 78，neither 308，詐欺合計 1200
+- trackA_atavci_rf vs trackA_sushmitha_lgbm：both 764，only_a 50，only_b 78，neither 308，詐欺合計 1200
+- trackA_atavci_rf vs trackB_atavci_rf：both 732，only_a 82，only_b 78，neither 308，詐欺合計 1200
+- trackA_atavci_rf vs trackB_atavci_soft_vote_approx：both 762，only_a 52，only_b 81，neither 305，詐欺合計 1200
+- trackA_atavci_rf vs trackB_atavci_xgb_hinge：both 759，only_a 55，only_b 102，neither 284，詐欺合計 1200
+- trackA_atavci_rf vs trackB_atavci_xgb_logistic：both 767，only_a 47，only_b 93，neither 293，詐欺合計 1200
+- trackA_atavci_rf vs trackB_sushmitha_lgbm：both 755，only_a 59，only_b 143，neither 243，詐欺合計 1200
+- trackA_atavci_rf vs v2_enriched_sqrt：both 762，only_a 52，only_b 75，neither 311，詐欺合計 1200
+- trackA_atavci_rf vs v2_merchant：both 736，only_a 78，only_b 156，neither 230，詐欺合計 1200
+- trackA_atavci_rf vs v2_merchant_expanding：both 743，only_a 71，only_b 154，neither 232，詐欺合計 1200
+- trackA_atavci_rf vs v2_merchant_step_causal：both 742，only_a 72，only_b 154，neither 232，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackA_atavci_xgb_hinge：both 802，only_a 45，only_b 31，neither 322，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackA_atavci_xgb_logistic：both 818，only_a 29，only_b 27，neither 326，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackA_sushmitha_lgbm：both 802，only_a 45，only_b 40，neither 313，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackB_atavci_rf：both 741，only_a 106，only_b 69，neither 284，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackB_atavci_soft_vote_approx：both 775，only_a 72，only_b 68，neither 285，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackB_atavci_xgb_hinge：both 780，only_a 67，only_b 81，neither 272，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackB_atavci_xgb_logistic：both 789，only_a 58，only_b 71，neither 282，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs trackB_sushmitha_lgbm：both 791，only_a 56，only_b 107，neither 246，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs v2_enriched_sqrt：both 808，only_a 39，only_b 29，neither 324，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs v2_merchant：both 767，only_a 80，only_b 125，neither 228，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs v2_merchant_expanding：both 775，only_a 72，only_b 122，neither 231，詐欺合計 1200
+- trackA_atavci_soft_vote_approx vs v2_merchant_step_causal：both 773，only_a 74，only_b 123，neither 230，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs trackA_atavci_xgb_logistic：both 804，only_a 29，only_b 41，neither 326，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs trackA_sushmitha_lgbm：both 796，only_a 37，only_b 46，neither 321，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs trackB_atavci_rf：both 731，only_a 102，only_b 79，neither 288，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs trackB_atavci_soft_vote_approx：both 764，only_a 69，only_b 79，neither 288，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs trackB_atavci_xgb_hinge：both 767，only_a 66，only_b 94，neither 273，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs trackB_atavci_xgb_logistic：both 778，only_a 55，only_b 82，neither 285，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs trackB_sushmitha_lgbm：both 779，only_a 54，only_b 119，neither 248，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs v2_enriched_sqrt：both 802，only_a 31，only_b 35，neither 332，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs v2_merchant：both 756，only_a 77，only_b 136，neither 231，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs v2_merchant_expanding：both 765，only_a 68，only_b 132，neither 235，詐欺合計 1200
+- trackA_atavci_xgb_hinge vs v2_merchant_step_causal：both 763，only_a 70，only_b 133，neither 234，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs trackA_sushmitha_lgbm：both 813，only_a 32，only_b 29，neither 326，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs trackB_atavci_rf：both 726，only_a 119，only_b 84，neither 271，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs trackB_atavci_soft_vote_approx：both 760，only_a 85，only_b 83，neither 272，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs trackB_atavci_xgb_hinge：both 765，only_a 80，only_b 96，neither 259，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs trackB_atavci_xgb_logistic：both 778，only_a 67，only_b 82，neither 273，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs trackB_sushmitha_lgbm：both 791，only_a 54，only_b 107，neither 248，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs v2_enriched_sqrt：both 811，only_a 34，only_b 26，neither 329，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs v2_merchant：both 770，only_a 75，only_b 122，neither 233，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs v2_merchant_expanding：both 775，only_a 70，only_b 122，neither 233，詐欺合計 1200
+- trackA_atavci_xgb_logistic vs v2_merchant_step_causal：both 774，only_a 71，only_b 122，neither 233，詐欺合計 1200
+- trackA_sushmitha_lgbm vs trackB_atavci_rf：both 725，only_a 117，only_b 85，neither 273，詐欺合計 1200
+- trackA_sushmitha_lgbm vs trackB_atavci_soft_vote_approx：both 760，only_a 82，only_b 83，neither 275，詐欺合計 1200
+- trackA_sushmitha_lgbm vs trackB_atavci_xgb_hinge：both 765，only_a 77，only_b 96，neither 262，詐欺合計 1200
+- trackA_sushmitha_lgbm vs trackB_atavci_xgb_logistic：both 780，only_a 62，only_b 80，neither 278，詐欺合計 1200
+- trackA_sushmitha_lgbm vs trackB_sushmitha_lgbm：both 785，only_a 57，only_b 113，neither 245，詐欺合計 1200
+- trackA_sushmitha_lgbm vs v2_enriched_sqrt：both 808，only_a 34，only_b 29，neither 329，詐欺合計 1200
+- trackA_sushmitha_lgbm vs v2_merchant：both 766，only_a 76，only_b 126，neither 232，詐欺合計 1200
+- trackA_sushmitha_lgbm vs v2_merchant_expanding：both 774，only_a 68，only_b 123，neither 235，詐欺合計 1200
+- trackA_sushmitha_lgbm vs v2_merchant_step_causal：both 773，only_a 69，only_b 123，neither 235，詐欺合計 1200
+- trackB_atavci_rf vs trackB_atavci_soft_vote_approx：both 800，only_a 10，only_b 43，neither 347，詐欺合計 1200
+- trackB_atavci_rf vs trackB_atavci_xgb_hinge：both 774，only_a 36，only_b 87，neither 303，詐欺合計 1200
+- trackB_atavci_rf vs trackB_atavci_xgb_logistic：both 781，only_a 29，only_b 79，neither 311，詐欺合計 1200
+- trackB_atavci_rf vs trackB_sushmitha_lgbm：both 754，only_a 56，only_b 144，neither 246，詐欺合計 1200
+- trackB_atavci_rf vs v2_enriched_sqrt：both 723，only_a 87，only_b 114，neither 276，詐欺合計 1200
+- trackB_atavci_rf vs v2_merchant：both 719，only_a 91，only_b 173，neither 217，詐欺合計 1200
+- trackB_atavci_rf vs v2_merchant_expanding：both 727，only_a 83，only_b 170，neither 220，詐欺合計 1200
+- trackB_atavci_rf vs v2_merchant_step_causal：both 727，only_a 83，only_b 169，neither 221，詐欺合計 1200
+- trackB_atavci_soft_vote_approx vs trackB_atavci_xgb_hinge：both 811，only_a 32，only_b 50，neither 307，詐欺合計 1200
+- trackB_atavci_soft_vote_approx vs trackB_atavci_xgb_logistic：both 824，only_a 19，only_b 36，neither 321，詐欺合計 1200
+- trackB_atavci_soft_vote_approx vs trackB_sushmitha_lgbm：both 788，only_a 55，only_b 110，neither 247，詐欺合計 1200
+- trackB_atavci_soft_vote_approx vs v2_enriched_sqrt：both 758，only_a 85，only_b 79，neither 278，詐欺合計 1200
+- trackB_atavci_soft_vote_approx vs v2_merchant：both 754，only_a 89，only_b 138，neither 219，詐欺合計 1200
+- trackB_atavci_soft_vote_approx vs v2_merchant_expanding：both 760，only_a 83，only_b 137，neither 220，詐欺合計 1200
+- trackB_atavci_soft_vote_approx vs v2_merchant_step_causal：both 760，only_a 83，only_b 136，neither 221，詐欺合計 1200
+- trackB_atavci_xgb_hinge vs trackB_atavci_xgb_logistic：both 822，only_a 39，only_b 38，neither 301，詐欺合計 1200
+- trackB_atavci_xgb_hinge vs trackB_sushmitha_lgbm：both 810，only_a 51，only_b 88，neither 251，詐欺合計 1200
+- trackB_atavci_xgb_hinge vs v2_enriched_sqrt：both 761，only_a 100，only_b 76，neither 263，詐欺合計 1200
+- trackB_atavci_xgb_hinge vs v2_merchant：both 773，only_a 88，only_b 119，neither 220，詐欺合計 1200
+- trackB_atavci_xgb_hinge vs v2_merchant_expanding：both 775，only_a 86，only_b 122，neither 217，詐欺合計 1200
+- trackB_atavci_xgb_hinge vs v2_merchant_step_causal：both 774，only_a 87，only_b 122，neither 217，詐欺合計 1200
+- trackB_atavci_xgb_logistic vs trackB_sushmitha_lgbm：both 803，only_a 57，only_b 95，neither 245，詐欺合計 1200
+- trackB_atavci_xgb_logistic vs v2_enriched_sqrt：both 775，only_a 85，only_b 62，neither 278，詐欺合計 1200
+- trackB_atavci_xgb_logistic vs v2_merchant：both 774，only_a 86，only_b 118，neither 222，詐欺合計 1200
+- trackB_atavci_xgb_logistic vs v2_merchant_expanding：both 778，only_a 82，only_b 119，neither 221，詐欺合計 1200
+- trackB_atavci_xgb_logistic vs v2_merchant_step_causal：both 778，only_a 82，only_b 118，neither 222，詐欺合計 1200
+- trackB_sushmitha_lgbm vs v2_enriched_sqrt：both 776，only_a 122，only_b 61，neither 241，詐欺合計 1200
+- trackB_sushmitha_lgbm vs v2_merchant：both 822，only_a 76，only_b 70，neither 232，詐欺合計 1200
+- trackB_sushmitha_lgbm vs v2_merchant_expanding：both 829，only_a 69，only_b 68，neither 234，詐欺合計 1200
+- trackB_sushmitha_lgbm vs v2_merchant_step_causal：both 829，only_a 69，only_b 67，neither 235，詐欺合計 1200
+- v2_enriched_sqrt vs v2_merchant：both 757，only_a 80，only_b 135，neither 228，詐欺合計 1200
+- v2_enriched_sqrt vs v2_merchant_expanding：both 768，only_a 69，only_b 129，neither 234，詐欺合計 1200
+- v2_enriched_sqrt vs v2_merchant_step_causal：both 767，only_a 70，only_b 129，neither 234，詐欺合計 1200
+- v2_merchant vs v2_merchant_expanding：both 843，only_a 49，only_b 54，neither 254，詐欺合計 1200
+- v2_merchant vs v2_merchant_step_causal：both 848，only_a 44，only_b 48，neither 260，詐欺合計 1200
+- v2_merchant_expanding vs v2_merchant_step_causal：both 890，only_a 7，only_b 6，neither 297，詐欺合計 1200
+
+金額切片
+- pr14_mapped_hgb
+  [0,20)：rows 40965，fraud 45，detected 0，missed 45，FP 0
+  [20,250)：rows 69435，fraud 454，detected 133，missed 321，FP 72
+  >=250：rows 906，fraud 701，detected 653，missed 48，FP 61
+- prod_rules
+  [0,20)：rows 40965，fraud 45，detected 0，missed 45，FP 7
+  [20,250)：rows 69435，fraud 454，detected 0，missed 454，FP 6
+  >=250：rows 906，fraud 701，detected 701，missed 0，FP 205
+- trackA_atavci_rf
+  [0,20)：rows 40965，fraud 45，detected 0，missed 45，FP 0
+  [20,250)：rows 69435，fraud 454，detected 150，missed 304，FP 56
+  >=250：rows 906，fraud 701，detected 664，missed 37，FP 49
+- trackA_atavci_soft_vote_approx
+  [0,20)：rows 40965，fraud 45，detected 1，missed 44，FP 0
+  [20,250)：rows 69435，fraud 454，detected 176，missed 278，FP 46
+  >=250：rows 906，fraud 701，detected 670，missed 31，FP 26
+- trackA_atavci_xgb_hinge
+  [0,20)：rows 40965，fraud 45，detected 0，missed 45，FP 0
+  [20,250)：rows 69435，fraud 454，detected 168，missed 286，FP 65
+  >=250：rows 906，fraud 701，detected 665，missed 36，FP 21
+- trackA_atavci_xgb_logistic
+  [0,20)：rows 40965，fraud 45，detected 11，missed 34，FP 6
+  [20,250)：rows 69435，fraud 454，detected 173，missed 281，FP 52
+  >=250：rows 906，fraud 701，detected 661，missed 40，FP 16
+- trackA_sushmitha_lgbm
+  [0,20)：rows 40965，fraud 45，detected 8，missed 37，FP 5
+  [20,250)：rows 69435，fraud 454，detected 176，missed 278，FP 55
+  >=250：rows 906，fraud 701，detected 658，missed 43，FP 17
+- trackB_atavci_rf
+  [0,20)：rows 40965，fraud 45，detected 0，missed 45，FP 0
+  [20,250)：rows 69435，fraud 454，detected 128，missed 326，FP 75
+  >=250：rows 906，fraud 701，detected 682，missed 19，FP 34
+- trackB_atavci_soft_vote_approx
+  [0,20)：rows 40965，fraud 45，detected 0，missed 45，FP 0
+  [20,250)：rows 69435，fraud 454，detected 149，missed 305，FP 45
+  >=250：rows 906，fraud 701，detected 694，missed 7，FP 31
+- trackB_atavci_xgb_hinge
+  [0,20)：rows 40965，fraud 45，detected 1，missed 44，FP 0
+  [20,250)：rows 69435，fraud 454，detected 167，missed 287，FP 40
+  >=250：rows 906，fraud 701，detected 693，missed 8，FP 18
+- trackB_atavci_xgb_logistic
+  [0,20)：rows 40965，fraud 45，detected 3，missed 42，FP 2
+  [20,250)：rows 69435，fraud 454，detected 161，missed 293，FP 39
+  >=250：rows 906，fraud 701，detected 696，missed 5，FP 18
+- trackB_sushmitha_lgbm
+  [0,20)：rows 40965，fraud 45，detected 10，missed 35，FP 0
+  [20,250)：rows 69435，fraud 454，detected 211，missed 243，FP 13
+  >=250：rows 906，fraud 701，detected 677，missed 24，FP 8
+- v2_enriched_sqrt
+  [0,20)：rows 40965，fraud 45，detected 4，missed 41，FP 3
+  [20,250)：rows 69435，fraud 454，detected 180，missed 274，FP 63
+  >=250：rows 906，fraud 701，detected 653，missed 48，FP 16
+- v2_merchant
+  [0,20)：rows 40965，fraud 45，detected 16，missed 29，FP 2
+  [20,250)：rows 69435，fraud 454，detected 235，missed 219，FP 20
+  >=250：rows 906，fraud 701，detected 641，missed 60，FP 5
+- v2_merchant_expanding
+  [0,20)：rows 40965，fraud 45，detected 13，missed 32，FP 1
+  [20,250)：rows 69435，fraud 454，detected 235，missed 219，FP 18
+  >=250：rows 906，fraud 701，detected 649，missed 52，FP 3
+- v2_merchant_step_causal
+  [0,20)：rows 40965，fraud 45，detected 14，missed 31，FP 1
+  [20,250)：rows 69435，fraud 454，detected 231，missed 223，FP 19
+  >=250：rows 906，fraud 701，detected 651，missed 50，FP 3
