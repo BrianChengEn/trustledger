@@ -165,6 +165,18 @@ Pack reads a closed, complete generator batch whose fingerprints match its manif
 The installer reserves a fresh directory and publishes its `manifest.json` readiness marker last. An ordinary failure removes only its own staged files. A process crash can leave an unpublished directory; preserve it for inspection and choose a fresh destination on retry. No existing dataset is replaced.
 
 After validating an install and reviewing the contents, attach the ZIP and its `.sha256` sidecar to a new private-repository dataset Release pinned to the reviewed code commit. Never replace an existing dataset version or commit the generated artifacts. Changes to source inputs require a new dataset version. Bundle tooling and verification were assisted by OpenAI Codex.
+### Offline selected-account user workspace
+
+To use one generated Nessie account in the **user's Today / Activity / Case / Privacy / Memory** workspace, start the explicit offline account demo after generating the batch:
+
+```bash
+bash scripts/dev-account-demo-backend.sh
+# In a second terminal:
+cd frontend
+API_PROXY_TARGET=http://127.0.0.1:8001 npm run dev -- --port 5174
+```
+
+Open `http://127.0.0.1:5174`. The launcher selects the first registered Nessie account and prints its local code; set `DEMO_ACCOUNT_TOKEN=acct_...` before launching to select another Nessie account. It reads the same 100 transaction IDs and fields as the source browser, uses a separate `account-user-demo.db` for account-scoped decisions/memory, clears vendor keys and reports **Synthetic demo data**. Missing or incomplete account data fails without falling back to 18 fixtures. Existing synthetic and live Nessie modes are unchanged. The USD product workspace only accepts Nessie-derived accounts; BankSim remains in the source browser with EUR and simulation days. Date-only rows retain their precision, with no invented merchant identity or recurring-payment inference.
 
 ## Tests
 

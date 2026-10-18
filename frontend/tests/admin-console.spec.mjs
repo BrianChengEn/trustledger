@@ -486,6 +486,7 @@ try {
   const syntheticLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'synthetic',
       DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
+  const syntheticBackend = children.at(-1);
   await ready('http://127.0.0.1:8123/api/v1/health',syntheticLogs);
   // The restarted synthetic server gets a fresh context, with no previous faults or connections.
   page = await appPage();
@@ -683,8 +684,63 @@ try {
   assert.equal(analysisCalls,previousAnalysis);
   assert.equal(explanationCalls,previousExplanation);
   await page.screenshot({path:join(root,'artifacts/account-demo-nessie.png'),fullPage:true});
+  // A user's generated history must be the same account/IDs as the source table, not the 18-row fixture.
+  await page.close();
+  await new Promise(resolve=>{syntheticBackend.once('exit',resolve);syntheticBackend.kill('SIGTERM');});
+  const userAccount = 'acct_' + '0'.repeat(32);
+  const accountLogs = start(resolve(root, 'backend/.venv/bin/python'),
+    ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'account-demo',
+      DEMO_ACCOUNT_TOKEN:userAccount, DATABASE_PATH:join(temp,'account-user.db'),
+      FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
+  await ready('http://127.0.0.1:8123/api/v1/health',accountLogs);
+  page = await appPage();
+  await userGoto(page, 'http://127.0.0.1:5174/#/activity');
+  await page.getByText('Synthetic demo data.',{exact:true}).waitFor();
+  await page.waitForFunction(()=>document.querySelectorAll('.txtable tbody tr').length===100);
+  const view = await (await page.request.post('http://127.0.0.1:5174/api/v1/workspace/refresh',{data:{}})).json();
+  const source = await (await page.request.get('http://127.0.0.1:5174/api/v1/data-sources/nessie/transactions?limit=100&account_token='+userAccount)).json();
+  assert.equal(view.data_mode,'synthetic');
+  assert.deepEqual(view.transactions.map(row=>row.id).sort(),source.items.map(row=>row.id).sort());
+  assert(view.transactions.every(row=>row.account_token===userAccount && row.date_only && row.currency==='USD'));
+  assert.equal(await page.locator('.txtable tbody tr').count(),100);
+  await page.locator('.txtable tbody tr button').evaluateAll(nodes=>nodes.forEach((node,index)=>node.setAttribute('data-history-index',String(index))));
+  const visited = new Set();
+  const next = page.locator('.activity .pager').getByRole('button',{name:'Next page',exact:true});
+  for (let count=0;count<100;count++) {
+    const visible = await page.locator('.txtable tbody tr').evaluateAll(rows=>rows.filter(row=>{
+      const r=row.getBoundingClientRect(),c=row.closest('.tablewrap').getBoundingClientRect();
+      return r.top+r.height/2>=c.top && r.top+r.height/2<=c.bottom;
+    }).map(row=>row.querySelector('button').getAttribute('data-history-index')));
+    visible.forEach(index=>visited.add(index));
+    if (await next.isDisabled()) break;
+    const before = await page.locator('.activity .pager span').innerText();
+    const target = await page.locator('.activity .tablewrap').evaluate((el, page) =>
+      Math.min(el.scrollHeight - el.clientHeight, page * el.clientHeight), Number(before.split('/')[0]));
+    await next.click();
+    await page.waitForFunction(before=>document.querySelector('.activity .pager span').textContent!==before,before);
+    // The page label rounds during smooth scrolling; inspect rows only at the destination.
+    await page.waitForFunction(target=>Math.abs(document.querySelector('.activity .tablewrap').scrollTop-target)<=1,target);
+  }
+  assert(await next.isDisabled(),'all history pages terminate');
+  assert.equal(visited.size,100,'each history row is reachable through the physical Pager');
+  await page.locator('.txtable tbody tr').last().getByRole('button').click();
+  await page.locator('.facts').getByText(view.transactions.at(-1).id,{exact:true}).waitFor();
+  await page.locator('.facts').getByText('Direction unknown',{exact:false}).waitFor();
+  await page.getByRole('button',{name:'Activity',exact:true}).click();
+  await page.getByRole('searchbox').fill('not-a-merchant');
+  await page.getByText('No transactions match',{exact:false}).waitFor();
+  await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+  assert.equal(await page.locator('.txtable tbody tr').count(),100);
+  await page.getByRole('button',{name:/^Flagged/}).click();
+  await page.getByText('No transactions match',{exact:false}).waitFor();
+  await page.getByRole('button',{name:'Clear filters',exact:true}).click();
+  await page.getByRole('combobox').selectOption('largest');
+  assert.equal(await page.locator('.txtable tbody tr').count(),100);
+  await toToday();
+  await page.getByText(/100 transactions checked by the rules/).waitFor();
+  await assertStableScale();
   assert.deepEqual(errors,[]);
-  console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, responsive checks and isolated Nessie/BankSim SQLite/API source switching, EUR/day display, pagination and stale-response isolation.');
+  console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, Nessie/BankSim source isolation and generated 100-row user history with identical source IDs, physical paging, details, filters and sorting.');
 } catch (error) {
   if (page) {
     console.error('Browser failure:', {url:page.url(),errors});
