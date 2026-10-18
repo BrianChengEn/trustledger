@@ -1,7 +1,8 @@
 import {labels, money} from './api';
 import {Icon, type IconName} from './icons';
 import {alertHints, byPriority, day, ruleCoverage} from './lib';
-import Pager from './Pager';
+import {useState} from 'react';
+import {PageNav} from './Pager';
 import {Chip, PageHead, stagger} from './ui';
 import Widgets from './Widgets';
 import {useWorkspace} from './workspace';
@@ -22,11 +23,18 @@ export default function Today() {
   const tx = (id: string) => transactions.find(t => t.id === id);
   const firstTx = first && tx(first.transaction_id);
   const count = (s: string) => ordered.filter(a => a.status === s).length;
+  // The queue shows three alerts at a time; the page buttons move between them.
+  const PER_PAGE = 3;
+  const [page, setPageRaw] = useState(0);
+  const pages = Math.max(1, Math.ceil(ordered.length / PER_PAGE));
+  const current = Math.min(page, pages - 1);
+  const setPage = (next: number) => setPageRaw(Math.max(0, Math.min(pages - 1, next)));
+  const shown = ordered.slice(current * PER_PAGE, current * PER_PAGE + PER_PAGE);
   const flaggedValue = open.reduce((n, a) => n + (tx(a.transaction_id)?.amount ?? 0), 0);
 
   return <div className="page today">
-    <PageHead eyebrow="Today" title={open.length ? `${open.length} ${open.length === 1 ? 'charge needs' : 'charges need'} your eyes.` : !ready ? 'Analysis unavailable.' : insufficient ? 'Some transactions need more evidence.' : 'Nothing needs you right now.'}>
-      {open.length
+    <PageHead eyebrow="Today" title={!ready ? 'Analysis unavailable.' : open.length ? `${open.length} ${open.length === 1 ? 'charge needs' : 'charges need'} your eyes.` : insufficient ? 'Some transactions need more evidence.' : 'Nothing needs you right now.'}>
+      {!ready ? 'Analysis is unavailable. Refresh before drawing a conclusion.' : open.length
         ? `${money(flaggedValue)} across flagged charges. Rules found them; you decide what they mean. Nothing changes until you do.`
         : insufficient ? `${insufficient} transactions have insufficient evidence. An absent alert is not a safe verdict.` : `${transactions.length} transactions checked by the rules. ${decided} flagged ${decided === 1 ? 'charge was' : 'charges were'} reviewed by you.`}
     </PageHead>
@@ -52,7 +60,7 @@ export default function Today() {
         </div>
       </div>
       <ul className="queue">
-        {ordered.map((a, i) => {
+        {shown.map((a, i) => {
           const t = tx(a.transaction_id);
           const prior = memories.length > 0 && a.evidence.some(e => e.startsWith('A prior consented'));
           return <li key={a.alert_id} style={stagger(i)}>
@@ -68,11 +76,11 @@ export default function Today() {
           </li>;
         })}
       </ul>
-      <Pager/>
+      <PageNav page={current} pages={pages} onPage={setPage}/>
     </section>}
 
     {!ordered.length && <div className="empty">
-      <Icon name={insufficient ? 'info' : 'shieldCheck'} size={28}/><p>No rule flagged any of your {transactions.length} transactions.</p></div>}
+      <Icon name={insufficient ? 'info' : 'shieldCheck'} size={28}/><p>{ready ? `No rule flagged any of your ${transactions.length} transactions.` : 'Analysis is unavailable; no completed check is claimed.'}</p></div>}
 
     <Widgets/>
   </div>;

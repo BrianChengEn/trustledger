@@ -31,6 +31,14 @@ export interface PrivacyPreview {
   safe_payload: Record<string, string|number|boolean>;
 }
 export interface Memory {memory_id: string; summary: string; source: string; created_at: string}
+/** Level 2: consented memories for this transaction's category. Context only; it never changes the alert. */
+export interface RelevantMemory extends Memory {verification: 'remote_verified' | 'local_only' | 'unverified'}
+export interface RelevantMemories {
+  memories: RelevantMemory[];
+  retrieval_mode: 'remote_verified' | 'local_fallback' | 'unavailable';
+  checked_at: string | null;
+  failure: string | null;
+}
 export interface SharedExplanation {
   task: 'explain_existing_alert';
   alert_type: Analysis['alert_type'];
@@ -142,9 +150,4 @@ export interface ScenarioResult {scenario: Scenario; created: DemoRow[]}
 export interface ResetResult {restored: number; cleared_decisions: number; cleared_memories: number}
 export interface DemoLog {id: number; at: string; action: 'create' | 'update' | 'delete' | 'scenario' | 'reset'; tx_id: string | null; summary: string}
 
-
-export interface RelevantMemories {
-  memories: (Memory & {verification: 'remote_verified'|'local_only'|'unverified'})[];
-  retrieval_mode: 'remote_verified'|'local_fallback'|'unavailable'; checked_at: string|null; failure: string|null;
-}
 export interface DeletionVerification {memory_id: string; status: 'absent'|'present'|'unverified'; checked_at: string|null; failure: string|null}

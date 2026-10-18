@@ -1,8 +1,7 @@
 import {useEffect, useRef} from 'react';
 import Activity from './Activity';
 import Case from './Case';
-import MemoryView from './MemoryView';
-import PrivacyView from './PrivacyView';
+import {MemoryHub, PrivacyHub} from './Hubs';
 import type {Route} from './route';
 import Today from './Today';
 import {Toasts} from './ui';
@@ -27,8 +26,8 @@ export default function WorkspaceView({route}: {route: Route}) {
       ? <p className="loading" role="status">{loading ? 'Loading your workspace…' : 'Rule checks unavailable. Retry before reviewing alerts.'}</p>
       : route.view === 'today' ? <Today/>
       : route.view === 'activity' ? <Activity key={route.filter ?? 'all'} initial={route.filter}/>
-      : route.view === 'privacy' ? <PrivacyView txId={route.tx}/>
-      : route.view === 'memory' ? <MemoryView/>
+      : route.view === 'privacy' ? <PrivacyHub txId={route.tx} lab={route.lab}/>
+      : route.view === 'memory' ? <MemoryHub lab={route.lab}/>
       : route.view === 'case' ? <Case key={route.tx} id={route.tx} from={route.from}/> : null}
   </div>;
 }

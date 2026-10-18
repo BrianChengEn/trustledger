@@ -36,8 +36,8 @@ try{
  await page.getByText('You marked this normal',{exact:true}).waitFor();
  await page.getByRole('link',{name:'Activity',exact:true}).click();
  await page.locator('tr').filter({hasText:'TEST FIXTURE 1'}).getByRole('button').click();
- const context=page.getByLabel('Relevant memory context');
- await context.getByText(/Remote content verified/).waitFor();
+ const context=page.getByRole('region',{name:'Relevant memory',exact:true});
+ await context.getByText(/Checked with Backboard just now/).waitFor();
  assert((await context.textContent()).includes('groceries alert as normal'));
  // Prior normal history must leave the second transaction's high-amount alert intact.
  await page.getByRole('radio',{name:/looks normal/}).waitFor();
@@ -52,7 +52,7 @@ try{
  await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
  await page.getByRole('link',{name:'Activity',exact:true}).click();
  await page.locator('tr').filter({hasText:'TEST FIXTURE 1'}).getByRole('button').click();
- await page.getByLabel('Relevant memory context').getByText('No matching consented memory.',{exact:true}).waitFor();
+ await page.getByRole('region',{name:'Relevant memory',exact:true}).getByText('No relevant memory found.',{exact:true}).waitFor();
  assert.equal(errors.length,0);
  console.log('PASS: FULL_STATEFUL_LIFECYCLE_VERIFIED_IN_ISOLATED_TEST — real rules, alert IDs, consent, mocked Backboard persistence, related context, grounded explanation, verified deletion, no reappearance.');
 }finally{if(browser)await browser.close();for(const child of children)child.kill('SIGTERM');}

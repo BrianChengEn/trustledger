@@ -1,12 +1,13 @@
 import {useEffect, useState} from 'react';
 import {labels, money, request, type Explanation, type Alert, type Transaction} from './api';
 import {Icon} from './icons';
-import {alertHints, explanationModeCopy, fullDate, isPriorEvidence, memorySentence, outcomeCopy, prettyCategory, ruleCoverage} from './lib';
+import {alertHints, explanationModeCopy, fullDate, isPriorEvidence, memorySentence, memoryStore, outcomeCopy, prettyCategory, ruleCoverage} from './lib';
 import {usePreview} from './preview';
 import {alertIcons, statusText} from './Today';
 import {categoryIcon} from './Activity';
 import Pager from './Pager';
-import RelevantMemory from './RelevantMemory';
+import RelevantMemoryCard from './RelevantMemoryCard';
+import {useRelevantMemories, verificationLine} from './relevant';
 import {Callout, Chip} from './ui';
 import {useWorkspace, type Run} from './workspace';
 
@@ -82,7 +83,7 @@ function AiStep({tx, run, stale, fieldCount, onRun, enabled}: {
   const running = run?.state === 'running';
   return <>
     <p>Rules stay in charge. Jev adds a second opinion on a <b>generalized</b> version of this charge{fieldCount ? ` (${fieldCount} fields, no merchant name, no exact amount, no IDs)` : ''}.
-      It runs only when you ask, once per click. <a href={href({view: 'privacy', tx: tx.id})}>Inspect exactly what is shared</a></p>
+      It runs only when you ask, once per click. <a href={href({view: 'privacy', tx: tx.id})}>Inspect exactly what is shared</a> · <a href={href({view: 'privacy', lab: ''})}>See how privacy works</a></p>
     {run?.state === 'running' && <div className="airun" role="status"><span className="spinner" aria-hidden="true"/>
       <div><b>Analyzing {tx.merchant_display} · {money(tx.amount)}</b><p>Sending the generalized fields to Jev through Backboard. This can take a few seconds…</p></div></div>}
     {run?.state === 'failed' && <Callout tone="warn" icon="alertTriangle" title="Analysis request failed" role="alert">{run.message}</Callout>}
@@ -182,14 +183,17 @@ function Decision({alert, tx, enabled}: {alert: Alert; tx: Transaction; enabled:
 
 /** The case file: one transaction explained in depth, with evidence, optional AI and the human decision. */
 export default function Case({id, from}: {id: string; from?: string}) {
-  const {transactions, alerts, runs, analyze, memoryKey, memories, loaded, ready, revision, go, href} = useWorkspace();
+  const {transactions, alerts, runs, analyze, memoryKey, loaded, ready, revision, go, href} = useWorkspace();
   const tx = transactions.find(t => t.id === id);
   const alert = alerts.find(a => a.transaction_id === id);
   const {preview} = usePreview(tx?.id, memoryKey);
+  // Hooks also run while the transaction is loading or missing; the hook gates its request.
+  const relevant = useRelevantMemories(tx?.id, true, tx?.merchant_category);
   if (!tx) return loaded ? <div className="page"><div className="empty"><Icon name="search" size={24}/>
     <p>That transaction was not found.</p><button onClick={() => go({view: 'activity'})}>Back to Activity</button></div></div>
     : <p className="loading" role="status">Loading…</p>;
   const run = runs[tx.id];
+  const memory = relevant.view.kind === 'found' ? relevant.view.memories[0] : undefined;
   const backTo = from === 'activity' ? 'Activity' : 'Today';
   return <div className="page case">
     <header className="casehead">
@@ -206,21 +210,28 @@ export default function Case({id, from}: {id: string; from?: string}) {
         <div><dt>Data source</dt><dd>{tx.source === 'synthetic' ? 'Synthetic fixture' : 'Capital One Nessie sandbox'}</dd></div>
         <div><dt>Reference</dt><dd className="mono">{tx.id}</dd></div>
       </dl>
-
+      {memory && <div className="memnote">
+        <Icon name="hardDrive" size={16}/><div><b>You told TrustLedger this category is normal</b>
+          <p>{memoryStore(memory.source).label}. {verificationLine(memory.verification)} Context only; it does not hide alerts.
+            {' '}<a href={href({view: 'memory'})}>Manage in Memory</a></p></div>
+      </div>}
     </aside>
     <div className="steps">
-      <Step n={1} title="Why it was flagged" tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
+      <Step n={1} title={alert ? 'Why it was flagged' : 'What was checked'} tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
         {!ready ? <p>Analysis is unavailable. Refresh before taking action.</p> : alert ? <Evidence alert={alert}/> : <p>{ruleCoverage(tx)}. Only supported checks can run: completed debits support the amount rule; Nessie merchant grouping and subscription evidence are unavailable. An absent alert is not evidence that a transaction is safe.</p>}
-        <RelevantMemory transactionId={tx.id} category={tx.merchant_category}/>
         <ExplanationPanel key={revision} tx={tx}/>
       </Step>
       <Step n={2} title="AI second opinion" tag={<Chip tone="ai" icon="sparkles">Optional</Chip>}>
         <AiStep tx={tx} run={ready ? run : undefined} stale={run?.state === 'done' && run.memoryKey !== memoryKey}
           enabled={ready} fieldCount={preview ? Object.keys(preview.safe_payload).length : null} onRun={() => void analyze(tx.id)}/>
       </Step>
-      <Step n={3} title="Your decision">
-        {ready && alert ? <Decision alert={alert} tx={tx} enabled={ready}/> : <p>{ready ? 'Nothing to decide: no alert exists for this charge.' : 'Refresh before making a decision.'}</p>}
-      </Step>
+      <div className="rightcol">
+        <RelevantMemoryCard view={relevant.view} retry={relevant.retry} category={tx.merchant_category}
+          failure={relevant.result?.failure} requiresReview={alert?.status === 'open'}/>
+        <Step n={3} title="Your decision">
+          {ready && alert ? <Decision alert={alert} tx={tx} enabled={ready}/> : <p>{ready ? 'Nothing to decide: no alert exists for this charge.' : 'Refresh before making a decision.'}</p>}
+        </Step>
+      </div>
     </div>
   </div>;
 }

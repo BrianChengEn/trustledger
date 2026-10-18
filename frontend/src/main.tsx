@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {Suspense, lazy, useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {type Alert} from './api';
 import {widgetStore} from './homeStore';
@@ -6,6 +6,8 @@ import {Icon, type IconName} from './icons';
 import {dataModeCopy, memoryModeCopy, type Tone} from './lib';
 import {useRoute, go, type Route} from './route';
 import AdminDemo from './AdminDemo';
+// Loaded on demand: the lab ships about 150 KB of research data that the rest of the app never needs.
+const FraudLab = lazy(() => import('./fraudlab/FraudLab'));
 import {AuthProvider, useAuth} from './auth';
 import Login from './Login';
 import {Admin, SourcesIntro} from './Sources';
@@ -44,7 +46,6 @@ const userNav: NavItem[] = [
 ];
 const adminNav: NavItem[] = [
   {view: 'admin', label: 'Demo data', icon: 'pencil'},
-  {view: 'memory', label: 'Memory', icon: 'hardDrive'},
   {view: 'sources', label: 'Data sources', icon: 'database', id: 'NAV-ADMIN'},
 ];
 
@@ -118,13 +119,12 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
   const sources = mode === 'admin' && (route.view === 'sources' || !!route.customer);
   const adminPage = mode === 'admin' && route.view === 'admin';
   // Each role only sees its own pages; anything else goes home.
-  const adminMemory = mode === 'admin' && route.view === 'memory';
-  const allowed = mode === 'admin' ? adminPage || sources || adminMemory : route.view !== 'admin' && route.view !== 'sources' && !route.customer;
+  const allowed = mode === 'admin' ? adminPage || sources || route.view === 'fraudlab' : route.view !== 'admin' && route.view !== 'sources' && !route.customer;
   useEffect(() => {
     if (!allowed) go(mode === 'admin' ? {view: 'admin'} : {view: 'today'});
   }, [allowed, mode]);
-  const active = sources ? 'sources' : adminPage ? 'admin' : adminMemory ? 'memory' : route.view === 'case' ? 'today' : route.view;
-  const badge = (view: Route['view']) => mode === 'user' ? (view === 'today' ? open : view === 'memory' ? memories.length : 0) : view === 'memory' ? memories.length : 0;
+  const active = sources ? 'sources' : adminPage ? 'admin' : route.view === 'case' ? 'today' : route.view;
+  const badge = (view: Route['view']) => mode === 'user' ? (view === 'today' ? open : view === 'memory' ? memories.length : 0) : 0;
 
   // Sub-features shown in the drop-down menus (each jumps straight to the right place).
   const firstOf = (type: Alert['alert_type']) => alerts.find(a => a.alert_type === type)?.transaction_id;
@@ -141,11 +141,6 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
         {label: 'Change log', hint: 'Every edit, scenario and reset', icon: 'clock', go: () => go({view: 'admin', tab: 'log'})},
       ]},
     ]},
-    memory: {eyebrow: 'MEMORY', title: 'What the user allowed.', blurb: 'Saved category preferences. Delete one here before resetting the demo.', groups: [
-      {heading: 'Saved preferences', items: [
-        {label: 'Saved preferences', hint: `${memories.length} stored`, icon: 'hardDrive', go: () => go({view: 'memory'})},
-      ]},
-    ]},
     sources: {eyebrow: 'DATA SOURCES', title: 'Where transactions come from.', blurb: 'The workspace works the same whichever source feeds it.', groups: [
       {heading: 'Capital One Nessie sandbox', items: [
         {label: 'Run a query', hint: 'Eight read-only functions', icon: 'search', go: consoleGo('NAV-Q')},
@@ -158,6 +153,9 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
         {label: 'Duplicate charges', hint: 'Same merchant and amount within 24 hours', icon: 'copy', go: caseOf(firstOf('duplicate')), disabled: !firstOf('duplicate')},
         {label: 'Large amounts', hint: 'Above the demo high-amount threshold', icon: 'alertTriangle', go: caseOf(firstOf('amount_anomaly')), disabled: !firstOf('amount_anomaly')},
         {label: 'Subscription increases', hint: 'A recurring charge rose by more than 20%', icon: 'trendingUp', go: caseOf(firstOf('subscription_change')), disabled: !firstOf('subscription_change')},
+      ]},
+      {heading: 'Learn', items: [
+        {label: 'Fraud Intelligence Lab', hint: 'Offline ML research on BankSim: model, evidence, benchmarks', icon: 'sparkles', go: () => go({view: 'fraudlab'})},
       ]},
       {heading: 'Make it yours', items: [
         {label: 'Edit widgets', hint: 'Remove or reorder your mini tools', icon: 'sliders', go: () => { go({view: 'today'}); widgetStore.setEditing(true); }},
@@ -177,11 +175,17 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
         {label: 'Safe payload', hint: 'The eight generalized fields, exactly', icon: 'layers', go: () => go({view: 'privacy', tx: priorityTx}), disabled: !priorityTx},
         {label: 'Your decision', hint: 'Mark a charge normal or review, with consent', icon: 'checkCircle', go: caseOf(firstOpen), disabled: !firstOpen},
       ]},
+      {heading: 'Learn', items: [
+        {label: 'Privacy Lab', hint: 'Step through what each AI service receives', icon: 'sparkles', go: () => go({view: 'privacy', lab: ''})},
+      ]},
     ]},
     memory: {eyebrow: 'MEMORY', title: 'What you’ve allowed it to remember.', blurb: 'Only category-level preferences you approve. Delete them anytime.', groups: [
       {heading: 'Saved preferences', items: [
         {label: 'Saved preferences', hint: `${memories.length} stored`, icon: 'hardDrive', go: () => go({view: 'memory'})},
         {label: 'Remove a memory', hint: 'Delete any stored preference', icon: 'trash', go: () => go({view: 'memory'})},
+      ]},
+      {heading: 'Learn', items: [
+        {label: 'Memory Lab', hint: 'How a charge becomes a memory and helps later', icon: 'sparkles', go: () => go({view: 'memory', lab: ''})},
       ]},
     ]},
   };
@@ -230,7 +234,8 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
       </div>
     </header>
     <main id="main">
-      {((mode === 'user' && allowed) || adminMemory) && <WorkspaceView route={route}/>}
+      {mode === 'user' && allowed && route.view !== 'fraudlab' && <WorkspaceView route={route}/>}
+      {allowed && route.view === 'fraudlab' && <Suspense fallback={<p className="loading" role="status">Loading the research lab…</p>}><FraudLab chapter={route.chapter}/></Suspense>}
       {adminPage && <AdminDemo/>}
       {auth.session.role === 'admin' && <div hidden={!sources} className="adminview"><SourcesIntro/><Admin active={sources}/></div>}
     </main>
