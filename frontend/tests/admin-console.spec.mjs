@@ -26,6 +26,7 @@ async function ready(url, logs) {
 }
 let browser, page;
 const errors = [];
+const apiStates = [];
 try {
   const frontendLogs = start(process.execPath, ['frontend/node_modules/vite/bin/vite.js',
     'frontend', '--host', '127.0.0.1', '--port', '5174'],
@@ -39,8 +40,6 @@ try {
   const chrome = process.env.PLAYWRIGHT_CHROME_PATH;
   browser = await chromium.launch({headless: true, ...(chrome ? {executablePath: chrome} :
     existsSync('/Applications/Google Chrome.app') ? {channel: 'chrome'} : {})});
-  page = await browser.newPage({viewport: {width: 1440, height: 1000}, reducedMotion: 'reduce'});
-  page.setDefaultTimeout(5000);
   async function assertResponsiveBaseline() {
     const layout = await page.evaluate(() => {
       return {width: innerWidth, scroll: document.documentElement.scrollWidth};
@@ -62,15 +61,26 @@ try {
   let deletes = 0;
   let analysisCalls = 0;
   let explanationCalls = 0;
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('request', req => {
-    if (req.url().endsWith('/admin/nessie/query')) queryCalls++;
-    if (req.method()==='DELETE') deletes++;
-    if (req.url().endsWith('/analyses')) analysisCalls++;
-    if (req.url().endsWith('/explanation')) explanationCalls++;
-  });
-  await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(
-    new URL(route.request().url()).hostname) ? route.continue() : route.abort());
+  async function appPage() {
+    const next = await browser.newPage({viewport: {width:1440,height:1000},reducedMotion:'reduce'});
+    next.setDefaultTimeout(5000);
+    next.on('pageerror', error => errors.push(error.message));
+    next.on('request', req => {
+      if (req.url().endsWith('/admin/nessie/query')) queryCalls++;
+      if (req.method()==='DELETE') deletes++;
+      if (req.url().endsWith('/analyses')) analysisCalls++;
+      if (req.url().endsWith('/explanation')) explanationCalls++;
+    });
+    next.on('response', response => {
+      const path = new URL(response.url()).pathname;
+      if (path.startsWith('/api/v1/')) apiStates.push({status:response.status(),
+        path:path.replace(/(?:txn|acct|customer|memory)_[A-Za-z0-9_-]+/g,'{resource}')});
+    });
+    await next.route('**/*', route => ['127.0.0.1','localhost'].includes(
+      new URL(route.request().url()).hostname) ? route.continue() : route.abort());
+    return next;
+  }
+  page = await appPage();
   await page.goto('http://127.0.0.1:5174');
   await page.getByRole('link', {name: /^Today/}).waitFor();
   await page.locator('.startcard').waitFor();
@@ -296,20 +306,18 @@ try {
   await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
   await sourceMemoryEntry;
   await page.getByText('Nothing is remembered yet.',{exact:true}).waitFor();
-  await page.waitForFunction(async()=>{
-    const refresh = document.querySelector('button[aria-label="Refresh memories"]');
-    if (refresh.disabled) return false;
-    await new Promise(requestAnimationFrame);
-    await new Promise(requestAnimationFrame);
-    return !refresh.disabled;
-  });
+  const manualRefresh = page.waitForResponse(response=>response.url().endsWith('/api/v1/workspace/refresh'));
+  await page.getByRole('button',{name:'Refresh memories',exact:true}).click();
+  await manualRefresh;
+  await page.locator('#NAV-ADMIN').click();
   let releaseRefresh, captureRefresh;
   const refreshHeld = new Promise(resolve=>{releaseRefresh=resolve;});
   const refreshCaptured = new Promise(resolve=>{captureRefresh=resolve;});
   await page.route('**/api/v1/workspace/refresh',async route=>{
     captureRefresh(); await refreshHeld; await route.continue();
   },{times:1});
-  await page.getByRole('button',{name:'Refresh memories',exact:true}).click();
+  // Hold the navigation refresh; holding an earlier automatic read can disable the manual button.
+  await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
   await refreshCaptured;
   await page.locator('#NAV-ADMIN').click();
   await page.locator('.topbar').getByRole('link',{name:/^Memory/}).click();
@@ -444,11 +452,14 @@ try {
   await unavailable.getByRole('button',{name:'Retry',exact:true}).click();
   await unavailable.getByText('You marked this for review',{exact:true}).waitFor();
 
+  await page.close();
   await new Promise(resolve=>{connectedBackend.once('exit',resolve);connectedBackend.kill('SIGTERM');});
   const syntheticLogs = start(resolve(root, 'backend/.venv/bin/python'),
     ['backend/tests/admin_console_server.py'], {PYTHONPATH:'backend', TRANSACTION_PROVIDER:'synthetic',
       DATABASE_PATH:join(temp,'synthetic.db'), FRONTEND_ORIGIN:'http://127.0.0.1:5174'});
   await ready('http://127.0.0.1:8123/api/v1/health',syntheticLogs);
+  // The restarted synthetic server gets a fresh context, with no previous faults or connections.
+  page = await appPage();
   await page.goto('http://127.0.0.1:5174/#/activity');
   await page.reload();
   await page.getByText('Synthetic demo data.',{exact:true}).waitFor();
@@ -545,6 +556,7 @@ try {
 } catch (error) {
   if (page) {
     console.error('Browser failure:', {url:page.url(),errors});
+    console.error('API status:',apiStates.slice(-12));
     console.error('Workspace state:', (await page.locator('main').innerText().catch(()=>'<unavailable>')).slice(0,1000));
   }
   throw error;
