@@ -146,39 +146,35 @@ export default function Case({id, from}: {id: string; from?: string}) {
   const memory = memories.find(m => memoryCategory(m.summary) === tx.merchant_category);
   const backTo = from === 'activity' ? 'Activity' : 'Today';
   return <div className="page case">
-    <button className="back" onClick={() => go({view: from === 'activity' ? 'activity' : 'today'})}><Icon name="arrowLeft" size={15}/>{backTo}</button>
     <header className="casehead">
+      <button className="back" onClick={() => go({view: from === 'activity' ? 'activity' : 'today'})}><Icon name="arrowLeft" size={15}/>{backTo}</button>
       <span className={'icontile large' + (alert?.status === 'open' ? ' alert' : '')}><Icon name={alert ? alertIcons[alert.alert_type] : categoryIcon(tx.merchant_category)} size={26}/></span>
-      <div><div className="eyebrow">{alert ? labels[alert.alert_type] : 'No alert'}</div><h1>{tx.merchant_display}</h1></div>
+      <div className="casetitle"><div className="eyebrow">{alert ? labels[alert.alert_type] : 'No alert'}</div><h1>{tx.merchant_display}</h1></div>
       <div className="caseamount"><strong>{money(tx.amount)}</strong>{alert && <small>{statusText[alert.status]}</small>}</div>
     </header>
-    <div className="casegrid">
-      <div className="steps">
-        <Step n={1} title="Why it was flagged" tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
-          {alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still run an AI second opinion.</p>}
-        </Step>
-        <Step n={2} title="AI second opinion" tag={<Chip tone="ai" icon="sparkles">Optional</Chip>}>
-          <AiStep tx={tx} run={run} stale={run?.state === 'done' && run.memoryKey !== memoryKey}
-            fieldCount={preview ? Object.keys(preview.safe_payload).length : null} onRun={() => void analyze(tx.id)}/>
-        </Step>
-        <Step n={3} title="Your decision">
-          {alert ? <Decision alert={alert} tx={tx}/> : <p>Nothing to decide: no alert exists for this charge.</p>}
-        </Step>
-      </div>
-      <aside className="facts" aria-label="Transaction details">
-        <h2>Transaction</h2>
-        <dl>
-          <dt>When</dt><dd>{fullDate(tx.occurred_at)}</dd>
-          <dt>Category</dt><dd>{prettyCategory(tx.merchant_category)}</dd>
-          <dt>Type</dt><dd>{tx.is_subscription ? 'Recurring subscription' : 'One-time purchase'} · {tx.direction}</dd>
-          <dt>Data source</dt><dd>{tx.source === 'synthetic' ? 'Synthetic fixture' : 'Capital One Nessie sandbox'}</dd>
-          <dt>Reference</dt><dd className="mono">{tx.id}</dd>
-        </dl>
-        {memory && (() => { const s = memoryStore(memory.source); return <div className="memnote">
-          <Icon name="hardDrive" size={16}/><div><b>You told TrustLedger this category is normal</b>
-            <p>{s.label}. Added as context only; it does not hide alerts.</p>
-            <a href="#/memory">Manage in Memory</a></div></div>; })()}
-      </aside>
+    <aside className="facts" aria-label="Transaction details">
+      <dl>
+        <div><dt>When</dt><dd>{fullDate(tx.occurred_at)}</dd></div>
+        <div><dt>Category</dt><dd>{prettyCategory(tx.merchant_category)}</dd></div>
+        <div><dt>Type</dt><dd>{tx.is_subscription ? 'Recurring subscription' : 'One-time purchase'} · {tx.direction}</dd></div>
+        <div><dt>Data source</dt><dd>{tx.source === 'synthetic' ? 'Synthetic fixture' : 'Capital One Nessie sandbox'}</dd></div>
+        <div><dt>Reference</dt><dd className="mono">{tx.id}</dd></div>
+      </dl>
+      {memory && (() => { const s = memoryStore(memory.source); return <div className="memnote">
+        <Icon name="hardDrive" size={16}/><div><b>You told TrustLedger this category is normal</b>
+          <p>{s.label}. Context only; it does not hide alerts. <a href="#/memory">Manage in Memory</a></p></div></div>; })()}
+    </aside>
+    <div className="steps">
+      <Step n={1} title="Why it was flagged" tag={alert && <Chip tone={alert.severity === 'high' ? 'danger' : 'warn'}>{alert.severity} priority</Chip>}>
+        {alert ? <Evidence alert={alert}/> : <p>No rule was triggered for this charge. It was compared against duplicate, unusual-amount and subscription-increase checks. You can still run an AI second opinion.</p>}
+      </Step>
+      <Step n={2} title="AI second opinion" tag={<Chip tone="ai" icon="sparkles">Optional</Chip>}>
+        <AiStep tx={tx} run={run} stale={run?.state === 'done' && run.memoryKey !== memoryKey}
+          fieldCount={preview ? Object.keys(preview.safe_payload).length : null} onRun={() => void analyze(tx.id)}/>
+      </Step>
+      <Step n={3} title="Your decision">
+        {alert ? <Decision alert={alert} tx={tx}/> : <p>Nothing to decide: no alert exists for this charge.</p>}
+      </Step>
     </div>
   </div>;
 }

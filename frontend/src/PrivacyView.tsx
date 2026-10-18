@@ -35,13 +35,8 @@ function Inspector({preview, tx}: {preview: PrivacyPreview; tx: Transaction}) {
   const [raw, setRaw] = useState(false);
   const payload = Object.entries(preview.safe_payload);
   const withheld = preview.inspection.filter(i => i.action === 'dropped').length;
-  return <>
-    <div className="privstats" aria-label="Summary">
-      <div><strong>{payload.length}</strong><span>fields can be shared</span></div>
-      <div><strong>{withheld}</strong><span>kinds of data withheld</span></div>
-      <div><strong>1</strong><span>destination: {preview.destination}</span></div>
-    </div>
-    <section className="panel" aria-labelledby="flow-title">
+  return <div className="privgrid">
+    <section className="panel flowpanel" aria-labelledby="flow-title">
       <h2 id="flow-title">From your data to the AI request</h2>
       <div className="flowhead" aria-hidden="true"><span>What TrustLedger knows</span><span>What happens</span><span>What AI would receive</span></div>
       <ul className="flow">
@@ -58,7 +53,13 @@ function Inspector({preview, tx}: {preview: PrivacyPreview; tx: Transaction}) {
         })}
       </ul>
     </section>
-    <section className="panel" aria-labelledby="payload-title">
+    <div className="privside">
+    <div className="privstats" aria-label="Summary">
+      <div><strong>{payload.length}</strong><span>fields can be shared</span></div>
+      <div><strong>{withheld}</strong><span>kinds of data withheld</span></div>
+      <div><strong>1</strong><span>destination: {preview.destination}</span></div>
+    </div>
+    <section className="panel payloadpanel" aria-labelledby="payload-title">
       <div className="sectiontop"><h2 id="payload-title">The complete payload</h2>
         <button aria-pressed={raw} onClick={() => setRaw(r => !r)}>{raw ? 'Show as fields' : 'Show raw JSON'}</button></div>
       <p className="quiet">This is the backend serializer’s output ({preview.schema_version}). The AI receives these {payload.length} fields and nothing else.</p>
@@ -66,7 +67,8 @@ function Inspector({preview, tx}: {preview: PrivacyPreview; tx: Transaction}) {
         : <dl className="payload">{payload.map(([k, v]) =>
           <div key={k} className={active === k ? 'lit' : ''}><dt>{k}</dt><dd>{readable(v)}</dd></div>)}</dl>}
     </section>
-  </>;
+    </div>
+  </div>;
 }
 
 /** Privacy answers: what does the app know versus what the AI could actually receive. */
@@ -76,9 +78,10 @@ export default function PrivacyView({txId}: {txId?: string}) {
   const id = txId && transactions.some(t => t.id === txId) ? txId : fallback;
   const tx = transactions.find(t => t.id === id);
   const {preview, failed, loading, retry} = usePreview(id, memoryKey);
-  return <div className="page">
+  return <div className="page privacy">
     <PageHead eyebrow="Privacy Inspector" title="What AI actually sees.">
       Your transactions are never sent to AI as they are. Pick a charge to see the real, generalized request the backend would build.</PageHead>
+    <div className="privtop">
     <Callout icon="lock" title="Viewing this page sends nothing.">
       AI is only called when you press “Analyze with Jev” on a case, and then only with the payload below.</Callout>
     <div className="pick">
@@ -87,6 +90,7 @@ export default function PrivacyView({txId}: {txId?: string}) {
         {transactions.map(t => <option key={t.id} value={t.id}>{t.merchant_display} · {money(t.amount)} · {t.id}</option>)}
       </select>
       {id && alerts.some(a => a.transaction_id === id) && <button onClick={() => go({view: 'case', tx: id, from: 'today'})}>Open this case<Icon name="arrowRight" size={15}/></button>}
+    </div>
     </div>
     {loading && <p className="loading" role="status">Loading the real payload from the backend…</p>}
     {failed && <Callout tone="warn" icon="alertTriangle" title="Could not load the privacy preview" role="alert">

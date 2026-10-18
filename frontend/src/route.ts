@@ -1,14 +1,16 @@
 import {useEffect, useState} from 'react';
 
 export type Route =
-  | {view: 'today'} | {view: 'activity'} | {view: 'memory'} | {view: 'sources'}
+  | {view: 'today'} | {view: 'memory'} | {view: 'sources'}
+  | {view: 'activity'; filter?: string}
   | {view: 'privacy'; tx?: string} | {view: 'case'; tx: string; from?: string};
 
 export function parse(hash: string): Route {
   const [, view = 'today', id, from] = hash.replace(/^#/, '').split('/');
   const tx = id ? decodeURIComponent(id) : undefined;
   switch (view) {
-    case 'activity': case 'memory': case 'sources': return {view};
+    case 'memory': case 'sources': return {view};
+    case 'activity': return {view, filter: tx};
     case 'privacy': return {view, tx};
     case 'case': return tx ? {view, tx, from} : {view: 'today'};
     default: return {view: 'today'};
@@ -16,6 +18,7 @@ export function parse(hash: string): Route {
 }
 export const href = (route: Route) =>
   '#/' + route.view + ('tx' in route && route.tx ? '/' + encodeURIComponent(route.tx) : '')
+  + (route.view === 'activity' && route.filter ? '/' + encodeURIComponent(route.filter) : '')
   + (route.view === 'case' && route.from ? '/' + route.from : '');
 
 export function useRoute() {

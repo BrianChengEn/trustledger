@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
+import Pager from './Pager';
 import {request, type Execution, type HistoryItem, type HistoryPage,
   type NessieQuery, type ResourceOption} from './api';
 
@@ -12,17 +13,17 @@ const text = (value: unknown) => typeof value === 'string' ? value : JSON.string
 
 function Body({value, format, json}: {value: unknown; format: string; json: boolean}) {
   if (format === 'none') return <p>沒有可顯示的去識別化資料。</p>;
-  if (json) return <pre>{JSON.stringify(value, null, 2)}</pre>;
+  if (json) return <div className="paged"><pre>{JSON.stringify(value, null, 2)}</pre><Pager/></div>;
   if (Array.isArray(value) && !value.length) return <p className="empty">查詢成功，沒有資料。</p>;
   const rows = Array.isArray(value) ? value : [value];
   if (!rows.every(row => row && typeof row === 'object' && !Array.isArray(row))) {
-    return <pre>{JSON.stringify(value, null, 2)}</pre>;
+    return <div className="paged"><pre>{JSON.stringify(value, null, 2)}</pre><Pager/></div>;
   }
   const objects = rows as Record<string, unknown>[];
   const columns = [...new Set(objects.flatMap(row => Object.keys(row)))];
-  return <div className="tablewrap"><table><thead><tr>{columns.map(key => <th key={key}>{key}</th>)}</tr></thead>
+  return <div className="paged"><div className="tablewrap"><table><thead><tr>{columns.map(key => <th key={key}>{key}</th>)}</tr></thead>
     <tbody>{objects.map((row, i) => <tr key={i}>{columns.map(key => <td key={key}>
-      {Object.hasOwn(row, key) ? text(row[key]) : '（不存在）'}</td>)}</tr>)}</tbody></table></div>;
+      {Object.hasOwn(row, key) ? text(row[key]) : '（不存在）'}</td>)}</tr>)}</tbody></table></div><Pager/></div>;
 }
 
 function Metadata({result}: {result: Omit<HistoryItem, 'history_id'>}) {
@@ -130,13 +131,13 @@ export default function Admin() {
         onClick={() => setDeleting('all')}>清除全部歷史</button></div>
       {historyBusy && <p role="status">讀取歷史中…</p>}
       {!historyBusy && !items.length && <p className="empty">尚無已儲存歷史。</p>}
-      {!!items.length && <div className="tablewrap"><table><thead><tr><th>查詢</th>
+      {!!items.length && <div className="paged"><div className="tablewrap"><table><thead><tr><th>查詢</th>
         <th>UTC / 來源</th><th>Nessie HTTP / 耗時</th><th>操作</th></tr></thead>
         <tbody>{items.map(row => <tr key={row.history_id}>
           <td>#{row.history_id} {row.query}</td><td>{row.requested_at}<small>{row.source}</small></td>
           <td>{row.http_status ?? row.transport_error?.type ?? '未收到回應'}<small>{row.duration_ms} ms</small></td>
           <td><button id={'H-DELETE-'+row.history_id} disabled={actionBusy} onClick={() => setDeleting(row.history_id)}>刪除</button></td>
-        </tr>)}</tbody></table></div>}
+        </tr>)}</tbody></table></div><Pager/></div>}
       {cursor && <button id="H-MORE" disabled={historyBusy} onClick={() => void loadHistory(true)}>載入更多</button>}
     </section>
     <dialog id="D-CONFIRMATION" ref={dialog} aria-labelledby="D-TITLE" onCancel={event => {

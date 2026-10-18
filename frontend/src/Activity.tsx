@@ -16,9 +16,9 @@ const categoryIcons: Record<string, IconName> = {
 export const categoryIcon = (name: string): IconName => categoryIcons[name] ?? 'circle';
 
 /** Activity is the full ledger: find any transaction, whatever its alert status. */
-export default function Activity() {
+export default function Activity({initial}: {initial?: string}) {
   const {transactions, alerts, health} = useWorkspace();
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>(initial === 'flagged' || initial === 'recurring' ? initial : 'all');
   const [sort, setSort] = useState<Sort>('newest');
   const [query, setQuery] = useState('');
   const alertFor = (id: string) => alerts.find(a => a.transaction_id === id);
@@ -34,13 +34,13 @@ export default function Activity() {
   const sources = [...new Set(transactions.map(t => t.source))];
   const data = dataModeCopy(health?.data_mode);
 
-  return <div className="page">
+  return <div className="page activity">
     <PageHead eyebrow="Activity" title="Every transaction.">
       Open any charge to see how it was checked, flagged or not.</PageHead>
     <p className="sourceline"><Icon name="database" size={15}/>
       <span><b>{data.label}.</b> {sources.length ? `All ${transactions.length} records here come from: ${sources.join(', ')}.` : ''}{' '}
         <a href="#/sources">Where does this data come from?</a></span></p>
-    <section className="panel">
+    <section className="panel fill">
       <div className="toolbar">
         <Seg label="Filter transactions" value={filter} onChange={setFilter} options={[
           {key: 'all', label: 'All', count: counts.all}, {key: 'flagged', label: 'Flagged', count: counts.flagged},
@@ -51,7 +51,7 @@ export default function Activity() {
           <select value={sort} onChange={e => setSort(e.target.value as Sort)}>
             <option value="newest">Newest first</option><option value="largest">Largest first</option></select></label>
       </div>
-      {rows.length ? <div className="tablewrap"><table className="txtable">
+      {rows.length ? <div className={'tablewrap' + (rows.length >= 6 ? ' stretch' : '')}><table className="txtable">
         <thead><tr><th>Merchant</th><th>When</th><th>Check result</th><th className="amount">Amount</th></tr></thead>
         <tbody>{rows.map((t, i) => {
           const a = alertFor(t.id);
