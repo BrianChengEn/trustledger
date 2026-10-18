@@ -174,8 +174,15 @@ class DemoEditor:
         with self.store.lock, self.store.connect() as db:
             self._begin(db)
             remote = db.execute("SELECT COUNT(*) FROM memories WHERE owner=? AND source='backboard'", (self.owner,)).fetchone()[0]
-            remote += db.execute("SELECT COUNT(*) FROM memory_jobs WHERE owner=? AND remote_id IS NOT NULL "
-                                 "AND state IN ('pending','confirmed')", (self.owner,)).fetchone()[0]
+            remote += db.execute("SELECT COUNT(*) FROM memory_jobs WHERE owner=? AND "
+                                 "(state IN ('preparing','pending') OR (remote_id IS NOT NULL AND state='confirmed'))",
+                                 (self.owner,)).fetchone()[0]
+            # Keep durable intent even before a remote job exists; reset cannot race a consented write.
+            remote += db.execute("SELECT COUNT(*) FROM confirmations WHERE owner=? AND consent=1 "
+                                 "AND decision='normal' AND json_valid(result) "
+                                 "AND json_extract(result,'$.memory_status')='pending' "
+                                 "AND NOT EXISTS (SELECT 1 FROM memory_jobs j WHERE j.owner=confirmations.owner "
+                                 "AND j.alert_id=confirmations.alert_id)", (self.owner,)).fetchone()[0]
             if remote:
                 # Backboard memories have their own delete path and failure handling; reset never touches them.
                 raise DemoEditError(409, "remote_memory_exists")

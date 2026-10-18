@@ -3,12 +3,10 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.auth import require_admin_when_enforced
-
 from app.schemas.dataset import SourcePage
 from app.services.data_sources import source_page
 from app.services.workspace import refresh
 
-# The source browser belongs to the admin console, so it needs an admin session when sign-in is enforced.
 router = APIRouter(prefix='/api/v1/data-sources', dependencies=[Depends(require_admin_when_enforced)])
 
 

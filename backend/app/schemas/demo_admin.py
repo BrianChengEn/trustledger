@@ -62,6 +62,8 @@ class DemoTransactionPatch(DemoModel):
     def _something(self):
         if not self.model_fields_set:
             raise ValueError("Nothing to change.")
+        if any(getattr(self, field) is None for field in self.model_fields_set):
+            raise ValueError("Changed fields cannot be null.")
         return self
 
 

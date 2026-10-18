@@ -22,3 +22,5 @@ evaluation/**/*.jsonl
 evaluation/**/*.csv
 /datasets/*.csv
 .idea/
+
+/evaluation/runs/

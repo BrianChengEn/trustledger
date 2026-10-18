@@ -43,8 +43,8 @@ def test_all_public_operations(contract, client):
     }
     memory_id = None
     for path, operation in paths.items():
-        if "/admin/" in path or "/auth/" in path or "/data-sources/" in path:
-            continue  # Admin, sign-in and scoped source contracts are exercised in their own tests.
+        if any(prefix in path for prefix in ("/admin/", "/auth/", "/data-sources/")):
+            continue  # Scoped Admin, session and source contracts are tested separately.
         method, spec = next(iter(operation.items()))
         url = path.replace("{transaction_id}", "txn_syn_004").replace(
             "{alert_id}", "alert_txn_syn_004").replace("{memory_id}", memory_id or "missing")

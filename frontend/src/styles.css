@@ -193,7 +193,7 @@ button.ghost { background: transparent; }
 .app { height: 100%; display: flex; justify-content: center; padding: 26px 48px; overflow: hidden; }
 /* The whole UI is one rounded window floating in the middle, with space around it on every side. */
 .frame { position: relative; flex: 0 1 1280px; min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 32px;
-  background: color-mix(in srgb, var(--surface) 74%, var(--bg)); 
+  background: color-mix(in srgb, var(--surface) 74%, var(--bg));
   border: 1px solid var(--line); box-shadow: 0 50px 100px -50px rgb(0 0 0 / .55), 0 1px 0 rgb(255 255 255 / .05) inset; }
 main { position: relative; flex: 1; min-height: 0; width: 100%; padding: 28px var(--gutter) 6px; display: flex; flex-direction: column; overflow: hidden; }
 .foot { flex: none; text-align: center; color: var(--muted); font-size: 12px; padding: 6px var(--gutter) 18px; opacity: .85; }

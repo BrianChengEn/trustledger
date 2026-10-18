@@ -1272,7 +1272,13 @@ paths:
           minimum: 0
           default: 0
           title: Offset
+      description: Local source data; an admin session is required when REQUIRE_LOGIN is enabled. No model calls.
       responses:
+        '401':
+          description: No session when login is required (auth_required)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '200':
           description: Successful Response
           content:
@@ -1313,7 +1319,13 @@ paths:
     post:
       summary: Refresh Nessie
       operationId: refreshSourceNessie
+      description: Local source data; an admin session is required when REQUIRE_LOGIN is enabled. No model calls.
       responses:
+        '401':
+          description: No session when login is required (auth_required)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
         '200':
           description: Successful Response
           content:
@@ -1775,6 +1787,7 @@ paths:
                 $ref: '#/components/schemas/ErrorEnvelope'
       description: Admin-only editing of the synthetic demo transactions. Requires an admin session and ALLOW_DEMO_EDIT=true; local access only.
 
+components:
 components:
   parameters:
     TransactionId:
@@ -2569,7 +2582,6 @@ components:
       - data_mode
       title: SourcePage
       type: object
-
     DemoLogEntry:
       properties:
         id:

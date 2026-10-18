@@ -375,11 +375,73 @@ def test_a_fresh_database_needs_no_backup(tmp_path):
     assert {"origin", "edited_at"} <= columns(path)
 
 
-def test_source_browser_is_admin_only(tmp_path):
-    url = "/api/v1/data-sources/banksim/transactions"
-    with make_client(tmp_path) as client:
-        assert code(client.get(url), 401) == "auth_required"
-        assert sign_in(client, "user", USER_PASS).status_code == 200
-        assert code(client.get(url), 403) == "admin_only"
-        assert sign_in(client, "admin", ADMIN_PASS).status_code == 200
-        assert client.get(url).status_code == 200
+@pytest.mark.parametrize("method,path", [
+    ("GET", "/api/v1/data-sources/banksim/transactions"),
+    ("GET", "/api/v1/data-sources/nessie/transactions"),
+    ("POST", "/api/v1/data-sources/nessie/refresh"),
+])
+def test_source_routes_share_the_admin_session_gate(anon, method, path):
+    def call():
+        return anon.request(method, path, **({"json": {}} if method == "POST" else {}))
+
+    assert code(call(), 401) == "auth_required"
+    assert sign_in(anon, "user", USER_PASS).status_code == 200
+    assert code(call(), 403) == "admin_only"
+    assert sign_in(anon, "admin", ADMIN_PASS).status_code == 200
+    result = call()
+    assert result.status_code == (200 if "banksim" in path else 503)
+    assert anon.post("/api/v1/auth/logout", json={}).status_code == 200
+    assert code(call(), 401) == "auth_required"
+
+
+def test_demo_edit_and_reset_cannot_change_source_databases(admin):
+    stores = admin.app.state.source_stores
+
+    def snapshot():
+        result = {}
+        for name, store in stores.items():
+            with store.connect() as db:
+                result[name] = list(db.iterdump())
+        return result
+
+    before = snapshot()
+    created = admin.post("/api/v1/admin/demo/transactions", json=GOOD).json()
+    assert admin.patch(f"/api/v1/admin/demo/transactions/{created['id']}", json={"amount": 8.25}).status_code == 200
+    assert admin.delete(f"/api/v1/admin/demo/transactions/{created['id']}").status_code == 204
+    assert admin.post("/api/v1/admin/demo/scenarios/duplicate").status_code == 200
+    assert admin.post("/api/v1/admin/demo/reset").status_code == 200
+    assert snapshot() == before
+
+
+@pytest.mark.parametrize("field", ["merchant", "category", "amount", "occurred_at", "direction", "is_subscription"])
+def test_explicit_null_patch_is_rejected_without_changing_the_charge(admin, field):
+    created = admin.post("/api/v1/admin/demo/transactions", json=GOOD).json()
+    before = admin.get("/api/v1/admin/demo/transactions").json()
+    response = admin.patch(f"/api/v1/admin/demo/transactions/{created['id']}", json={field: None})
+    assert code(response, 422) == "invalid_request"
+    assert admin.get("/api/v1/admin/demo/transactions").json() == before
+
+
+@pytest.mark.parametrize("state", ["claimed", "preparing", "pending"])
+def test_reset_preserves_unresolved_memory_intents_and_reconciliation(admin, state):
+    store, owner, alert_id = admin.app.state.store, "demo-user-001", "alert_txn_syn_004"
+    receipt, created = store.claim_confirmation(owner, alert_id, "normal", True, True, "test-request")
+    assert created and receipt.memory_status == "pending"
+    if state != "claimed":
+        store.prepare_memory_job(owner, alert_id, "test-assistant", "Approved test category preference")
+    if state == "pending":
+        assert store.record_memory_baseline(owner, alert_id, {"existing-memory"})
+    with store.connect() as db:
+        before = list(db.iterdump())
+    assert code(admin.post("/api/v1/admin/demo/reset"), 409) == "remote_memory_exists"
+    with store.connect() as db:
+        assert list(db.iterdump()) == before
+
+
+def test_reset_succeeds_after_explicit_pending_memory_deletion(admin):
+    store, owner, alert_id = admin.app.state.store, "demo-user-001", "alert_txn_syn_004"
+    store.claim_confirmation(owner, alert_id, "normal", True, True, "test-request")
+    local_id = store.prepare_memory_job(owner, alert_id, "test-assistant", "Approved test category preference")
+    assert admin.delete(f"/api/v1/memories/{local_id}").status_code == 204
+    assert store.memory_job(owner, alert_id=alert_id)["state"] == "deleted"
+    assert admin.post("/api/v1/admin/demo/reset").status_code == 200
