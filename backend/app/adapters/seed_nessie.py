@@ -4,7 +4,7 @@ import argparse
 import hashlib
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from app.adapters.nessie import API_BASE, REMOTE_ID, NessieClient
 from app.adapters.nessie_fixture import BASELINE_SHA256, baseline_digest, load_baseline
@@ -170,13 +170,130 @@ def seed_baseline(settings, store, client=None, *, probe=False, baseline_path=No
     return {"confirmed": count, "probe": probe, "balance_semantics": "opening-balance"}
 
 
+def seed_transfers(settings, store, client=None):
+    """Explicitly top up confirmed sandbox accounts; never invoked by runtime routes."""
+    from app.services.workspace import collection, movements, token
+
+    key = settings.nessie_api_key.get_secret_value()
+    if settings.transaction_provider != 'nessie' or not key:
+        raise SeedBlocked('Select Nessie and configure its backend key before transfer setup.')
+    if baseline_digest(load_baseline(store)) != BASELINE_SHA256:
+        raise SeedBlocked('Baseline checksum changed; reconcile before transfer setup.')
+    owner, scope = settings.demo_user_id, hashlib.sha256(key.encode()).hexdigest()
+    with store.connect() as db:
+        confirmed = db.execute("SELECT a.remote_id,c.remote_id AS customer FROM seed_records a "
+                               "JOIN seed_records c ON c.run_id=a.run_id AND c.kind='customer' "
+                               "AND c.local_id=a.parent_local_id JOIN seed_runs s ON s.id=a.run_id "
+                               "WHERE s.owner=? AND s.dataset_sha256=? AND s.api_base_url=? "
+                               "AND s.credential_fingerprint=? AND a.kind='account' "
+                               "AND a.state='confirmed' AND c.state='confirmed'",
+                               (owner, BASELINE_SHA256, API_BASE, scope)).fetchall()
+        db.execute("CREATE TABLE IF NOT EXISTS nessie_setup_operations ("
+                   "owner TEXT NOT NULL,credential_scope TEXT NOT NULL,operation TEXT NOT NULL,"
+                   "request_fingerprint TEXT NOT NULL,state TEXT NOT NULL "
+                   "CHECK(state IN ('pending','confirmed','failed')),http_status INTEGER,updated_at TEXT NOT NULL,"
+                   "PRIMARY KEY(owner,credential_scope,operation))")
+    parents = {row['remote_id']: row['customer'] for row in confirmed}
+    if not parents:
+        raise SeedBlocked('Confirmed baseline account mappings are required.')
+    client = client or NessieClient(key)
+
+    def read(path, *, allow_missing=False):
+        capture = client.request('GET', path)
+        if allow_missing and capture['http_status'] == 404:
+            return None
+        if capture['http_status'] != 200:
+            raise SeedBlocked('Transfer setup read failed; no automatic write retry was attempted.')
+        try:
+            return collection(capture)
+        except (TypeError, ValueError):
+            raise SeedBlocked('Transfer setup received an invalid collection.') from None
+
+    accounts = read('/accounts')
+    if any(row['_id'] not in parents or row.get('customer_id') != parents[row['_id']]
+           for row in accounts):
+        raise SeedBlocked('An account lacks its confirmed baseline customer mapping.')
+    created = total = 0
+    for account in accounts:
+        remote = account['_id']
+        customer = account['customer_id']
+        code = store.alias_resources(owner, scope, 'customer', [customer])[customer]
+        customer_owner = f'{owner}:nessie:{scope}:{code}'
+        account_code = token('acct_', customer_owner, remote)
+        path = f'/accounts/{remote}/transfers'
+
+        def transfers(*, allow_missing=False):
+            rows = read(path, allow_missing=allow_missing)
+            if rows is not None:
+                try:
+                    movements(rows, customer_owner, remote, 'transfers')
+                except (TypeError, ValueError):
+                    raise SeedBlocked('Transfer readback failed validation.') from None
+            return rows
+
+        rows = transfers(allow_missing=True) or []
+        for number in range(1, 11):
+            operation = f'v021-transfer-usd:{account_code}:{number}'
+            marker = 'TL-' + operation
+            # Nessie truncates fractional transfer amounts; whole-dollar fixtures round-trip exactly.
+            payload = {'amount': 10 + number * 7,
+                       'transaction_date': (date(2026, 10, 18) - timedelta(days=number)).isoformat(),
+                       'status': 'pending' if number % 5 == 0 else 'completed', 'description': marker}
+            request_hash = fingerprint(payload)
+            identity = (owner, scope, operation)
+            with store.connect() as db:
+                saved = db.execute('SELECT * FROM nessie_setup_operations WHERE owner=? '
+                                   'AND credential_scope=? AND operation=?', identity).fetchone()
+            candidates = [row for row in rows if row.get('description') == marker]
+            if saved:
+                if saved['request_fingerprint'] != request_hash or saved['state'] == 'failed':
+                    raise SeedBlocked('Transfer setup requires manual reconciliation.')
+            else:
+                if len(rows) >= 10:
+                    break
+                if candidates:
+                    raise SeedBlocked('An untracked transfer marker requires reconciliation.')
+                try:
+                    with store.connect() as db:
+                        db.execute("INSERT INTO nessie_setup_operations VALUES(?,?,?,?,'pending',NULL,?)",
+                                   (*identity, request_hash, now()))
+                except sqlite3.IntegrityError:
+                    raise SeedBlocked('Transfer setup was claimed by another process.') from None
+                capture = client.request('POST', path, payload)
+                status = capture['http_status']
+                with store.connect() as db:
+                    db.execute('UPDATE nessie_setup_operations SET http_status=?,updated_at=?,state=? '
+                               'WHERE owner=? AND credential_scope=? AND operation=?',
+                               (status, now(), 'failed' if status is not None and 400 <= status < 500
+                                else 'pending', *identity))
+                if status is not None and 400 <= status < 500:
+                    raise SeedBlocked('Nessie rejected transfer creation; no automatic retry is allowed.')
+                rows = transfers()
+                candidates = [row for row in rows if row.get('description') == marker]
+                created += 1
+            if (len(candidates) != 1
+                    or any(candidates[0].get(name) != value for name, value in payload.items())):
+                raise SeedBlocked('Transfer outcome is missing or ambiguous; reconcile without reposting.')
+            with store.connect() as db:
+                db.execute("UPDATE nessie_setup_operations SET state='confirmed',updated_at=? "
+                           'WHERE owner=? AND credential_scope=? AND operation=?', (now(), *identity))
+        if len(rows) < 10:
+            raise SeedBlocked('Transfer coverage is incomplete; reconcile existing setup operations.')
+        total += len(rows)
+    return {'accounts': len(accounts), 'transfers': total, 'created': created}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--probe", action="store_true")
+    operation = parser.add_mutually_exclusive_group()
+    operation.add_argument("--probe", action="store_true")
+    operation.add_argument("--transfers", action="store_true", help='Top up existing confirmed accounts to 10 transfers.')
     args = parser.parse_args()
     settings = Settings()
     try:
-        result = seed_baseline(settings, Store(settings.database_path), probe=args.probe)
+        store = Store(settings.database_path)
+        result = (seed_transfers(settings, store) if args.transfers else
+                  seed_baseline(settings, store, probe=args.probe))
     except SeedBlocked as exc:
         parser.exit(1, f"Import blocked: {exc}\n")
     except (OSError, sqlite3.Error):

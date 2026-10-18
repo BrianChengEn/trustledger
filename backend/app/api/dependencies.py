@@ -7,16 +7,17 @@ from app.core.jev import BackboardJevProvider
 from app.core.memory import PriorConfirmations
 from app.core.fraud import FraudProvider, select_fraud_provider
 from app.core.transactions import (
-    ProviderUnavailable, SQLiteTransactionProvider, TransactionProvider,
+    SQLiteTransactionProvider, TransactionProvider,
     TransactionService, UserContext,
 )
+from app.services.workspace import WorkspaceTransactionProvider, owner
 
 
 def get_transaction_provider(request: Request) -> TransactionProvider:
     """Override this dependency to inject a canonical mock/Data-owned provider."""
     state = request.app.state
-    if state.settings.transaction_provider != "synthetic":
-        raise ProviderUnavailable()
+    if request.path_params.get('customer_code') or state.settings.transaction_provider == 'nessie':
+        return WorkspaceTransactionProvider(request)
     return SQLiteTransactionProvider(state.store, state.settings.demo_user_id)
 
 
@@ -24,7 +25,7 @@ def get_transaction_service(
     request: Request,
     provider: Annotated[TransactionProvider, Depends(get_transaction_provider)],
 ) -> TransactionService:
-    return TransactionService(provider, UserContext(request.app.state.settings.demo_user_id))
+    return TransactionService(provider, UserContext(owner(request)))
 
 
 Transactions = Annotated[TransactionService, Depends(get_transaction_service)]
@@ -40,15 +41,17 @@ def get_fraud_provider(request: Request) -> FraudProvider | None:
 
 def get_prior_confirmations(request: Request) -> PriorConfirmations:
     state = request.app.state
-    return PriorConfirmations(lambda: state.store.consented_memory_summaries(state.settings.demo_user_id))
+    return PriorConfirmations(lambda: state.store.consented_memory_summaries(owner(request)))
 
 
 def get_analysis_service(
+    request: Request,
     transactions: Transactions,
     provider: Annotated[FraudProvider | None, Depends(get_fraud_provider)],
     memory: Annotated[PriorConfirmations, Depends(get_prior_confirmations)],
 ) -> AnalysisService:
-    return AnalysisService(transactions, provider, memory)
+    return AnalysisService(transactions, provider, memory,
+                           lambda aid: request.app.state.store.status(owner(request), aid))
 
 
 Analyses = Annotated[AnalysisService, Depends(get_analysis_service)]

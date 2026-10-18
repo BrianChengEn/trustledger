@@ -207,8 +207,20 @@ def test_all_admin_operation_contracts(contract, client):
     client.base_url = "http://127.0.0.1"
     client.headers["origin"] = "http://localhost:5173"
     client.app.state.settings.nessie_api_key = SecretStr("synthetic-test")
-    client.app.state.nessie = NessieClient("synthetic-test", transport=httpx.MockTransport(
-        lambda request: httpx.Response(200, json=[])))
+    def upstream(request):
+        if request.url.path == '/customers':
+            body = [{'_id': 'c' * 24}]
+        elif request.url.path.endswith('/accounts'):
+            body = [{'_id': 'a' * 24, 'customer_id': 'c' * 24, 'type': 'Checking', 'balance': 100, 'rewards': 0}]
+        elif request.url.path.endswith('/purchases'):
+            body = [{'_id': 'b' * 24, 'purchase_date': '2026-10-17T10:00:00+00:00',
+                     'amount': 849, 'status': 'completed'}]
+        else:
+            body = []
+        return httpx.Response(200, json=body)
+
+    client.app.state.nessie = NessieClient('synthetic-test', transport=httpx.MockTransport(upstream))
+    client.headers['content-type'] = 'application/json'
     prefix = "/api/v1/admin/nessie"
     operations = [
         ("post", "/query", {"query": "customers.list"}),
@@ -217,17 +229,60 @@ def test_all_admin_operation_contracts(contract, client):
         ("get", "/history/{history_id}", None),
         ("delete", "/history/{history_id}", {"confirm": True}),
         ("delete", "/history", {"confirm": True}),
+        ('get', '/customers', None),
+        ('post', '/customers/{customer_code}/workspace/refresh', {}),
+        ('get', '/customers/{customer_code}/health', None),
+        ('get', '/customers/{customer_code}/transactions', None),
+        ('post', '/customers/{customer_code}/analyses', {'transaction_id': '{transaction_id}'}),
+        ('get', '/customers/{customer_code}/alerts', None),
+        ('get', '/customers/{customer_code}/privacy/preview/{transaction_id}', None),
+        ('post', '/customers/{customer_code}/alerts/{alert_id}/confirmations',
+         {'decision': 'normal', 'consent_to_memory': True}),
+        ('get', '/customers/{customer_code}/memories', None),
+        ('delete', '/customers/{customer_code}/memories/{memory_id}', None),
     ]
     expected = {(p, m) for p, item in contract["paths"].items() if "/admin/" in p for m in item}
     assert {(prefix + path, method) for method, path, _ in operations} == expected
     history_id = None
+    customer_code = transaction_id = memory_id = ''
     for method, path, body in operations:
-        kwargs = {"json": body} if body is not None else {}
-        url = prefix + path.replace("{history_id}", str(history_id))
+        replacements = {'{history_id}': str(history_id), '{customer_code}': customer_code,
+                        '{transaction_id}': transaction_id, '{alert_id}': 'alert_' + transaction_id,
+                        '{memory_id}': memory_id}
+        url = prefix + path
+        payload = dict(body) if body is not None else None
+        for placeholder, value in replacements.items():
+            url = url.replace(placeholder, value)
+            if payload:
+                payload = {key: value if item == placeholder else item for key, item in payload.items()}
+        kwargs = {'json': payload} if payload is not None else {}
         response = client.request(method, url, **kwargs)
-        assert response.status_code == 200
+        if path.endswith('/memories/{memory_id}'):
+            assert response.status_code == 204 and not response.content
+            continue
+        assert response.status_code == 200, (path, response.text)
         schema = contract["paths"][prefix + path][method]["responses"]["200"]["content"]["application/json"]["schema"]
         validate(contract, schema, response.json())
         if path == "/query":
             history_id = response.json()["history_id"]
             assert history_id is not None
+            customer_code = response.json()['response_body'][0]['resource_id']
+        if path.endswith('/workspace/refresh'):
+            transaction_id = response.json()['transactions'][0]['id']
+        if path.endswith('/confirmations'):
+            memory_id = response.json()['memory_id']
+
+
+def test_all_contract_references_resolve(contract):
+    def visit(value):
+        if isinstance(value, dict):
+            if '$ref' in value:
+                target = contract
+                for part in value['$ref'].removeprefix('#/').split('/'):
+                    target = target[part.replace('~1', '/').replace('~0', '~')]
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+    visit(contract)

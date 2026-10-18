@@ -20,8 +20,10 @@ or `feat/local-memory-feedback`.
 - Jev is called through Backboard System One only with FRAUD_PROVIDER=backboard-jev
   and a BACKBOARD_API_KEY. A key alone never activates inference; only POST analyses
   may call it, at most once. Rules remain authoritative.
-  The direct TypeSafe API is not the selected route. The Nessie dashboard adapter
-  remains an extension point. Backboard memory uses explicit consented CRUD;
+  The direct TypeSafe API is not the selected route. Nessie workspaces require
+  explicit provider selection, confirmed baseline mapping and structured SQLite cache.
+  Admin customer contexts reuse the same review logic with isolated owners.
+  Backboard memory uses explicit consented CRUD;
   inference memory stays off. Admin sandbox reads and the explicit SQLite baseline
   CLI are implemented. A missing key uses rules-only/local-fallback; failed calls
   are degraded and must not be labeled rules+jev-live or backboard-live.
@@ -34,6 +36,7 @@ or `feat/local-memory-feedback`.
 
 ## Update rules
 
+- For integration updates, treat the user-selected updated frontend as the visual and interaction baseline. Preserve every existing view, control, position, size, color and action. Adapt backend/Nessie/SQLite data through the existing API/client boundaries; do not redesign the UI to fit backend structures. Any necessary visible change requires explicit scope agreement. Compare the integrated screens and interactions against that baseline before completion; passing API tests alone does not establish UI compatibility.
 - Use `docs/00-*.md` through `docs/07-*.md` as the governing implementation constraints; keep the effective update designs under local `docs/vx.x.x/`. Preserve historical designs and user-authored notes.
 - Use `/Users/kenny/Desktop/project-development-workflow/SKILL.md` and its `rule.md` as the sole lifecycle router; preserve ownership, contract, safety and CI requirements above.
 - Runtime synthetic data uses structured SQLite; JSON files are offline compatibility fixtures only. Admin uses local resource codes and stores status/time metadata, never raw response bodies or browser-facing remote IDs. Content comparison is disabled.

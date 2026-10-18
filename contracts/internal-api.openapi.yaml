@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TrustLedger Internal API
-  version: 0.1.0-mvp
+  version: 0.3.0-mvp
   description: >-
     Team-owned React-to-FastAPI contract for the Technica 2026 B2C MVP.
     This is not a Capital One, Jev, or Backboard schema.
@@ -12,6 +12,8 @@ paths:
     get:
       operationId: getHealth
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Safe readiness status. Never includes keys or upstream bodies.
           content:
@@ -26,6 +28,8 @@ paths:
           in: query
           schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Canonical transactions for the current demo user.
           content:
@@ -47,6 +51,8 @@ paths:
               properties:
                 transaction_id: { type: string, minLength: 1, maxLength: 80 }
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Rules result plus optional Jev result.
           content:
@@ -57,6 +63,8 @@ paths:
     get:
       operationId: listAlerts
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Alerts for the current demo user.
           content:
@@ -70,6 +78,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/TransactionId'
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Exact safe payload and transformation explanation.
           content:
@@ -96,6 +106,8 @@ paths:
                 consent_to_memory:
                   type: boolean
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Confirmation outcome and memory write status.
           content:
@@ -111,6 +123,8 @@ paths:
     get:
       operationId: listMemories
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Sanitized summaries only.
           content:
@@ -199,6 +213,8 @@ paths:
       description: Owner-scoped status/time metadata only; no response body or resource
         ID is retained. No content comparison.
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Completed local operation; query envelopes retain the actual
             upstream status.
@@ -255,6 +271,8 @@ paths:
       description: Owner-scoped status/time metadata only; no response body or resource
         ID is retained. No content comparison.
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Completed local operation; query envelopes retain the actual
             upstream status.
@@ -312,6 +330,8 @@ paths:
       description: Owner-scoped status/time metadata only; no response body or resource
         ID is retained. No content comparison.
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Completed local operation; query envelopes retain the actual
             upstream status.
@@ -369,6 +389,8 @@ paths:
       description: Owner-scoped status/time metadata only; no response body or resource
         ID is retained. No content comparison.
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Completed local operation; query envelopes retain the actual
             upstream status.
@@ -430,9 +452,11 @@ paths:
       operationId: listNessieLocalResources
       tags:
       - local-admin
-      description: List server-issued owner/credential-scoped local resource codes.
-        No upstream request or raw IDs.
+      description: Refresh scoped account-code mappings from Nessie and list local
+        resource codes. Account codes match Overview; raw IDs remain backend-only.
       responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
         '200':
           description: Completed local operation; query envelopes retain the actual
             upstream status.
@@ -478,6 +502,705 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers/{customer_code}/health:
+    get:
+      operationId: customer_getHealth
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Safe readiness status. Never includes keys or upstream bodies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/transactions:
+    get:
+      operationId: customer_listTransactions
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Canonical transactions for the current demo user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/analyses:
+    post:
+      operationId: customer_analyzeTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - transaction_id
+              properties:
+                transaction_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Rules result plus optional Jev result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analysis'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/alerts:
+    get:
+      operationId: customer_listAlerts
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Alerts for the current demo user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alert'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/privacy/preview/{transaction_id}:
+    get:
+      operationId: customer_previewPrivacyPayload
+      parameters:
+      - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Exact safe payload and transformation explanation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyPreview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/alerts/{alert_id}/confirmations:
+    post:
+      operationId: customer_confirmAlert
+      parameters:
+      - $ref: '#/components/parameters/AlertId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - decision
+              - consent_to_memory
+              properties:
+                decision:
+                  type: string
+                  enum:
+                  - normal
+                  - review
+                consent_to_memory:
+                  type: boolean
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Confirmation outcome and memory write status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Confirmation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflicting or duplicate confirmation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/memories:
+    get:
+      operationId: customer_listMemories
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Sanitized summaries only.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemorySummary'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/memories/{memory_id}:
+    delete:
+      operationId: customer_deleteMemory
+      parameters:
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Remote memory deletion failed; local memory is preserved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    parameters:
+    - name: customer_code
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/workspace/refresh:
+    post:
+      summary: Refresh Workspace
+      operationId: refresh_workspace_api_v1_admin_nessie_customers__customer_code__workspace_refresh_post
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Customer Code
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceSnapshot'
+        '422':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '502':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers/{customer_code}/health:
+    get:
+      operationId: customer_getHealth
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Safe readiness status. Never includes keys or upstream bodies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/transactions:
+    get:
+      operationId: customer_listTransactions
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Canonical transactions for the current demo user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers/{customer_code}/analyses:
+    post:
+      operationId: customer_analyzeTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - transaction_id
+              properties:
+                transaction_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Rules result plus optional Jev result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analysis'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/alerts:
+    get:
+      operationId: customer_listAlerts
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Alerts for the current demo user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alert'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/privacy/preview/{transaction_id}:
+    get:
+      operationId: customer_previewPrivacyPayload
+      parameters:
+      - $ref: '#/components/parameters/TransactionId'
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Exact safe payload and transformation explanation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyPreview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers/{customer_code}/alerts/{alert_id}/confirmations:
+    post:
+      operationId: customer_confirmAlert
+      parameters:
+      - $ref: '#/components/parameters/AlertId'
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - decision
+              - consent_to_memory
+              properties:
+                decision:
+                  type: string
+                  enum:
+                  - normal
+                  - review
+                consent_to_memory:
+                  type: boolean
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Confirmation outcome and memory write status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Confirmation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflicting or duplicate confirmation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers/{customer_code}/memories:
+    get:
+      operationId: customer_listMemories
+      responses:
+        '502':
+          $ref: '#/components/responses/NessieUnavailable'
+        '200':
+          description: Sanitized summaries only.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemorySummary'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+  /api/v1/admin/nessie/customers/{customer_code}/memories/{memory_id}:
+    delete:
+      operationId: customer_deleteMemory
+      parameters:
+      - name: memory_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^customer_[0-9a-f]{32}$
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Remote memory deletion failed; local memory is preserved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Local Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers/{customer_code}/workspace/refresh:
+    post:
+      summary: Refresh Workspace
+      operationId: refresh_workspace_api_v1_admin_nessie_customers__customer_code__workspace_refresh_post
+      parameters:
+      - name: customer_code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Customer Code
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceSnapshot'
+        '422':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '502':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/workspace/refresh:
+    post:
+      summary: Refresh Workspace
+      operationId: refresh_workspace_api_v1_workspace_refresh_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceSnapshot'
+        '422':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '502':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/admin/nessie/customers:
+    get:
+      tags:
+      - local-admin
+      summary: Customers
+      operationId: customers_api_v1_admin_nessie_customers_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AdminResourceOption'
+                type: array
+                title: Response Customers Api V1 Admin Nessie Customers Get
+        '422':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '403':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '502':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '503':
+          description: Safe workspace error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 components:
   parameters:
     TransactionId:
@@ -491,6 +1214,11 @@ components:
       required: true
       schema: { type: string, minLength: 1, maxLength: 80 }
   responses:
+    NessieUnavailable:
+      description: Required fresh Nessie acquisition failed; the requested operation was stopped.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
     NotFound:
       description: Resource is absent or is not owned by the current demo identity.
       content:
@@ -516,12 +1244,13 @@ components:
         occurred_at: { type: string, format: date-time }
         amount: { type: number, minimum: 0 }
         currency: { type: string, enum: [USD] }
-        direction: { type: string, enum: [debit, credit] }
+        direction: { type: string, enum: [debit, credit, unknown] }
         merchant_display: { type: string, maxLength: 80 }
         merchant_category: { type: string, maxLength: 40 }
         source: { type: string, enum: [synthetic, nessie] }
         account_token: { type: string, pattern: '^acct_[A-Za-z0-9_-]+$' }
         is_subscription: { type: boolean }
+        kind: { type: string, enum: [purchase, transfer, deposit, withdrawal], default: purchase }
     Analysis:
       type: object
       additionalProperties: false
@@ -586,7 +1315,7 @@ components:
             merchant_category: { type: string }
             amount_bucket: { type: string, enum: ['0-10', '10-25', '25-50', '50-100', '100-250', '250+'] }
             currency: { type: string, enum: [USD] }
-            local_day_part: { type: string, enum: [morning, afternoon, evening, overnight] }
+            local_day_part: { type: string, enum: [morning, afternoon, evening, overnight, unknown] }
             same_category_same_amount_24h_count: { type: integer, minimum: 0, maximum: 20 }
             is_subscription: { type: boolean }
             subscription_delta_bucket: { type: string, enum: [none, up-to-20-percent, over-20-percent, unknown] }
@@ -635,13 +1364,15 @@ components:
           - accounts.by_customer
           - deposits.by_account
           - withdrawals.by_account
+          - purchases.by_account
+          - transfers.by_account
           title: Query
           type: string
         resource_id:
           anyOf:
           - maxLength: 41
             type: string
-            pattern: ^(customer|account)_[0-9a-f]{32}$
+            pattern: ^(customer|account|acct)_[0-9a-f]{32}$
           - type: 'null'
           default: null
           description: Server-issued local customer/account code only.
@@ -837,3 +1568,196 @@ components:
       - deleted
       title: DeleteOutcome
       type: object
+    WorkspaceAccount:
+      properties:
+        account_token:
+          type: string
+          title: Account Token
+        type:
+          type: string
+          enum:
+          - Checking
+          - Savings
+          - Credit Card
+          title: Type
+        balance:
+          type: number
+          title: Balance
+        rewards:
+          type: integer
+          title: Rewards
+      additionalProperties: false
+      type: object
+      required:
+      - account_token
+      - type
+      - balance
+      - rewards
+      title: WorkspaceAccount
+    WorkspaceMovement:
+      properties:
+        id:
+          type: string
+          title: Id
+        occurred_at:
+          type: string
+          format: date-time
+          title: Occurred At
+        amount:
+          type: number
+          minimum: 0.0
+          title: Amount
+        currency:
+          type: string
+          const: USD
+          title: Currency
+        direction:
+          type: string
+          enum:
+          - debit
+          - credit
+          - unknown
+          title: Direction
+        merchant_display:
+          type: string
+          maxLength: 80
+          title: Merchant Display
+        merchant_category:
+          type: string
+          maxLength: 40
+          title: Merchant Category
+        source:
+          type: string
+          enum:
+          - synthetic
+          - nessie
+          title: Source
+        account_token:
+          type: string
+          pattern: ^acct_[A-Za-z0-9_-]+$
+          title: Account Token
+        is_subscription:
+          type: boolean
+          title: Is Subscription
+        kind:
+          type: string
+          enum:
+          - purchase
+          - transfer
+          - deposit
+          - withdrawal
+          title: Kind
+        settlement_status:
+          type: string
+          enum:
+          - pending
+          - completed
+          - cancelled
+          title: Settlement Status
+        date_only:
+          type: boolean
+          title: Date Only
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - occurred_at
+      - amount
+      - currency
+      - direction
+      - merchant_display
+      - merchant_category
+      - source
+      - account_token
+      - is_subscription
+      - kind
+      - settlement_status
+      - date_only
+      title: WorkspaceMovement
+    CollectionStatus:
+      properties:
+        account_token:
+          type: string
+          title: Account Token
+        kind:
+          type: string
+          enum:
+          - accounts
+          - purchases
+          - transfers
+          - deposits
+          - withdrawals
+          title: Kind
+        requested_at:
+          type: string
+          format: date-time
+          title: Requested At
+        synced_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Synced At
+        http_status:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Http Status
+        error:
+          anyOf:
+          - type: string
+            enum:
+            - upstream
+            - timeout
+            - connection
+            - schema
+          - type: 'null'
+          title: Error
+      additionalProperties: false
+      type: object
+      required:
+      - account_token
+      - kind
+      - requested_at
+      - synced_at
+      - http_status
+      - error
+      title: CollectionStatus
+    WorkspaceSnapshot:
+      properties:
+        customer_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customer Id
+        data_mode:
+          type: string
+          enum:
+          - synthetic
+          - nessie-live
+          - degraded
+          title: Data Mode
+        accounts:
+          items:
+            $ref: '#/components/schemas/WorkspaceAccount'
+          type: array
+          title: Accounts
+        transactions:
+          items:
+            $ref: '#/components/schemas/WorkspaceMovement'
+          type: array
+          title: Transactions
+        sync:
+          items:
+            $ref: '#/components/schemas/CollectionStatus'
+          type: array
+          title: Sync
+      additionalProperties: false
+      type: object
+      required:
+      - customer_id
+      - data_mode
+      - accounts
+      - transactions
+      - sync
+      title: WorkspaceSnapshot

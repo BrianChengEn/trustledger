@@ -1,0 +1,132 @@
+{
+  "dataset_name": "BankSim (Lopez-Rojas & Axelsson, EMSS 2014)",
+  "source_file_basename": "banks.csv",
+  "license_note": "CC BY-NC-SA 4.0. Do not commit or redistribute the raw CSV.",
+  "sparkov_status": "Official Kaggle Sparkov was not downloaded (no Kaggle credentials used). The local Hugging Face fraudTrain.csv is a truncated Excel export with scientific-notation card numbers, so it was not used.",
+  "original_row_count": 594643,
+  "original_fraud_count": 7200,
+  "original_normal_count": 587443,
+  "original_prevalence": 0.012108105199254007,
+  "eval_row_count": 11210,
+  "eval_fraud_count": 120,
+  "eval_normal_count": 11090,
+  "eval_prevalence": 0.010704727921498661,
+  "eval_customer_count": 3858,
+  "history_row_count": 3686,
+  "history_customer_count": 3510,
+  "history_scope": "Only the previous step is exported. Older rows are outside the 24 hour window the authoritative duplicate rule can use, and is_subscription is false so older subscription history cannot change a decision.",
+  "step_min_eval": 177,
+  "step_max_eval": 179,
+  "time_range_utc": {
+    "start": "2014-06-27T00:00:00+00:00",
+    "end_nominal": "2014-06-29T23:59:00+00:00",
+    "clock": "imputed; intra-day seconds are file order within customer and step, not a real clock"
+  },
+  "sampling_method": "Contiguous suffix of whole steps, natural prevalence, closest to 10000 rows inside 5000-15000. Not a random row sample and not fraud-enriched.",
+  "seed": 20261017,
+  "category_map": {
+    "es_barsandrestaurants": "dining",
+    "es_food": "groceries",
+    "es_hyper": "groceries",
+    "es_transportation": "transportation",
+    "es_tech": "electronics"
+  },
+  "eval_source_category_counts": {
+    "es_transportation": 9525,
+    "es_food": 656,
+    "es_health": 325,
+    "es_wellnessandbeauty": 234,
+    "es_fashion": 117,
+    "es_hyper": 74,
+    "es_barsandrestaurants": 61,
+    "es_sportsandtoys": 49,
+    "es_hotelservices": 42,
+    "es_tech": 41,
+    "es_home": 34,
+    "es_contents": 16,
+    "es_otherservices": 14,
+    "es_leisure": 14,
+    "es_travel": 8
+  },
+  "unsupported_categories": [
+    {
+      "source_category": "es_health",
+      "eval_count": 325
+    },
+    {
+      "source_category": "es_wellnessandbeauty",
+      "eval_count": 234
+    },
+    {
+      "source_category": "es_fashion",
+      "eval_count": 117
+    },
+    {
+      "source_category": "es_sportsandtoys",
+      "eval_count": 49
+    },
+    {
+      "source_category": "es_hotelservices",
+      "eval_count": 42
+    },
+    {
+      "source_category": "es_home",
+      "eval_count": 34
+    },
+    {
+      "source_category": "es_contents",
+      "eval_count": 16
+    },
+    {
+      "source_category": "es_otherservices",
+      "eval_count": 14
+    },
+    {
+      "source_category": "es_leisure",
+      "eval_count": 14
+    },
+    {
+      "source_category": "es_travel",
+      "eval_count": 8
+    }
+  ],
+  "eval_fraud_by_source_category": {
+    "es_transportation": 0,
+    "es_sportsandtoys": 26,
+    "es_food": 0,
+    "es_wellnessandbeauty": 18,
+    "es_health": 22,
+    "es_fashion": 2,
+    "es_tech": 2,
+    "es_home": 2,
+    "es_otherservices": 6,
+    "es_barsandrestaurants": 2,
+    "es_hyper": 2,
+    "es_hotelservices": 16,
+    "es_contents": 0,
+    "es_travel": 8,
+    "es_leisure": 14
+  },
+  "amount_ge_250_by_fraud": {
+    "fraud_0_ge250_0": 11071,
+    "fraud_0_ge250_1": 19,
+    "fraud_1_ge250_0": 48,
+    "fraud_1_ge250_1": 72
+  },
+  "assumptions": [
+    "currency USD is a schema requirement; BankSim publishes no currency code.",
+    "direction debit is assumed; BankSim publishes no credit/debit field.",
+    "is_subscription is false for every row; subscription flags were not invented.",
+    "source synthetic is the schema tag for this offline sample, not the product fixture.",
+    "One step is treated as one day starting 2014-01-01 UTC. The hour is not in the data.",
+    "Customer ids are hashed into account_token and are absent from this summary."
+  ],
+  "not_evaluable": [
+    "duplicate rule-specific accuracy: no independent duplicate labels",
+    "amount_anomaly rule-specific accuracy: no independent amount-anomaly labels",
+    "subscription_change: no subscription flag, price history, or subscription labels"
+  ],
+  "fraud_label_check": "Every fraud field parsed as the integer 0 or 1; other values abort the script.",
+  "output_jsonl_path": "/tmp/tl-eval-data/quick/quick_sample.jsonl",
+  "jsonl_line_count": 14896
+}

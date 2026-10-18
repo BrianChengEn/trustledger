@@ -9,10 +9,11 @@ from app.core.rules import analyze
 
 class AnalysisService:
     def __init__(self, transactions: TransactionService, provider: FraudProvider | None = None,
-                 memory: PriorConfirmations | None = None):
+                 memory: PriorConfirmations | None = None, confirmation_status=None):
         self.transactions = transactions
         self.provider = provider
         self.memory = memory or PriorConfirmations()
+        self.confirmation_status = confirmation_status or (lambda aid: 'open')
 
     def analyze(self, transaction_id: str, request_id: str) -> Analysis:
         # Use F3's per-request history and list/get consistency checks. All selection
@@ -37,8 +38,10 @@ class AnalysisService:
         for transaction in sorted(history, key=lambda row: row.id):
             prior = self.memory.for_category(transaction.merchant_category)
             analysis = analyze(transaction, history, request_id, prior)
-            if analysis.alert_type != "none":
-                result.append(Alert(**analysis.model_dump(), alert_id="alert_" + transaction.id))
+            aid = 'alert_' + transaction.id
+            status = self.confirmation_status(aid)
+            if analysis.alert_type != "none" or status != 'open':
+                result.append(Alert(**analysis.model_dump(), alert_id=aid, status=status))
         return result
 
     def preview(self, transaction_id: str) -> PrivacyPreview:

@@ -10,21 +10,21 @@ This repository is a working synthetic demo. It is not a live bank connection an
 
 ## Current status
 
-This candidate combines the current main, Nessie Admin implementation, SQLite alignment and PR #7 consented Backboard memory. On 17 October 2026, explicit Backboard memory CRUD was checked against the live API: create, store, retrieve, reuse, two-owner isolation, restart, and delete. System One classification on that same account returned HTTP 402 `Insufficient credits for System One`. The client keeps the rule result and reports `degraded`. Do not buy credits or turn on auto-reload.
+The local v0.3.0 candidate integrates the UI from `main` after PR #13 with the existing synthetic/Nessie data work. Today, Activity, Case, Privacy and Memory share the same components in the main workspace and isolated Data sources/Admin customer reviews. Synthetic remains the default. Existing generators, 18 offline records, common account codes, legacy aliases and explicit Nessie setup are retained. Connected data actions still require fresh Nessie acquisition. On 17 October 2026, explicit Backboard memory CRUD was checked against the live API: create, store, retrieve, reuse, two-owner isolation, restart, and delete. System One classification on that same account returned HTTP 402 `Insufficient credits for System One`. Failed inference preserves the rule result and reports `degraded`. Do not buy credits or turn on auto-reload.
 
 | Area | Status |
 |---|---|
 | Synthetic transactions, rules, review UI, Privacy Inspector | Implemented |
 | SQLite synthetic data, confirmations and consented category memory | Implemented; JSON remains an offline fixture only |
 | Consented memory affects the next analysis | Implemented on `main` |
-| Jev through Backboard | Implemented. A parsed response is required before health says `rules+jev-live`. This account currently receives HTTP 402, so a flagged review stays `degraded` |
+| Jev through Backboard | Explicitly configured POST analyses may attempt inference. HTTP 402 preserves rules and reports request-specific degraded mode; GET/confirmation stays rules-only |
 | Direct TypeSafe API | Not selected and not called |
 | Backboard persistent memory | Implemented and checked live. No key uses SQLite and labels it `local-fallback`. A key alone does not flip health to `backboard-live` |
-| Capital One Nessie | Six allowlisted Admin reads and explicit synthetic baseline CLI; dashboard transaction adapter remains an extension point |
+| Capital One Nessie | Shared Overview/Admin customer workspace; structured SQLite account and movement cache, per-collection freshness/failure; eight Admin queries with typed SQLite projections; explicit baseline CLI retained |
 | GitHub Actions CI | Backend, frontend and Admin browser checks run for each PR |
 | Production auth, hosting, deployment | Not started |
 
-Before a provider attempt, health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMORY_WRITE=true`, or memory `off` otherwise. Failed calls report degraded mode. Filling an API key does not by itself report `rules+jev-live` or `backboard-live`.
+With the default synthetic provider, health reports `synthetic`, `rules-only`, and `local-fallback` when `ALLOW_MEMORY_WRITE=true`, or memory `off` otherwise. Connected Nessie health reflects its SQLite snapshot and per-collection failures. Filling an API key does not by itself activate inference or report `backboard-live`.
 
 ## Documentation
 
@@ -61,9 +61,9 @@ Details, directories, and remaining tasks: [TEAM_ROLES.md](TEAM_ROLES.md).
 |---|---|
 | Frontend | React 19.3.1, TypeScript 5.9.3, Vite 7.3.7 |
 | Backend | Python 3.12, FastAPI 0.143.3, Uvicorn 0.54.0 |
-| Analysis | Deterministic rules, plus Jev through Backboard when a key is set |
+| Analysis | Deterministic rules; explicit `FRAUD_PROVIDER=backboard-jev` enables a bounded provider attempt only for POST analyses |
 | Memory | SQLite index/fallback; explicit consented Backboard CRUD when enabled and configured |
-| Banking | Synthetic SQLite dashboard; separate Nessie Admin sandbox reads |
+| Banking | Synthetic SQLite by default; explicit `TRANSACTION_PROVIDER=nessie` connects the mapped synthetic sandbox customer |
 
 Versions are the lockfiles, not the ranges in `package.json`. Full inventory: [TECH_STACK.md](TECH_STACK.md).
 
@@ -95,9 +95,13 @@ bash scripts/dev-frontend.sh
 - API docs: http://127.0.0.1:8000/docs
 - Smoke check, with the backend already running: `backend/.venv/bin/python scripts/smoke.py`
 
-Expect 8 synthetic transactions and 3 alerts. Memory writes default off; explicitly enable `ALLOW_MEMORY_WRITE` locally to test consented memory. Open **Possible duplicate**, read the evidence and Privacy Inspector, confirm normal with memory consent, then open **Confirmed memory** and confirm deletion. The inspector reloads after confirm and delete.
+Expect 18 synthetic transactions (8 original purchase scenarios plus 10 transfers) and 3 alerts. Memory writes default off; explicitly enable `ALLOW_MEMORY_WRITE` locally to test consented memory. In **Today**, open **Possible duplicate**, read the case evidence and follow the privacy link. Optional AI analysis runs only when explicitly requested. Choose normal with separate memory consent, then open **Memory** and confirm deletion. **Activity** keeps the selected frontend's original search/filter/sort and merchant/date/result/amount table; open a merchant row for its case. Existing date/type fields reflect actual movement data. The inspector reloads after confirm and delete.
+
+For the connected main workspace, keep the provided `NESSIE_API_KEY` in `backend/.env` and explicitly set `TRANSACTION_PROVIDER=nessie`. It resolves the first baseline customer from the existing confirmed import mapping; an absent mapping returns `workspace_not_linked` and never chooses another customer. **Data sources > Admin > 使用者交易** selects local customer codes and reuses the updated review pages inside that customer scope. Main navigation returns to the unchanged main identity; it is not a global customer switch. Refresh reads accounts, purchases, transfers, deposits and withdrawals into structured SQLite. All connected data actions, including privacy, confirmations and memory, first refresh Nessie. A failed required collection stops the action with a safe error; previously displayed rows remain labelled cached/unavailable. Transfer records without direction evidence show direction unknown and do not contribute to spending or direction-based rules. Only the latest 100 movements are displayed/analyzed. Nessie lacks validated merchant/category grouping here, so duplicate and subscription assertions are unavailable. A transfer 404 is an error, never an empty success or an automatic creation request.
 
 Shared steps, role-specific keys, and fixes: [TEAM-SETUP-60MIN.md](TEAM-SETUP-60MIN.md).
+
+Explicit synthetic transfer setup is available from `backend/` with `.venv/bin/python -m app.adapters.seed_nessie --transfers`. It requires the selected Nessie provider, backend key and confirmed existing baseline account mappings. It retains existing transfers, adds only the deficit to 10 per account, and verifies each creation through readback. Repeating the verified setup created zero records. The current sandbox has 18 accounts and 180 transfers. Ordinary browsing and refresh never create banking records; genuine provider failures still stop connected actions.
 
 ## Tests
 
@@ -127,16 +131,16 @@ Start the backend with `ALLOW_MEMORY_WRITE=true` and `BACKBOARD_API_KEY` set in 
 6. Stop and start the backend. Repeat steps 3 and 4. The same row is still there.
 7. Send the same confirmation again. The stored `memory_id` comes back, and the memory list does not grow.
 
-That confirmation also asks Jev about every rule-flagged transaction. On this account those calls return HTTP 402, so `analysis_mode` becomes `degraded` while the rule alert remains. The prior confirmation adds one evidence line. It does not clear `needs_human` or the alert type. The HTTP API has one server-side demo user. Two-owner isolation is the opt-in test above, not a browser-selected account.
+GETs and confirmations never invoke fraud inference. Only an explicitly configured POST analysis attempts the provider; a failure leaves the rule result and reports degraded for that request. The prior confirmation adds one evidence line without clearing `needs_human`. Admin customer contexts use server-resolved, credential-scoped owners; the same connected customer shares decisions with Overview while other customers and the offline baseline remain isolated.
 
 ## External APIs
 
 | Service | In this repo | Credential | Called today |
 |---|---|---|---|
-| Jev through Backboard | `POST https://app.backboard.io/api/threads/messages` from `jev_client.py` | `BACKBOARD_API_KEY` | Only when that key is non-empty |
+| Jev through Backboard | Bounded System One call through `core/jev.py` | `BACKBOARD_API_KEY` | Explicit `FRAUD_PROVIDER=backboard-jev`, only POST analyses; key alone does not enable it |
 | Direct TypeSafe API | Not used. Optional vendor route | `JEV_API_KEY` is unused | No |
 | Backboard memory | Explicit CRUD in `backboard_client.py`; committed consent and durable recovery in SQLite | `BACKBOARD_API_KEY`; owner assistant stored in SQLite | Only for enabled, explicitly consented memory or subsequent read/delete |
-| Nessie sandbox | Six Admin GETs and explicit `scripts/seed_nessie.py` baseline CLI | `NESSIE_API_KEY` stays backend-only | Only after explicit Admin execution or CLI invocation |
+| Nessie sandbox | Allowlisted GETs, shared cached workspace and explicit `app.adapters.seed_nessie` baseline CLI | `NESSIE_API_KEY` stays backend-only | Connected data actions, Admin queries and metadata prerequisites, or explicit CLI invocation; browsing never creates banking records |
 
 `docs/.env.example` lists extra URLs and model names. `backend/app/core/config.py` does not read those fields. Do not treat that example as the live configuration.
 
@@ -146,10 +150,12 @@ That confirmation also asks Jev about every rule-flagged transaction. On this ac
 - Keys stay in `backend/.env`, which Git ignores. Bootstrap does not overwrite an existing `.env`.
 - The AI payload is built from an allowlist. Raw ids, merchant text, exact amounts, and exact timestamps stay out.
 - Memory writes default off and require decision `normal` plus explicit consent. Sources are labelled `local-fallback` or `backboard`; uncertain writes stay pending and are never automatically posted again.
-- Admin displays local resource codes and safe projections. History stores status/time metadata only; startup removes legacy raw history, preserving confirmations and import progress.
+- Admin displays local resource codes and safe typed projections read back from SQLite. History stores status/time metadata only; startup removes legacy raw history, preserving confirmations and import progress.
 - Do not commit `.env`, SQLite databases, `.venv`, or `node_modules`.
 - No real customer financial data in the hackathon build.
 
 ## AI assistance
 
 The starter application and the original design notes include material prepared with OpenAI Codex. Later memory-feedback work and this ownership documentation were prepared with Grok. Credit the tools the team actually uses in the Technica submission. Do not claim measured model accuracy, vendor cost, or compliance that this repository has not tested.
+
+The v0.2.0/v0.2.1 Nessie updates and v0.3.0 UI/data integration were implemented and checked with OpenAI Codex.

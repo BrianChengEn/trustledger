@@ -6,7 +6,8 @@ from starlette.exceptions import HTTPException
 from app.adapters.nessie import NessieClient
 from app.adapters.synthetic import load_transactions
 from app.api.admin_nessie import router as admin_router
-from app.api.routes import router
+from app.api.routes import customer_router, router
+from app.api.workspace import router as workspace_router
 from app.core.config import Settings
 from app.core.http import RequestGuardMiddleware, ResponseSecurityMiddleware, error_response
 from app.core.store import Store
@@ -14,7 +15,7 @@ from app.core.transactions import ProviderError, TransactionNotFound
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    app = FastAPI(title="TrustLedger synthetic development API", version="0.1.0")
+    app = FastAPI(title="TrustLedger synthetic development API", version="0.3.0")
     app.state.settings = settings or Settings()
     app.state.store = Store(app.state.settings.database_path)
     load_transactions(app.state.store, app.state.settings.demo_user_id)
@@ -33,6 +34,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 502: "memory_delete_failed"}.get(
             exc.status_code, "request_failed")
         admin_codes = {404: {"history_not_found", "resource_not_found"}, 503: {"nessie_not_configured"}}
+        workspace_codes = {404: {'customer_not_found'}, 409: {'workspace_not_linked'},
+                           502: {'customers_unavailable', 'nessie_unavailable'}, 503: {'nessie_not_configured'}}
+        if isinstance(exc.detail, str) and exc.detail in workspace_codes.get(exc.status_code, set()):
+            code = exc.detail
         if (request.url.path.startswith("/api/v1/admin/nessie") and isinstance(exc.detail, str)
                 and exc.detail in admin_codes.get(exc.status_code, set())):
             code = exc.detail
@@ -52,6 +57,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return error_response(request.scope, 422, "invalid_request", "Request does not match the API contract.")
 
     app.include_router(router)
+    app.include_router(customer_router)
+    app.include_router(workspace_router)
     app.include_router(admin_router)
     return app
 
