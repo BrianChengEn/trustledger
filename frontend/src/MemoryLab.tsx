@@ -182,7 +182,8 @@ export default function MemoryLab({step, onStep}: {step: string; onStep: (id: st
         <section><h3>After deletion</h3><p>Rules still work.</p><p className="quiet">Prior context is gone.</p></section>
         <blockquote className="lesson">Memory changes what the user knows, not what the fraud rules decide.</blockquote>
         <div className="actions"><button type="button" className="primary" onClick={() => go({view: 'privacy', lab: ''})}>Explore Privacy Protection<Icon name="arrowRight" size={15}/></button>
-          <a className="button" href={href({view: 'case', tx: target.id, from: 'today'})}>Open the real case</a></div></div>,
+          <a className="button" href={href({view: 'case', tx: target.id, from: 'today'})}>Open the real case</a>
+          <a className="button" href={href({view: 'fraudlab'})}>Explore the fraud research (offline)</a></div></div>,
       why: {why: 'This is the one idea to remember.', changed: 'Only the context the user can see.', unchanged: 'Every fraud decision.', next: 'See how Privacy limits what AI receives.'}},
   ];
   const idOf = (t: string) => steps.some(s => s.id === t) ? t : steps[0].id;

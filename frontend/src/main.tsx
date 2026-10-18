@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {Suspense, lazy, useEffect, useRef, useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {type Alert} from './api';
 import {widgetStore} from './homeStore';
@@ -6,6 +6,8 @@ import {Icon, type IconName} from './icons';
 import {dataModeCopy, memoryModeCopy, type Tone} from './lib';
 import {useRoute, go, type Route} from './route';
 import AdminDemo from './AdminDemo';
+// Loaded on demand: the lab ships about 150 KB of research data that the rest of the app never needs.
+const FraudLab = lazy(() => import('./fraudlab/FraudLab'));
 import {AuthProvider, useAuth} from './auth';
 import Login from './Login';
 import {Admin, SourcesIntro} from './Sources';
@@ -117,7 +119,7 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
   const sources = mode === 'admin' && (route.view === 'sources' || !!route.customer);
   const adminPage = mode === 'admin' && route.view === 'admin';
   // Each role only sees its own pages; anything else goes home.
-  const allowed = mode === 'admin' ? adminPage || sources : route.view !== 'admin' && route.view !== 'sources' && !route.customer;
+  const allowed = mode === 'admin' ? adminPage || sources || route.view === 'fraudlab' : route.view !== 'admin' && route.view !== 'sources' && !route.customer;
   useEffect(() => {
     if (!allowed) go(mode === 'admin' ? {view: 'admin'} : {view: 'today'});
   }, [allowed, mode]);
@@ -151,6 +153,9 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
         {label: 'Duplicate charges', hint: 'Same merchant and amount within 24 hours', icon: 'copy', go: caseOf(firstOf('duplicate')), disabled: !firstOf('duplicate')},
         {label: 'Large amounts', hint: 'Above the demo high-amount threshold', icon: 'alertTriangle', go: caseOf(firstOf('amount_anomaly')), disabled: !firstOf('amount_anomaly')},
         {label: 'Subscription increases', hint: 'A recurring charge rose by more than 20%', icon: 'trendingUp', go: caseOf(firstOf('subscription_change')), disabled: !firstOf('subscription_change')},
+      ]},
+      {heading: 'Learn', items: [
+        {label: 'Fraud Intelligence Lab', hint: 'Offline ML research on BankSim: model, evidence, benchmarks', icon: 'sparkles', go: () => go({view: 'fraudlab'})},
       ]},
       {heading: 'Make it yours', items: [
         {label: 'Edit widgets', hint: 'Remove or reorder your mini tools', icon: 'sliders', go: () => { go({view: 'today'}); widgetStore.setEditing(true); }},
@@ -229,7 +234,8 @@ function Shell({mode}: {mode: 'user' | 'admin'}) {
       </div>
     </header>
     <main id="main">
-      {mode === 'user' && allowed && <WorkspaceView route={route}/>}
+      {mode === 'user' && allowed && route.view !== 'fraudlab' && <WorkspaceView route={route}/>}
+      {allowed && route.view === 'fraudlab' && <Suspense fallback={<p className="loading" role="status">Loading the research lab…</p>}><FraudLab chapter={route.chapter}/></Suspense>}
       {adminPage && <AdminDemo/>}
       {auth.session.role === 'admin' && <div hidden={!sources} className="adminview"><SourcesIntro/><Admin active={sources}/></div>}
     </main>

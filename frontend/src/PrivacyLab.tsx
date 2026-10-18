@@ -115,7 +115,8 @@ export default function PrivacyLab({step, onStep}: {step: string; onStep: (id: s
         <blockquote className="lesson">TrustLedger limits what external AI services receive before the request leaves the backend.</blockquote>
         <p className="quiet">This reduces what a provider can see. It does not remove every privacy risk.</p>
         <div className="actions"><button type="button" className="primary" onClick={() => go({view: 'memory', lab: ''})}>See How Memory Works<Icon name="arrowRight" size={15}/></button>
-          <a className="button" href={href({view: 'privacy', tx: tx.id})}>Open the real privacy inspector</a></div></div>,
+          <a className="button" href={href({view: 'privacy', tx: tx.id})}>Open the real privacy inspector</a>
+          <a className="button" href={href({view: 'fraudlab'})}>Explore the fraud research (offline)</a></div></div>,
       why: {why: 'Compare what exists with what is allowed out.', changed: 'Nothing.', unchanged: 'Your data and decisions.', next: 'Try the Memory Lab with the same charge.'}},
   ];
   void money;

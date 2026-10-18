@@ -44,4 +44,10 @@ describe('customer navigation stays inside Data sources', () => {
     expect(href({view: 'privacy', lab: 'p-4'})).toBe('#/privacy/lab/p-4');
     expect(parse('#/privacy/txn_syn_004')).toEqual({view: 'privacy', tx: 'txn_syn_004'});
   });
+  it('round-trips the Fraud Intelligence Lab chapters', () => {
+    expect(parse('#/fraud-lab')).toEqual({view: 'fraudlab', chapter: undefined});
+    expect(parse('#/fraud-lab/arena')).toEqual({view: 'fraudlab', chapter: 'arena'});
+    expect(href({view: 'fraudlab'})).toBe('#/fraud-lab');
+    expect(href({view: 'fraudlab', chapter: 'explorer'})).toBe('#/fraud-lab/explorer');
+  });
 });

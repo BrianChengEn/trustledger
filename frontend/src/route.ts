@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 
 export type Route = (
   | {view: 'today'} | {view: 'activity'; filter?: string} | {view: 'memory'; lab?: string} | {view: 'sources'}
-  | {view: 'admin'; tab?: string}
+  | {view: 'admin'; tab?: string} | {view: 'fraudlab'; chapter?: string}
   | {view: 'privacy'; tx?: string; lab?: string} | {view: 'case'; tx: string; from?: string}
 ) & {customer?: string};
 
@@ -20,20 +20,22 @@ export function parse(hash: string): Route {
     case 'memory': route = id === 'lab' ? {view, lab: from ?? ''} : {view}; break;
     case 'activity': route = tx ? {view, filter: tx} : {view}; break;
     case 'admin': route = tx ? {view, tab: tx} : {view}; break;
+    case 'fraud-lab': route = {view: 'fraudlab', chapter: tx}; break;
     case 'privacy': route = id === 'lab' ? {view, lab: from ?? ''} : {view, tx}; break;
     case 'case': route = tx ? {view, tx, from} : {view: 'today'}; break;
     default: route = {view: 'today'};
   }
   return customer ? {...route, customer} : route;
 }
-export const href = (route: Route) =>
-  '#/' + (route.customer && route.view !== 'sources' ? 'sources/' + encodeURIComponent(route.customer) + '/' : '')
-  + route.view + (('view' in route && (route.view === 'memory' || route.view === 'privacy') && route.lab !== undefined)
-    ? '/lab' + (route.lab ? '/' + encodeURIComponent(route.lab) : '')
-    : 'tx' in route && route.tx ? '/' + encodeURIComponent(route.tx) : '')
-  + (route.view === 'activity' && route.filter ? '/' + encodeURIComponent(route.filter) : '')
-  + (route.view === 'admin' && route.tab ? '/' + encodeURIComponent(route.tab) : '')
-  + (route.view === 'case' && route.from ? '/' + route.from : '');
+export const href = (route: Route) => {
+  let path = route.view === 'fraudlab' ? 'fraud-lab' + (route.chapter ? '/' + encodeURIComponent(route.chapter) : '') : route.view;
+  if ((route.view === 'memory' || route.view === 'privacy') && route.lab !== undefined) path += '/lab' + (route.lab ? '/' + encodeURIComponent(route.lab) : '');
+  else if ('tx' in route && route.tx) path += '/' + encodeURIComponent(route.tx);
+  if (route.view === 'activity' && route.filter) path += '/' + encodeURIComponent(route.filter);
+  if (route.view === 'admin' && route.tab) path += '/' + encodeURIComponent(route.tab);
+  if (route.view === 'case' && route.from) path += '/' + route.from;
+  return '#/' + (route.customer && route.view !== 'sources' ? 'sources/' + encodeURIComponent(route.customer) + '/' : '') + path;
+};
 
 export function useRoute() {
   const [route, setRoute] = useState(() => parse(window.location.hash));
