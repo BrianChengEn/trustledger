@@ -103,7 +103,7 @@ try {
   async function toToday() {
     const preview = page.getByRole('button',{name:'Preview as user',exact:true});
     if (await preview.count()) await preview.click();
-    await page.locator('.topbar').getByRole('link',{name:/^Today/}).click();
+    await toUser(/^Today/);
   }
   // Pages that start on the user's screens open in the admin's "Preview as user" mode.
   async function userGoto(target, url) {
