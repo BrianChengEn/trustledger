@@ -17,6 +17,37 @@ def local_token(prefix, dataset, value):
     return prefix + hashlib.sha256((dataset + ':' + value).encode()).hexdigest()[:32]
 
 
+def banksim_rows(filename: Path, dataset: str):
+    with Path(filename).open(newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        if reader.fieldnames != HEADER:
+            raise ValueError('Unexpected BankSim header.')
+        for number, raw in enumerate(reader, 1):
+            if None in raw or any(value is None for value in raw.values()):
+                raise ValueError('Invalid BankSim row width.')
+            values = {key: value.strip().strip("'") for key, value in raw.items()}
+            if values['fraud'] not in {'0', '1'}:
+                raise ValueError('Invalid BankSim label.')
+            amount = Decimal(values['amount']) * 100
+            if not amount.is_finite() or amount < 0 or amount != amount.to_integral_value():
+                raise ValueError('BankSim amount must have exact hundredths.')
+            customer, merchant = values['customer'], values['merchant']
+            customer_token = local_token('customer_', dataset, customer)
+            key = f'{number:012d}'
+            row = TransactionRecord(
+                id=local_token('txn_', dataset, key), owner=customer_token,
+                source='banksim', dataset_id=dataset, source_record_key=key,
+                customer_token=customer_token, amount_minor=int(amount), currency='EUR',
+                merchant_token=local_token('merchant_', dataset, merchant),
+                source_category=values['category'], simulation_step=int(values['step']),
+                banksim_features=BankSimFeatures(
+                    customer_code=customer, merchant_code=merchant,
+                    age_band=values['age'] or None, gender=values['gender'] or None,
+                    zipcode_origin=values['zipcodeOri'] or None,
+                    zipcode_merchant=values['zipMerchant'] or None))
+            yield row, bool(int(values['fraud']))
+
+
 def import_banksim(filename: Path, store: DatasetStore):
     if store.source != 'banksim' or Path(filename).resolve() == store.filename.resolve():
         raise ValueError('BankSim import requires a separate banksim source database.')
@@ -27,34 +58,9 @@ def import_banksim(filename: Path, store: DatasetStore):
 
     def records():
         nonlocal labels
-        with Path(filename).open(newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            if reader.fieldnames != HEADER:
-                raise ValueError('Unexpected BankSim header.')
-            for number, raw in enumerate(reader, 1):
-                if None in raw or any(value is None for value in raw.values()):
-                    raise ValueError('Invalid BankSim row width.')
-                values = {key: value.strip().strip("'") for key, value in raw.items()}
-                if values['fraud'] not in {'0', '1'}:
-                    raise ValueError('Invalid BankSim label.')
-                labels += int(values['fraud'])
-                amount = Decimal(values['amount']) * 100
-                if not amount.is_finite() or amount < 0 or amount != amount.to_integral_value():
-                    raise ValueError('BankSim amount must have exact hundredths.')
-                customer, merchant = values['customer'], values['merchant']
-                customer_token = local_token('customer_', dataset, customer)
-                key = f'{number:012d}'
-                yield TransactionRecord(
-                    id=local_token('txn_', dataset, key), owner=customer_token,
-                    source='banksim', dataset_id=dataset, source_record_key=key,
-                    customer_token=customer_token, amount_minor=int(amount), currency='EUR',
-                    merchant_token=local_token('merchant_', dataset, merchant),
-                    source_category=values['category'], simulation_step=int(values['step']),
-                    banksim_features=BankSimFeatures(
-                        customer_code=customer, merchant_code=merchant,
-                        age_band=values['age'] or None, gender=values['gender'] or None,
-                        zipcode_origin=values['zipcodeOri'] or None,
-                        zipcode_merchant=values['zipMerchant'] or None))
+        for row, label in banksim_rows(filename, dataset):
+            labels += label
+            yield row
 
     count = store.upsert_transactions(records())
     return {'dataset_id': dataset, 'transactions': count, 'fraud_labels': labels,

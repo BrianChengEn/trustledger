@@ -636,6 +636,53 @@ try {
   await page.locator('#V-CUSTOMERS .today').waitFor();
   assert.equal(analysisCalls,previousAnalysis);
   assert.equal(explanationCalls,previousExplanation);
+  // Generated source accounts reuse this table and cannot change source/owner on a late response.
+  await toConsole();
+  await page.locator('#NAV-DATA').click();
+  await page.locator('#S-BANKSIM').click();
+  await page.locator('#S-ACCOUNT').waitFor();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===26);
+  const bankOptions = await page.locator('#S-ACCOUNT option').evaluateAll(nodes=>nodes.map(n=>n.value).filter(Boolean));
+  await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
+  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  assert((await sourceLedger.innerText()).includes('synthetic-derived'));
+  assert((await sourceLedger.locator('tbody').innerText()).includes('€180.01'));
+  for (let offset=25;offset<=75;offset+=25) {
+    await page.locator('#S-NEXT').click();
+    await sourceLedger.getByText(`${offset+1}–${offset+25} of 100`,{exact:true}).waitFor();
+  }
+  assert(await page.locator('#S-NEXT').isDisabled());
+  await page.locator('#S-ACCOUNT-NEXT').click();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===7);
+  const lastBank = await page.locator('#S-ACCOUNT option').last().getAttribute('value');
+  await page.locator('#S-ACCOUNT').selectOption(lastBank);
+  await sourceLedger.getByText('1–25 of 100',{exact:true}).waitFor();
+  await page.locator('#S-ACCOUNT-PREV').click();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===27);
+  let releaseAccount, captureAccount;
+  const heldAccount = new Promise(resolve=>{releaseAccount=resolve;});
+  const capturedAccount = new Promise(resolve=>{captureAccount=resolve;});
+  await page.route('**/data-sources/banksim/transactions?*account_token=*',async route=>{
+    const response=await route.fetch(); captureAccount(); await heldAccount; await route.fulfill({response});
+  },{times:1});
+  await page.locator('#S-ACCOUNT').selectOption(bankOptions[1]);
+  await capturedAccount;
+  assert.equal(await sourceLedger.locator('tbody tr').count(),0);
+  await page.locator('#S-ACCOUNT').selectOption(bankOptions[0]);
+  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  const lateAccount=page.waitForResponse(response=>response.url().includes('account_token='+bankOptions[1]));
+  releaseAccount(); await lateAccount;
+  assert.equal(await page.locator('#S-ACCOUNT').inputValue(),bankOptions[0]);
+  await page.locator('#S-NESSIE').click();
+  await page.waitForFunction(()=>document.querySelectorAll('#S-ACCOUNT option').length===3);
+  const nessieCode=await page.locator('#S-ACCOUNT option').last().getAttribute('value');
+  await page.locator('#S-ACCOUNT').selectOption(nessieCode);
+  await sourceLedger.getByText('100 transactions',{exact:true}).waitFor();
+  assert((await sourceLedger.locator('tbody').innerText()).includes('$1.24'));
+  assert((await sourceLedger.locator('tbody').innerText()).includes('Date only'));
+  assert.equal(analysisCalls,previousAnalysis);
+  assert.equal(explanationCalls,previousExplanation);
+  await page.screenshot({path:join(root,'artifacts/account-demo-nessie.png'),fullPage:true});
   assert.deepEqual(errors,[]);
   console.log('PASS: existing UI/Admin/review/privacy/memory baseline, synthetic 18 rows/3 alerts, responsive checks and isolated Nessie/BankSim SQLite/API source switching, EUR/day display, pagination and stale-response isolation.');
 } catch (error) {

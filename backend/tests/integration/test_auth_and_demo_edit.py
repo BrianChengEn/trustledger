@@ -445,3 +445,25 @@ def test_reset_succeeds_after_explicit_pending_memory_deletion(admin):
     assert admin.delete(f"/api/v1/memories/{local_id}").status_code == 204
     assert store.memory_job(owner, alert_id=alert_id)["state"] == "deleted"
     assert admin.post("/api/v1/admin/demo/reset").status_code == 200
+
+
+@pytest.mark.parametrize('path', [
+    '/api/v1/transactions/txn_syn_003/relevant-memories',
+    '/api/v1/memories/missing/deletion-verification',
+])
+def test_level2_public_routes_require_session_before_memory_access(anon, path):
+    assert code(anon.get(path), 401) == 'auth_required'
+    assert sign_in(anon, 'user', USER_PASS).status_code == 200
+    response = anon.get(path)
+    assert response.status_code == (200 if path.endswith('relevant-memories') else 404)
+
+
+@pytest.mark.parametrize('suffix', [
+    '/transactions/txn_syn_003/relevant-memories',
+    '/memories/missing/deletion-verification',
+])
+def test_level2_customer_routes_check_role_before_customer_or_provider(anon, suffix):
+    path = '/api/v1/admin/nessie/customers/customer_' + '0' * 32 + suffix
+    assert code(anon.get(path), 401) == 'auth_required'
+    assert sign_in(anon, 'user', USER_PASS).status_code == 200
+    assert code(anon.get(path), 403) == 'admin_only'
