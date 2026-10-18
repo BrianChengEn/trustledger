@@ -1,0 +1,214 @@
+# TrustLedger 快速評估
+
+這是一次小型、可重現的探索。它量的是：**目前 HTTP 規則發出的人工審核警示，有多常和 BankSim 的詐欺標籤落在同一筆交易上。**
+
+它不是上線級的詐欺偵測準確率，也沒有調過門檻。Jev 分類準確率：**NOT MEASURED IN THIS RUN。**
+
+## 直接結果
+
+在自然盛行率的 11,210 筆保留樣本裡，警示幾乎只代表「借記金額 >= 250」。
+
+| 指標 | 值 | 分子 / 分母 |
+| --- | --- | --- |
+| 樣本 | 11,210 | 評分列，不含歷史列 |
+| 詐欺 / 正常 | 120 / 11,090 | 盛行率 120/11210 = 1.070% |
+| TP / FP / TN / FN | 72 / 20 / 11,070 / 48 | 見下方矩陣 |
+| Accuracy | 0.993934 | 11,142 / 11,210 |
+| Precision | 0.782609 | 72 / 92 |
+| Recall | 0.600000 | 72 / 120 |
+| F1 | 0.679245 | 由上面的 precision 與 recall 算出 |
+| FPR | 0.001803 | 20 / 11,090 |
+| Balanced accuracy | 0.799098 | (72/120 + 11,070/11,090) / 2 |
+
+**Accuracy 很高，是因為 9,525 筆交通交易裡詐欺標籤是 0，而且幾乎都沒有警示。** 這不代表系統擅長抓詐欺。比較有用的數字是 recall 60%（漏掉 48/120）和 precision 78.3%（92 次警示裡 20 次不是詐欺標籤）。
+
+沒有enriched sample。下面的 precision 是自然盛行率。
+
+## 資料
+
+| 項目 | 值 |
+| --- | --- |
+| 使用的資料 | BankSim，Lopez-Rojas 與 Axelsson，EMSS 2014 |
+| 原始列數 | 594,643；詐欺 7,200；正常 587,443；盛行率 7,200/594,643 |
+| 評分樣本 | step 177–179，11,210 筆，3,858 個客戶 |
+| 保留的歷史 | 前一個 step 的 3,686 筆，3,510 個客戶。只保留 24 小時規則用得到的上下文 |
+| 推算時間 | 2014-06-27 到 2014-06-29 UTC。日內秒數是檔案順序，不是真實時鐘 |
+| 抽樣 | 整個 step 的時間尾段，自然盛行率，目標約 10,000 筆，落在 5,000–15,000。Seed 20261017 只作紀錄，沒有做隨機抽樣 |
+| 標籤檢查 | `fraud` 欄全部是整數 0 或 1 |
+
+Sparkov 沒有用。官方 Kaggle 檔沒有下載。本機的 Hugging Face `fraudTrain.csv` 是被 Excel 截斷的匯出，卡號大量變成科學記號，不能當客戶編號。
+
+對應到產品類別時，明確映射只有：
+
+- `es_barsandrestaurants` → dining
+- `es_food`、`es_hyper` → groceries
+- `es_transportation` → transportation
+- `es_tech` → electronics
+- 其餘 → other
+
+評分窗裡 120 筆詐欺有 114 筆因此變成 `other`。交通 9,525 筆的詐欺數是 0。
+
+三個必須寫明的假設：BankSim 沒有幣別，schema 才綁成 USD；沒有借貸方向，全部當成 debit；沒有訂閱旗標，`is_subscription` 全部是 false。
+
+## 混淆矩陣
+
+預測正例是 `alert_type != none`。真實正例是 BankSim `fraud == 1`。
+
+|  | 有警示 | 沒有警示 |
+| --- | --- | --- |
+| 詐欺標籤 | TP 72 | FN 48 |
+| 正常標籤 | FP 20 | TN 11,070 |
+
+警示類型和標籤的交叉：
+
+| 警示 | 詐欺 | 正常 |
+| --- | --- | --- |
+| amount_anomaly | 72 | 19 |
+| duplicate | 0 | 1 |
+| subscription_change | 0 | 0 |
+| none | 48 | 11,070 |
+
+72 筆 TP 全部是金額規則。48 筆 FN 全部低於 250，而且沒有被重複扣款規則接住。金額 >= 250 的格子是：詐欺 72、正常 19。多出來的 1 筆 FP 是金額 0.22 的交通重複扣款。
+
+同一組 `(fraud, alert_type)` 用兩段獨立的計數程式得到同一張矩陣。在寫評分腳本之前，另一段直接呼叫 `core.rules.analyze` 的程式也得到 TP 72、FP 20、TN 11,070、FN 48。
+
+規則各自的準確率：
+
+- Duplicate：**NOT EVALUABLE**。沒有獨立的重複扣款標籤。
+- Amount anomaly：**NOT EVALUABLE**。沒有獨立的金額異常標籤。上面的數字只是「警示對上詐欺標籤」。
+- Subscription change：**NOT EVALUABLE**。資料沒有訂閱旗標、價格歷史或訂閱標籤。這次它發出 0 次警示。
+
+## 30 個情境
+
+預期結果來自 `docs/00-overall-architecture-report.md` 第 7 節的文字，不是把 `core/rules.py` 的不等式抄成答案，也不是人工複核過的 ground truth。
+
+文件規則是：同類別、同金額、24 小時內算重複；金額大於過去 30 天同類別中位數的 3 倍，而且大於 USD 100；同一訂閱類別比上次增加超過 20%。
+
+總計 **21/30 通過，9 個失敗。** 合成資料的 8 筆 demo fixture 自我測試通過。
+
+| 規則 | 情境通過 | 主要落差 |
+| --- | --- | --- |
+| Duplicate | 9/12 | 正式程式用商家名稱。文件用類別。同類別但不同商家不會警示；同商家但不同類別反而會警示 |
+| Amount | 6/11 | 正式程式是借記 >= 250。沒有個人基準也會警示；穩定的高消費也會警示；中位數 3 倍但低於 250 的消費不會警示 |
+| Subscription | 5/6 | 同一商家的漲價、剛好 20%、降價都符合文件。同一類別但換商家的 +25% 不會警示 |
+| 已確認正常後的一筆普通消費 | 1/1 | 確認本身不會製造警示。若規則命中，`needs_human` 仍是 true |
+
+9 個失敗案例：`dup_same_category_other_merchant`、`dup_different_category_same_merchant`、`amt_250_no_history`、`amt_251_no_history`、`amt_849_no_history`、`amt_high_but_consistent`、`amt_above_median_below_250`、`sub_up_25_other_merchant`、`confirmed_other_merchant_repeat`。
+
+## 八項功能可靠性
+
+執行的是現有本機測試，沒有呼叫 Backboard、Jev 或 Nessie。排除 `backend/tests/integration/test_backboard_live.py`。
+
+pytest 原文：`293 passed, 1 warning in 4.36s`。failed 0，skipped 0，errors 0。唯一 warning 是 Starlette 的 httpx deprecation。
+
+這不是安全稽核。`test_privacy_rules.py` 測的是 `services/ai/rules.py`，不能當成 HTTP `core/rules.py` 的證明。
+
+| # | 功能 | 結果 | 證據 |
+| --- | --- | --- | --- |
+| 1 | Synthetic demo user | pass | demo fixture 與 `demo_user_id` 的 API 路徑。沒有單獨的登入測試 |
+| 2 | Transactions 與 alert 細節 | pass | `txn_syn_004/005/008` 的警示欄位和規則結果一致 |
+| 3 | Deterministic rules | pass | `test_fraud.py`、`test_analysis_pipeline.py`。規則結果沒有被 mock provider 覆寫 |
+| 4 | Jev 整合與 fallback | pass（只有 mock） | 缺 key 維持 rules-only；成功 mock 標成 rules+jev-live；失敗標成 degraded。分類準確率沒有量 |
+| 5 | Backboard / SQLite memory | pass | consent、local-fallback、刪除、重複確認、provider 失敗、owner 隔離 |
+| 6 | Privacy Inspector | pass | SafePayload 八欄、敏感值不進 payload、secret 不出現在 repr。不是完整的隱私稽核 |
+| 7 | Human confirmation | pass | `memory_status=written`、重複確認沿用同一筆、DELETE 204、衝突保留原確認 |
+| 8 | Provider mode | pass | 測試看過 rules-only、mock 的 rules+jev-live、degraded、local-fallback |
+
+瀏覽器上的畫面沒有重跑。`scripts/check.sh` 沒有跑。
+
+## 五個最需要處理的問題
+
+### 1. 金額規則是一條固定的 250 門檻
+
+- 失敗了什麼：文件寫的是「大於 30 天同類別中位數的 3 倍，且大於 USD 100」。HTTP 規則是借記 `amount >= 250`。
+- 證據：72/72 的 TP 都是 `amount_anomaly`；48/48 的 FN 都低於 250。情境 5 個失敗，包含沒有歷史的 250、849，以及穩定高消費 288，還有高於中位數 3 倍但只有 180 的漏報。
+- 影響功能：deterministic amount rule。
+- 建議：隔夜評估前先決定要以文件規則還是 250 門檻為準，並讓文件和 `backend/app/core/rules.py` 一致。不要用這次資料調門檻。
+- 工作量：改動本身小，加上測試大約半天到一天。這個檔案是 integrator 的範圍，要先和 Benson 同意。
+- 優先順序：P0。它同時決定漏報、誤報，和這次分數的意義。
+
+### 2. 99.39% accuracy 不能拿來代表偵測能力
+
+- 失敗了什麼：評分窗 85% 是交通交易，詐欺數是 0。11,070 個 TN 把 accuracy 推高。
+- 證據：交通 9,525 筆、詐欺 0。Balanced accuracy 只有 0.799。F1 是 0.679。
+- 影響功能：評估報告，不是某一條產品規則。
+- 建議：隔夜報告以 precision、recall、F1、FPR 和 balanced accuracy 為主，並分開寫自然盛行率。Accuracy 只當附錄。
+- 工作量：報告規格，數小時，不改產品。
+- 優先順序：P0（對隔夜評估的解讀）。
+
+### 3. 重複扣款規則幾乎沒有作動，而且鍵和文件不同
+
+- 失敗了什麼：文件用類別。程式用 `merchant_display`。這次 11,210 筆只發出 1 次 duplicate，而且是正常交易。
+- 證據：`duplicate|fraud=1` 是 0，`duplicate|fraud=0` 是 1，金額 0.22。情境 9/12，失敗的 3 個都是類別和商家不一致。
+- 影響功能：duplicate detection。日內時間是推算的，所以 BankSim 上的重複次數對時鐘假設敏感。
+- 建議：先決定鍵是類別還是商家，再在有真實時戳的資料上重測。不要把這 1 筆當成規則有效的證據。
+- 工作量：產品決定之後，程式和測試大約半天。`core/rules.py` 需 integrator 同意。
+- 優先順序：P1。
+
+### 4. 這份資料幾乎測不到類別規則
+
+- 失敗了什麼：120 筆詐欺有 114 筆被映射成 `other`。健康、運動、休閒、旅遊、住宿都沒有對應的產品類別。
+- 證據：`sample_summary.json` 的 `eval_fraud_by_source_category`。
+- 影響功能：之後若把金額規則改成類別中位數，BankSim 會把大部分詐欺混在同一個 `other` 裡。
+- 建議：隔夜評估若要測類別，使用類別能對上的資料。官方 Sparkov 仍較接近，但必須先拿到沒有科學記號卡號的原檔。不要用目前這份 Hugging Face 匯出當客戶歷史。
+- 工作量：資料準備大約半天，前提是有可用的原檔。
+- 優先順序：P0（隔夜評估的資料選擇）。
+
+### 5. 訂閱規則沒有外部標籤，而且有兩套規則實作
+
+- 失敗了什麼：BankSim 無法評估 subscription change。情境裡，同一類別但不同商家的 +25% 不會警示。`services/ai/rules.py` 仍在，HTTP 實際走 `core/rules.py`。
+- 證據：訂閱警示 0 次；情境 5/6；`test_privacy_rules.py` 的路徑和 HTTP 不同。
+- 影響功能：subscription change，以及隔夜評估可能評到錯誤的模組。
+- 建議：訂閱繼續只用獨立情境，不要編造訂閱標籤。隔夜腳本只 import `app.core.rules.analyze`。兩套規則要嘛對齊，要嘛在文件標明哪一套已停用。
+- 工作量：情境可沿用這次的 6 題再擴充。對齊兩套規則大約一天，而且跨 AI owner 和 integrator。
+- 優先順序：P1。
+
+## 這次沒有評的東西
+
+- Jev 分類準確率。
+- 任何付費或真實的 Backboard、Jev、Nessie 呼叫。
+- 三條規則各自的外部準確率。
+- 官方 Sparkov，以及損壞的 Hugging Face 卡號檔。
+- 瀏覽器畫面和 `scripts/check.sh`。
+- 完整安全稽核。
+- BankSim 的真實幣別和真實時鐘。文件沒有這些欄位。
+
+## 隔夜完整評估建議
+
+1. 先處理上面的 P0：確認 250 和中位數規則哪一個才是要測的規格，並確認資料的類別映射不會把詐欺都收成 `other`。
+2. 只評 `backend/app/core/rules.py`。
+3. 主集維持自然盛行率。若要做詐欺加權的診斷集，分開報告，而且不要把它的 precision 說成真實盛行率。
+4. 訂閱規則繼續標成 NOT EVALUABLE，除非有獨立標籤。
+5. 不要在測試資料上調門檻。
+6. Jev 若要實測，另外授權，並先解決每次請求可能建立 Default Assistant 的問題。這次沒有實測。
+7. 樣本再加大時，報告區間估計和每個指標的分母。不要用 accuracy 當標題。
+
+## 重現方式
+
+原始 CSV 不進 git。本機路徑是 `/tmp/tl-eval-data/banks.csv`。
+
+```bash
+cd /Users/brian/Projects/trustledger
+PYTHONPATH=backend backend/.venv/bin/python evaluation/prepare_quick_sample.py
+PYTHONPATH=backend backend/.venv/bin/python evaluation/run_quick_eval.py
+```
+
+`evaluation/run_quick_eval.py` 在樣本不存在時會自己先準備。輸出是 `evaluation/results/quick_metrics.json`、`scenario_results.json` 和 `quick_failure_cases.md`。
+
+可靠性測試：
+
+```bash
+backend/.venv/bin/python -m pytest -q --tb=line \
+  backend/tests/unit/ai/test_privacy_rules.py \
+  backend/tests/unit/ai/test_backboard_memory.py \
+  backend/tests/unit/ai/test_jev_backboard.py \
+  backend/tests/unit/core/test_fraud.py \
+  backend/tests/unit/core/test_store_reliability.py \
+  backend/tests/unit/core/test_explanation.py \
+  backend/tests/integration/test_fraud_boundary.py \
+  backend/tests/integration/test_analysis_pipeline.py \
+  backend/tests/integration/test_approved_integration.py \
+  backend/tests/integration/test_security.py
+```
+
+這次評估由 Grok 協助撰寫腳本和報告。沒有修改產品門檻，也沒有修改產品源碼。
