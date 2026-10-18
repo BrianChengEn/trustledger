@@ -1,9 +1,10 @@
 import json
+from datetime import timedelta
 
 import pytest
 
 from app.adapters.synthetic import load_transactions
-from app.services.ai.memory_policy import memory_sentence
+from app.services.ai.memory_policy import memory_sentence, prior_confirmation
 from app.services.ai.privacy import safe_payload
 from app.services.ai.rules import analyze
 
@@ -41,7 +42,40 @@ def test_memory_requires_all_gates():
     assert result and tx.id not in result and tx.merchant_display not in result
 
 
+def test_consented_memory_sets_prior_label_without_raw_values():
+    rows = load_transactions()
+    streaming = next(row for row in rows if row.id == "txn_syn_004")
+    fitness = next(row for row in rows if row.id == "txn_syn_008")
+    sentence = memory_sentence(streaming, "normal", True, True)
+    assert sentence is not None
+    assert prior_confirmation(streaming.merchant_category, [sentence]) == "normal"
+    assert prior_confirmation(fitness.merchant_category, [sentence]) == "unknown"
+    assert prior_confirmation(streaming.merchant_category, []) == "unknown"
+    payload = safe_payload(streaming, rows, "normal").model_dump()
+    text = json.dumps(payload)
+    assert payload["prior_user_confirmation"] == "normal"
+    for forbidden in [streaming.id, streaming.account_token, streaming.merchant_display, "11.99"]:
+        assert forbidden not in text
+    analysis = analyze(streaming, rows, "test", "normal")
+    assert analysis.alert_type == "duplicate" and analysis.needs_human
+    assert any("category as normal" in line for line in analysis.evidence)
+    quiet = analyze(rows[0], rows, "test", "normal")
+    assert quiet.alert_type == "none" and not quiet.needs_human
+
+
 def test_empty_history_and_future_transactions():
     rows = load_transactions()
     assert analyze(rows[2], [], "test").alert_type == "none"
     assert analyze(rows[2], rows, "test").alert_type == "none"
+
+
+def test_rules_use_category_and_thirty_day_median():
+    tx = load_transactions()[4]
+    prior = tx.model_copy(update={"id": "prior", "amount": 100,
+                                 "occurred_at": tx.occurred_at - timedelta(days=1)})
+    high = tx.model_copy(update={"amount": 301})
+    assert analyze(high, [prior, high], "test").alert_type == "amount_anomaly"
+    below = high.model_copy(update={"amount": 300})
+    assert analyze(below, [prior, below], "test").alert_type == "none"
+    duplicate = prior.model_copy(update={"amount": 301, "merchant_display": "Other synthetic merchant"})
+    assert analyze(high, [duplicate, high], "test").alert_type == "duplicate"

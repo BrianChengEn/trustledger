@@ -1,5 +1,7 @@
 # 任務書 4 — FastAPI Integration / Deployment Engineer
 
+目前負責人是 Benson（`benson5112`）。目錄、CI 與尚未開始的部署見 [../TEAM_ROLES.md](../TEAM_ROLES.md)。
+
 ## 任務結果
 
 你是 integrator。交付 internal API、configuration、request identity、safe errors/logging、四個 subsystem 的組裝、CI green 與可重現部署。你不重寫其他三人的實作；你建立穩定介面、mocks、fallbacks 和 vertical slice。
@@ -154,9 +156,9 @@ Secrets 只在 backend runtime。`/health` 只能回「configured/reachable/mode
 
 `GET /api/v1/memories`、`DELETE /api/v1/memories/{memory_id}`
 
-- 只回 sanitized summary。
+- 只回 sanitized summary。`source` 為 `backboard` 或 `local-fallback`。
 - delete 驗證 current demo assistant ownership。
-- upstream async delete 必須回誠實狀態；若 internal contract 僅 204，只有確認完成後才回 204，否則調整 contract需團隊同意。
+- `backboard` 列先刪遠端。HTTP 200 且 `success: true`，或遠端已經 404，才刪本地列並回 204。其他失敗回 502，本地列保留，`memory_mode=degraded`。`local-fallback` 不送 HTTP。
 
 ## Request identity / isolation
 

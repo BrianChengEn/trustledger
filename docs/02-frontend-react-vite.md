@@ -1,5 +1,7 @@
 # 任務書 2 — Frontend Engineer（React + TypeScript + Vite）
 
+目前負責人是 Ian（`IanChou89`）。目錄與驗收見 [../TEAM_ROLES.md](../TEAM_ROLES.md)。前端不要改 AI service 或 Nessie adapter。
+
 ## 任務結果
 
 交付一個精緻、可鍵盤操作、對金融初學者友善的 B2C Demo。三個核心 surface：Overview/Transactions、Alert Detail + Human Confirmation、Privacy & Memory。前端只呼叫自家 FastAPI，從不接觸 Nessie/Jev/Backboard key。

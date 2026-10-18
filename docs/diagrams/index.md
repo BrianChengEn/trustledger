@@ -1,5 +1,7 @@
 # TrustLedger Mermaid 圖表
 
+`.mmd` 是可編輯來源。圖上若仍把記憶體畫成只有 SQLite，以倉庫根目錄的 [ARCHITECTURE.md](../../ARCHITECTURE.md) 為準：有 `BACKBOARD_API_KEY` 且使用者同意時，同意過的類別句子會寫入 Backboard；沒有 key 時才是標成 `local-fallback` 的 SQLite。同目錄的 `.svg` 與 `docs/index.html` 仍是較早的版面快照。
+
 所有 `.mmd` 都是可編輯純文字。可在支援 Mermaid 的 Markdown viewer、GitHub 或 [Mermaid Live Editor](https://mermaid.live/) 檢視。不要把含真實 key、帳號、個資的內容貼進外部 editor。
 
 | 圖 | 用途 | Source of truth |

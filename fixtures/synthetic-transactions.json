@@ -9,7 +9,8 @@
     "merchant_category": "dining",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": false
+    "is_subscription": false,
+    "kind": "purchase"
   },
   {
     "id": "txn_syn_002",
@@ -21,7 +22,8 @@
     "merchant_category": "groceries",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": false
+    "is_subscription": false,
+    "kind": "purchase"
   },
   {
     "id": "txn_syn_003",
@@ -33,7 +35,8 @@
     "merchant_category": "streaming",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": true
+    "is_subscription": true,
+    "kind": "purchase"
   },
   {
     "id": "txn_syn_004",
@@ -45,7 +48,8 @@
     "merchant_category": "streaming",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": true
+    "is_subscription": true,
+    "kind": "purchase"
   },
   {
     "id": "txn_syn_005",
@@ -57,7 +61,8 @@
     "merchant_category": "electronics",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": false
+    "is_subscription": false,
+    "kind": "purchase"
   },
   {
     "id": "txn_syn_006",
@@ -69,7 +74,8 @@
     "merchant_category": "transportation",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": false
+    "is_subscription": false,
+    "kind": "purchase"
   },
   {
     "id": "txn_syn_007",
@@ -81,7 +87,8 @@
     "merchant_category": "fitness_subscription",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": true
+    "is_subscription": true,
+    "kind": "purchase"
   },
   {
     "id": "txn_syn_008",
@@ -93,6 +100,137 @@
     "merchant_category": "fitness_subscription",
     "source": "synthetic",
     "account_token": "acct_demo_a1",
-    "is_subscription": true
+    "is_subscription": true,
+    "kind": "purchase"
+  },
+  {
+    "id": "txn_syn_transfer_01",
+    "occurred_at": "2026-10-17T12:00:00-04:00",
+    "amount": 17.0,
+    "currency": "USD",
+    "direction": "credit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_02",
+    "occurred_at": "2026-10-16T12:00:00-04:00",
+    "amount": 24.0,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_03",
+    "occurred_at": "2026-10-15T12:00:00-04:00",
+    "amount": 31.0,
+    "currency": "USD",
+    "direction": "credit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_04",
+    "occurred_at": "2026-10-14T12:00:00-04:00",
+    "amount": 38.0,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_05",
+    "occurred_at": "2026-10-13T12:00:00-04:00",
+    "amount": 45.0,
+    "currency": "USD",
+    "direction": "credit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_06",
+    "occurred_at": "2026-10-12T12:00:00-04:00",
+    "amount": 52.0,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_07",
+    "occurred_at": "2026-10-11T12:00:00-04:00",
+    "amount": 59.0,
+    "currency": "USD",
+    "direction": "credit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_08",
+    "occurred_at": "2026-10-10T12:00:00-04:00",
+    "amount": 66.0,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_09",
+    "occurred_at": "2026-10-09T12:00:00-04:00",
+    "amount": 73.0,
+    "currency": "USD",
+    "direction": "credit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
+  },
+  {
+    "id": "txn_syn_transfer_10",
+    "occurred_at": "2026-10-08T12:00:00-04:00",
+    "amount": 80.0,
+    "currency": "USD",
+    "direction": "debit",
+    "merchant_display": "Transfer",
+    "merchant_category": "other",
+    "source": "synthetic",
+    "account_token": "acct_demo_a1",
+    "is_subscription": false,
+    "kind": "transfer"
   }
 ]

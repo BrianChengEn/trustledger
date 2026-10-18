@@ -1,6 +1,9 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+  "live_network: opt-in external API call; scripts/check.sh does not set GEMINI_LIVE_TEST",
+]
 
 [tool.ruff]
 line-length = 100

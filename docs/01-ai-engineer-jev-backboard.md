@@ -1,5 +1,7 @@
 # 任務書 1 — AI Engineer（Jev + Backboard + Privacy）
 
+目前負責人是 Brian（`BrianChengEn`）。Jev 的選定路線是 Backboard System One，不是直接呼叫 TypeSafe API。執行狀態以 [../ARCHITECTURE.md](../ARCHITECTURE.md) 與 [../TEAM_ROLES.md](../TEAM_ROLES.md) 為準。
+
 ## 任務結果
 
 交付一個可被 FastAPI 呼叫、可單元測試、fail-closed 的 AI service layer：先將交易轉成 allowlisted features，再跑 deterministic rules；若 Jev 可用，加入 bounded decision；只有使用者明確確認與同意後，才把 sanitized fact 寫入 Backboard。
@@ -228,7 +230,16 @@ merchant_display, raw_description, transaction_id, account_token
 - memory 位於 assistant scope，跨同 assistant threads。
 - memory 可 list/add/search/get/update/delete。
 
-MVP 建議不要把完整交易內容交給 Auto extraction。確認後由 `memory_policy.py` 先建立 sanitized sentence，再使用官方 Add Memory endpoint；之後分析可用 semantic search 或 `Readonly`。禁止將多個 demo users 放進同一 assistant。
+MVP 建議不要把完整交易內容交給 Auto extraction。目前程式就是這樣做，而且沒有採用下面舊稿裡的 semantic search 或 `Readonly`：
+
+- Jev 請求固定 `memory=off`。分類不會自動寫入 assistant memory。
+- 同意後只把類別句子 `POST` 到 `/assistants/{assistant_id}/memories`。句子以外的內容在送出前就被拒絕。
+- 每個 owner 在 SQLite 保存第一個 assistant id，之後重用。HTTP API 的 owner 是 `DEMO_USER_ID`，瀏覽器不能選。
+- 分析只用本地已索引、且通過 `approved_memory` 的句子。遠端 list 只用來確認讀取成功，不會把孤兒遠端列匯入。
+- 沒有 key 時不送 memory HTTP，SQLite `source=local-fallback`。失敗不得標成 `backboard-live`。
+- 預設測試不呼叫 Backboard。要打真實 API 時，在 `backend/` 執行 `BACKBOARD_LIVE_TEST=1 .venv/bin/python -m pytest -q tests/integration/test_backboard_live.py`。
+
+禁止將多個 demo users 放進同一 assistant。
 
 Memory write gate：
 
@@ -267,15 +278,19 @@ python -m pytest tests/unit/ai -q
 
 預期：所有測試通過；沒有 network；沒有真實 key。至少看到 privacy forbidden-field tests、rules cases、Jev response parser、Backboard write gate。
 
-### Jev authentication/readiness（不跑 decision）
+### Jev through Backboard（選定路線）
+
+不要呼叫 `https://api.typesafe.ai` 或 `https://jev-ai.org`。選定請求是：
 
 ```bash
 curl --fail-with-body --silent --show-error \
-  https://jev-ai.org/api/v1/models/ \
-  -H "Authorization: Bearer $JEV_API_KEY"
+  https://app.backboard.io/api/threads/messages \
+  -H "X-API-Key: $BACKBOARD_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data '{"content":"Classify the minimized features in system_one.state.","llm_provider":"typesafe","model_name":"jev-latest","stream":false,"system_one":{"state":{"merchant_category":"streaming","amount_bucket":"10-25","currency":"USD","local_day_part":"afternoon","same_category_same_amount_24h_count":2,"is_subscription":true,"subscription_delta_bucket":"none","prior_user_confirmation":"unknown"},"questions":{"pattern":{"type":"choice","instructions":"Which pattern matches state?","criteria":{"duplicate":"Repeated category and amount","amount_anomaly":"Highest amount bucket","subscription_change":"Subscription increased","none":"No listed pattern"}}}}}'
 ```
 
-預期：HTTP 200、model list 含 decision model。官方文件說 GET models 不執行模型且不收費。不要把輸出貼進公開 issue。
+文件：<https://docs.backboard.io/concepts/system-one>。不要把回應或 key 貼進公開 issue。直接的 TypeSafe API 只是未採用的選項。
 
 ### Backboard readiness
 
@@ -288,6 +303,8 @@ curl --fail-with-body --silent --show-error \
 預期：HTTP 200 與 assistant list。若無 assistant，由一位 owner 建立一個 `TrustLedger Demo User` assistant；避免四人各建一個造成 ID 混亂。
 
 ## 常見錯誤
+
+下表的 Jev 308、400、401 屬於未採用的直接 TypeSafe 路由。選定路線的失敗應維持 `rules-only` 或 `degraded`，不要改打 `api.typesafe.ai`。
 
 | 症狀 | 原因 | 修正 |
 |---|---|---|

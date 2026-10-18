@@ -6,7 +6,7 @@
 
 ## 先讀這三件事
 
-**立即開始：** 先讀 [START-HERE.md](START-HERE.md)。本套件提供開發文件，未附完整應用程式；可先安裝工具，啟動與測試指令要等 repo 骨架和程式建立後執行。`index.html` 已內嵌文件與圖表，可離線直接開啟；`pages/` 另有可獨立閱讀的 HTML。
+**立即開始：** 應用程式已經在倉庫根目錄。現況、技術清單與四人分工看 [../README.md](../README.md)、[../TECH_STACK.md](../TECH_STACK.md)、[../TEAM_ROLES.md](../TEAM_ROLES.md)、[../ARCHITECTURE.md](../ARCHITECTURE.md)。本目錄的 `index.html` 是離線快照，可能落後 Markdown。
 
 1. TrustLedger 的 MVP 只有四個產品能力：交易分析、經使用者確認後才寫入的 Backboard 記憶、Privacy Inspector、人工確認。
 2. 原始帳號、姓名、地址、API key 與完整原始交易不得送到 Jev 或 Backboard。所有供應商 key 只存在 FastAPI 後端。
@@ -99,6 +99,8 @@ git switch -c chore/<your-name>-bootstrap
 - repo、Devpost 描述與簡報清楚揭露 AI 工具使用；官方規則要求 credit AI usage。
 
 ## 重要限制
+
+Versioned implementation updates are maintained locally under `docs/vx.x.x/`, using guides 00–07 as constraints. The current local update is [v0.3.1](v0.3.1/ArchitectureDecisions.md): integrate Ian's selected `ianthechou` frontend (`9c40b01`) with the existing v0.3.0 backend, retaining its palette, menus, widgets, themes and window fitting. The user approved existing pagination only when Activity overflows. Effective designs: [Frontend](v0.3.1/Frontend.md), unchanged [Backend](v0.3.0/Backend.md), [DataFlow](v0.3.0/DataFlow.md), [UserFlow](v0.3.0/UserFlow.md), [Database](v0.2.1/Database.md); the new decision map records filter/paging/data-presentation adaptations. [v0.2.1](v0.2.1/ArchitectureDecisions.md) records the 180 connected transfers, 10 offline transfers and canonical account codes; earlier version directories remain historical. Every original merchant-row control opens details; customer state is isolated. Integration preserves the selected frontend's views, controls, styling and interactions while adapting backend data at existing API/client boundaries. Newly added Markdown design notes are excluded from PRs; JSON files remain offline compatibility fixtures. No additional generator, global customer switch, banking write, dependency or deployment is part of v0.3.1.
 
 這是黑客松 prototype，不是銀行產品、投資建議、詐欺判定系統或合規認證。不要使用真實金融資料，不要宣稱 PCI DSS、SOC 2、GLBA、CCPA/GDPR 或銀行安全合規已完成。正式上線前仍需法律/隱私評估、供應商 DPA 與 retention 審查、正式身分驗證/授權、滲透測試、監控與事件應變。
 
