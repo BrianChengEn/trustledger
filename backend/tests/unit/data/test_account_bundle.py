@@ -33,6 +33,12 @@ def batch(tmp_path):
     return target
 
 
+def test_one_time_starter_initialization_cannot_rewrite_feature_branches():
+    import yaml
+    workflow = yaml.safe_load((ROOT / '.github/workflows/bootstrap.yml').read_text())
+    assert workflow.get('on', workflow.get(True)) == {'workflow_dispatch': None}
+
+
 def test_bundle_round_trip_preserves_transactions_and_excludes_private_state(tmp_path):
     source = batch(tmp_path)
     archive = tmp_path / 'dataset.zip'
