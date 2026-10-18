@@ -4,6 +4,8 @@ limit_req_zone $binary_remote_addr zone=tl_login:10m rate=6r/m;
 limit_conn_zone $binary_remote_addr zone=tl_connections:10m;
 server {
     listen 80;
+    access_log off;
+    server_tokens off;
     server_name 35.227.39.10;
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/letsencrypt;

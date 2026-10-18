@@ -40,7 +40,7 @@ fails, use a separately installed, verified Python 3.12 runtime in an isolated
 venv; pass its executable using TRUSTLEDGER_PYTHON to release.sh. Never replace
 system Python or change dependency pins merely to force a deployment. Selecting
 or installing that runtime requires inspecting actual available packages first.
-VM compatibility is NOT yet verified. Local tests use Python 3.12.
+VM backend compatibility is verified: locked requirements, pip check, lint and all 710 backend tests pass on Python 3.14.4. Local full checks use Python 3.12. See AUDIT.txt for frontend/proxy outcomes.
 
 Host preparation once SSH works (do not expose services)
 Check existing nginx configuration/services/data before touching anything.
@@ -129,3 +129,15 @@ console evidence, test outcomes and certificate renewal evidence for submission.
 Do not claim Vultr hosting for this GCP deployment. No provider is production
 verified. Brian owns paid-provider authorization; Kenny owns Nessie; Ian's
 frontend is unchanged. Superseded PR #23/#26 and open feature PRs are excluded.
+
+Audit follow-up
+See AUDIT.txt. The owner provided GCP rule inventory: existing tagged 80/443
+allows suffice. Host UFW is already active and SSH restricted to the current
+operator; second login verified. Web ports remain blocked. Run
+restrict-cloud-ssh.sh VERIFIED_OPERATOR_IP/32 in authorized Cloud Shell to
+narrow cloud SSH/RDP only for this VM, retaining existing web tags. Review rules
+first; if named rules already exist, inspect them rather than rerunning create.
+After public-release approval, allow 80/tcp and 443/tcp in UFW and activate the
+ACME bootstrap, then trusted TLS and the approved release. No shared default
+firewall rule needs editing. Never open 8000. Credentials are available only in
+the benson-owned mode-0600 file recorded in AUDIT.txt.
