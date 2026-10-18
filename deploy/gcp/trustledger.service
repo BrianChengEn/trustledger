@@ -1,5 +1,5 @@
 [Unit]
-Description=TrustLedger restricted synthetic demo
+Description=TrustLedger authenticated Nessie sandbox demo
 After=network.target
 
 [Service]
