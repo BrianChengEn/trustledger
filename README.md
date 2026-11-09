@@ -196,6 +196,20 @@ API_PROXY_TARGET=http://127.0.0.1:8001 npm run dev -- --port 5174
 
 Open `http://127.0.0.1:5174`. The launcher selects the first registered Nessie account and prints its local code; set `DEMO_ACCOUNT_TOKEN=acct_...` before launching to select another Nessie account. It reads the same 100 transaction IDs and fields as the source browser, uses a separate `account-user-demo.db` for account-scoped decisions/memory, clears vendor keys and reports **Synthetic demo data**. Missing or incomplete account data fails without falling back to 18 fixtures. Existing synthetic and live Nessie modes are unchanged. The USD product workspace only accepts Nessie-derived accounts; BankSim remains in the source browser with EUR and simulation days. Date-only rows retain their precision, with no invented merchant identity or recurring-payment inference.
 
+## Running tests
+
+Install the locked dependencies on a clean checkout, then run the suite:
+
+```bash
+python3 -m venv backend/.venv
+backend/.venv/bin/python -m pip install -r backend/requirements.lock.txt
+npm ci --prefix frontend
+npx --prefix frontend playwright install --with-deps chromium
+bash scripts/check.sh
+```
+
+`bash scripts/check.sh` is the command GitHub Actions runs on every push and pull request (`.github/workflows/tests.yml`). The workflow has no secrets and does not call Backboard, Nessie, or Gemini. Leave `BACKBOARD_LIVE_TEST` unset for this command.
+
 ## Tests
 
 ```bash

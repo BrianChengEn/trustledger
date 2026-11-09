@@ -210,28 +210,34 @@ try {
   assert.equal(await page.getByText('Mark').count() >= 0, true);
   // Failure states never keep an old sentence.
   const memoryRoute = '**/relevant-memories';
-  await page.route(memoryRoute, route => route.fulfill({status: 500, json: {error: {code: 'internal_error'}}}), {times: 1});
+  // Hold this handler for the whole step so a second read gets the same response.
+  const routeMemory = async handler => {
+    await page.unroute(memoryRoute);
+    await page.route(memoryRoute, handler);
+  };
+  await routeMemory(route => route.fulfill({status: 500, json: {error: {code: 'internal_error'}}}));
   await page.reload();
   await page.getByText('Memory could not be loaded.').waitFor();
   assert(!(await page.locator('.relevant').innerText()).includes('explicitly confirmed'), 'an HTTP error shows no stale sentence');
   assert.equal(await page.getByText('You told TrustLedger this category is normal').count(), 0, 'the facts note follows the same result');
-  await page.route(memoryRoute, route => route.fulfill({json: {memories: [{memory_id: 'mem_x', summary: SENTENCE, created_at: '2026-10-18T12:00:00Z',
-    source: 'backboard', verification: 'unverified'}], retrieval_mode: 'unavailable', checked_at: null, failure: 'provider_error'}}), {times: 1});
+  await routeMemory(route => route.fulfill({json: {memories: [{memory_id: 'mem_x', summary: SENTENCE, created_at: '2026-10-18T12:00:00Z',
+    source: 'backboard', verification: 'unverified'}], retrieval_mode: 'unavailable', checked_at: null, failure: 'provider_error'}}));
   await page.reload();
   await page.getByText('Memory could not be checked right now.').waitFor();
   assert(!(await page.locator('.relevant').innerText()).includes('explicitly confirmed'), 'unavailable shows no summary');
-  await page.route(memoryRoute, route => route.fulfill({json: {memories: [], retrieval_mode: 'remote_verified', checked_at: '2026-10-18T12:00:00Z', failure: null}}), {times: 1});
+  await routeMemory(route => route.fulfill({json: {memories: [], retrieval_mode: 'remote_verified', checked_at: '2026-10-18T12:00:00Z', failure: null}}));
   await page.reload();
   await page.getByText('No relevant memory found.', {exact: true}).waitFor();
   assert(!(await page.locator('.relevant').innerText()).includes('Checked with Backboard'), 'an empty verified list is not a match');
-  await page.route(memoryRoute, route => route.fulfill({json: {memories: [{memory_id: 'mem_y', summary: SENTENCE, created_at: '2026-10-18T12:00:00Z',
-    source: 'backboard', verification: 'remote_verified'}], retrieval_mode: 'remote_verified', checked_at: '2026-10-18T12:00:00Z', failure: null}}), {times: 1});
+  await routeMemory(route => route.fulfill({json: {memories: [{memory_id: 'mem_y', summary: SENTENCE, created_at: '2026-10-18T12:00:00Z',
+    source: 'backboard', verification: 'remote_verified'}], retrieval_mode: 'remote_verified', checked_at: '2026-10-18T12:00:00Z', failure: null}}));
   await page.reload();
   await page.locator('.relevant').getByText('Checked with Backboard just now.').waitFor();
   assert((await page.locator('.facts .memnote').innerText()).includes('Checked with Backboard just now.'), 'facts and card share per-memory verification');
   // Real delete: the memory disappears from the card and the alert is unchanged.
   const memories = await (await page.request.get(api('/memories'))).json();
   assert.equal((await page.request.delete(api(`/memories/${memories[0].memory_id}`), {headers: {origin: BASE}})).status(), 204);
+  await page.unroute(memoryRoute);
   await page.reload();
   await page.getByText('No relevant memory found.', {exact: true}).waitFor();
   const afterDelete = (await (await page.request.get(api('/alerts'))).json()).find(a => a.transaction_id === laterId);

@@ -1,0 +1,29 @@
+name: Tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install backend dependencies
+        run: |
+          python3 -m venv backend/.venv
+          backend/.venv/bin/python -m pip install -r backend/requirements.lock.txt
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+      - name: Install the browser used by the lab checks
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Run tests
+        run: bash scripts/check.sh
